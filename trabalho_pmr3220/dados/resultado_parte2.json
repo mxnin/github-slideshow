@@ -1,0 +1,287 @@
+{
+  "lagrange_simbolico": [
+    "I1*Derivative(theta1(t), (t, 2)) + I2*(Derivative(phi(t), (t, 2)) + Derivative(theta1(t), (t, 2))) + a1**2*m1*Derivative(theta1(t), (t, 2)) + g*(a1*m1*cos(theta1(t)) + m2*(L1*cos(theta1(t)) + c2*cos(gamma + phi(t) + theta1(t)))) + m2*(L1**2*Derivative(theta1(t), (t, 2)) - L1*c2*sin(gamma + phi(t))*Derivative(phi(t), t)**2 - 2*L1*c2*sin(gamma + phi(t))*Derivative(phi(t), t)*Derivative(theta1(t), t) + L1*c2*cos(gamma + phi(t))*Derivative(phi(t), (t, 2)) + 2*L1*c2*cos(gamma + phi(t))*Derivative(theta1(t), (t, 2)) + c2**2*Derivative(phi(t), (t, 2)) + c2**2*Derivative(theta1(t), (t, 2)))",
+    "I2*Derivative(phi(t), (t, 2)) + I2*Derivative(theta1(t), (t, 2)) + L1*c2*m2*sin(gamma + phi(t))*Derivative(theta1(t), t)**2 + L1*c2*m2*cos(gamma + phi(t))*Derivative(theta1(t), (t, 2)) + c2**2*m2*Derivative(phi(t), (t, 2)) + c2**2*m2*Derivative(theta1(t), (t, 2)) + c2*g*m2*cos(gamma + phi(t) + theta1(t))"
+  ],
+  "parametros_80kg": {
+    "coxa": {
+      "m": 9.878899999999996,
+      "r": [
+        0.20664041543086792,
+        0.0
+      ],
+      "I": 0.20157542874773507
+    },
+    "perna": {
+      "m": 5.4359,
+      "r": [
+        0.25807814713294946,
+        0.030847007855184974
+      ],
+      "I": 0.17197926530051402
+    }
+  },
+  "parametros_60kg": {
+    "coxa": {
+      "m": 7.878900000000001,
+      "r": [
+        0.2151290154717029,
+        0.0
+      ],
+      "I": 0.16538590135577302
+    },
+    "perna": {
+      "m": 4.2158999999999995,
+      "r": [
+        0.2588240944993952,
+        0.03117513460945469
+      ],
+      "I": 0.1328554889211752
+    }
+  },
+  "componentes_ortese": [
+    {
+      "elo": "coxa",
+      "item": "hastes Al (2x)",
+      "m": 0.21600000000000003,
+      "pos": [
+        0.2,
+        0.0
+      ],
+      "I": 0.0028800000000000006
+    },
+    {
+      "elo": "perna",
+      "item": "hastes Al (2x)",
+      "m": 0.24300000000000002,
+      "pos": [
+        0.225,
+        0.0
+      ],
+      "I": 0.004100625000000001
+    },
+    {
+      "elo": "coxa",
+      "item": "bracadeira proximal PP",
+      "m": 0.13145,
+      "pos": [
+        0.1,
+        0.0
+      ],
+      "I": 0.0
+    },
+    {
+      "elo": "coxa",
+      "item": "bracadeira distal PP",
+      "m": 0.13145,
+      "pos": [
+        0.3,
+        0.0
+      ],
+      "I": 0.0
+    },
+    {
+      "elo": "perna",
+      "item": "bracadeira PP",
+      "m": 0.13145,
+      "pos": [
+        0.15,
+        0.0
+      ],
+      "I": 0.0
+    },
+    {
+      "elo": "perna",
+      "item": "palmilha PP + estribo",
+      "m": 0.18145,
+      "pos": [
+        0.45,
+        0.125
+      ],
+      "I": 0.0009450520833333333
+    },
+    {
+      "elo": "coxa",
+      "item": "articulacao joelho (aco 304)",
+      "m": 0.2,
+      "pos": [
+        0.4,
+        0.0
+      ],
+      "I": 0.0
+    },
+    {
+      "elo": "coxa",
+      "item": "atuador do joelho",
+      "m": 1.2,
+      "pos": [
+        0.4,
+        0.0
+      ],
+      "I": 0.001215
+    }
+  ],
+  "massa_ortese": 2.4348,
+  "parametros_80kg_sem_ortese": {
+    "coxa": {
+      "m": 8.0,
+      "r": [
+        0.17320000000000002,
+        0.0
+      ],
+      "I": 0.13354112
+    },
+    "perna": {
+      "m": 4.88,
+      "r": [
+        0.2555004098360656,
+        0.029713114754098366
+      ],
+      "I": 0.15644520575983606
+    }
+  },
+  "verificacao_NE": {
+    "lagrange": [
+      45.25362335328806,
+      4.972280007134309
+    ],
+    "newton_euler": [
+      45.25362335328806,
+      4.9722800071343105
+    ]
+  },
+  "T": 2.0,
+  "final I|80kg": {
+    "tau_quadril_max": 6.228241179259744,
+    "tau_joelho_max": 13.502096898143428,
+    "tau_quadril_rms": 4.689901890402984,
+    "tau_joelho_rms": 9.328946324065877,
+    "pot_quadril_max": 0.8866374605145873,
+    "pot_joelho_max": 22.23289138620147,
+    "w_coxa_max": 9.496874999999994,
+    "w_perna_max": 103.003125,
+    "w_joelho_max": 112.49999999999999,
+    "a_coxa_max": 14.62103261718754,
+    "a_perna_max": 158.57974863281305,
+    "a_joelho_max": 173.20078125000057,
+    "grav_quadril_max": 7.9602279939931995,
+    "grav_joelho_max": 13.86024628538736
+  },
+  "final I|60kg": {
+    "tau_quadril_max": 4.671217509634838,
+    "tau_joelho_max": 10.505395921133212,
+    "tau_quadril_rms": 3.543154497119494,
+    "tau_joelho_rms": 7.255215312319774,
+    "pot_quadril_max": 0.6723873451817506,
+    "pot_joelho_max": 17.28673550991266,
+    "w_coxa_max": 9.496874999999994,
+    "w_perna_max": 103.003125,
+    "w_joelho_max": 112.49999999999999,
+    "a_coxa_max": 14.62103261718754,
+    "a_perna_max": 158.57974863281305,
+    "a_joelho_max": 173.20078125000057,
+    "grav_quadril_max": 6.059881915757013,
+    "grav_joelho_max": 10.781783155635926
+  },
+  "sens_T|final I": [
+    [
+      1.0,
+      9.96188590239616,
+      13.502096898143428
+    ],
+    [
+      1.5,
+      6.228241179259744,
+      13.502096898143428
+    ],
+    [
+      2.0,
+      6.228241179259744,
+      13.502096898143428
+    ],
+    [
+      3.0,
+      7.0019158682977904,
+      13.502096898143428
+    ],
+    [
+      4.0,
+      7.417521046285929,
+      13.505476333158729
+    ]
+  ],
+  "final II|80kg": {
+    "tau_quadril_max": 39.99053301462259,
+    "tau_joelho_max": 2.814855713999492,
+    "tau_quadril_rms": 28.519995675479755,
+    "tau_joelho_rms": 1.6139830106794055,
+    "pot_quadril_max": 53.93447514205047,
+    "pot_joelho_max": 2.8237164438055227,
+    "w_coxa_max": 93.815625,
+    "w_perna_max": 9.215625000000015,
+    "w_joelho_max": 103.03125000000001,
+    "a_coxa_max": 144.43501816406297,
+    "a_perna_max": 14.188030664062572,
+    "a_joelho_max": 158.62304882812555,
+    "grav_quadril_max": 40.88906465997401,
+    "grav_joelho_max": 1.6449530625000022
+  },
+  "final II|60kg": {
+    "tau_quadril_max": 32.1028334436562,
+    "tau_joelho_max": 2.19951968955941,
+    "tau_quadril_rms": 22.883944679637846,
+    "tau_joelho_rms": 1.258824898714496,
+    "pot_quadril_max": 43.31267987847818,
+    "pot_joelho_max": 2.209263939220928,
+    "w_coxa_max": 93.815625,
+    "w_perna_max": 9.215625000000015,
+    "w_joelho_max": 103.03125000000001,
+    "a_coxa_max": 144.43501816406297,
+    "a_perna_max": 14.188030664062572,
+    "a_joelho_max": 158.62304882812555,
+    "grav_quadril_max": 32.81663957684121,
+    "grav_joelho_max": 1.2893405625000018
+  },
+  "sens_T|final II": [
+    [
+      1.0,
+      39.99053301462259,
+      6.6701554817614825
+    ],
+    [
+      1.5,
+      39.99053301462259,
+      3.8097003991075438
+    ],
+    [
+      2.0,
+      39.99053301462259,
+      2.814855713999492
+    ],
+    [
+      3.0,
+      39.99053301462259,
+      2.117311679660236
+    ],
+    [
+      4.0,
+      39.99053301462259,
+      1.884475351994383
+    ]
+  ],
+  "estrutural": {
+    "haste da perna (torque do joelho)": {
+      "M": 13.502096898143428,
+      "sigma_MPa": 20.25314534721514,
+      "n_escoamento": 13.627512925440529,
+      "n_goodman": 7.267180939525347
+    },
+    "haste da coxa (torque do quadril)": {
+      "M": 39.99053301462259,
+      "sigma_MPa": 59.98579952193388,
+      "n_escoamento": 4.601088961047861,
+      "n_goodman": 2.4536352437696625
+    }
+  },
+  "W_mm3": 333.3333333333334
+}

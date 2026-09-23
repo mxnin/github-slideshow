@@ -1,0 +1,992 @@
+\documentclass[11pt,a4paper,oneside]{report}
+
+% ------------------------------------------------------------------ pacotes
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[brazil]{babel}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage[a4paper,margin=2.5cm]{geometry}
+\usepackage{amsmath,amssymb,amsthm,bm}
+\usepackage{graphicx}
+\usepackage{booktabs,array,tabularx,multirow}
+\usepackage{caption,subcaption}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,angles,quotes,calc,patterns,babel}
+\usepackage[output-decimal-marker={,}, group-separator={.}, range-phrase={ a }, list-final-separator={ e }, list-pair-separator={ e }, list-separator={; }]{siunitx}
+\usepackage{enumitem}
+\usepackage{csquotes}
+\usepackage[style=abnt,backend=biber]{biblatex}
+\addbibresource{referencias.bib}
+\usepackage[hidelinks]{hyperref}
+\usepackage[brazilian,capitalise,noabbrev]{cleveref}
+\usepackage{listings}
+
+\lstset{basicstyle=\ttfamily\footnotesize, breaklines=true, frame=single,
+        literate={á}{{\'a}}1 {ã}{{\~a}}1 {é}{{\'e}}1 {ç}{{\c{c}}}1 {õ}{{\~o}}1 {í}{{\'i}}1 {ó}{{\'o}}1}
+
+\input{dados/valores.tex}
+
+\newcommand{\ve}[1]{\bm{#1}}
+\newcommand{\e}{\mathrm{e}}
+\newcommand{\dd}{\,\mathrm{d}}
+\newtheorem{hipotese}{Hipótese}
+\captionsetup{font=small,labelfont=bf}
+\numberwithin{equation}{chapter}
+
+% ------------------------------------------------------------------ capa
+\begin{document}
+\begin{titlepage}
+  \centering
+  {\large ESCOLA POLITÉCNICA DA UNIVERSIDADE DE SÃO PAULO\par}
+  {\large PMR3220 -- Mecanismos\par}
+  \vspace{4cm}
+  {\LARGE\bfseries Prótese e órtese de membro inferior humano\par}
+  \vspace{0.8cm}
+  {\large Parte I -- Síntese dimensional de uma prótese de joelho policêntrica\\
+          Parte II -- Simulação cinemática e dinâmica de uma órtese de membro inferior\par}
+  \vspace{3cm}
+  {\large Integrantes do grupo:\par}
+  \vspace{0.3cm}
+  \begin{tabular}{ll}
+    Nome Sobrenome & NUSP 0000000 \\
+    Nome Sobrenome & NUSP 0000000 \\
+    Nome Sobrenome & NUSP 0000000 \\
+  \end{tabular}
+  \vfill
+  {\large São Paulo\\ 2026\par}
+\end{titlepage}
+
+% ------------------------------------------------------------------ resumo
+\begin{abstract}
+Este relatório apresenta o projeto de dois dispositivos para o membro inferior humano.
+Na Parte~I, realiza-se a síntese dimensional de um quadrilátero articulado plano que
+reproduz o movimento relativo entre a coxa e o conjunto perna--pé (joelho policêntrico),
+utilizando três posições de precisão do elo acoplador. O movimento de referência é
+descrito no referencial da coxa a partir de medições do membro íntegro (protocolo
+detalhado no texto) e, para o exemplo numérico, de um modelo anatômico de quatro barras
+cruzadas dos ligamentos cruzados. Os pivôs móveis na perna foram escolhidos por
+otimização, e os pivôs fixos na coxa decorrem da condição de circunferência pelas três
+posições homólogas. O mecanismo resultante apresenta erro máximo de \errmax~mm na
+posição do tornozelo entre \SI{0}{\degree} e \SI{120}{\degree} de flexão e ângulo de transmissão
+mínimo de \mumin\si{\degree}. Um gabarito em escala 1:1 é fornecido para a maquete.
+Na Parte~II, modela-se o membro inferior com órtese como um manipulador plano de dois
+graus de liberdade. As configurações intermediárias são geradas por interpolação
+polinomial de 5º grau e os torques dos atuadores do quadril e do joelho são obtidos
+pelas equações de Lagrange (verificadas por Newton--Euler), com parâmetros
+antropométricos de \textcite{winter2009} e materiais selecionados em referências de
+elementos de máquinas. Para um indivíduo de \SI{80}{kg} e $T=\SI{2}{s}$, os torques
+máximos são de \tqIImax~N\,m no quadril (configuração final~II) e \tjImax~N\,m no
+joelho (configuração final~I), dominados pela parcela gravitacional.
+
+\medskip
+\noindent\textbf{Palavras-chave:} síntese de mecanismos; quadrilátero articulado;
+joelho policêntrico; órtese ativa; interpolação polinomial; dinâmica de Lagrange.
+\end{abstract}
+
+\tableofcontents
+\listoffigures
+\listoftables
+
+% ==================================================================
+\chapter{Introdução}
+% ==================================================================
+
+A articulação do joelho é frequentemente representada, em primeira aproximação, por uma
+junta de revolução. Essa representação, contudo, não é rigorosa: no plano sagital, o
+movimento relativo entre fêmur e tíbia combina rolamento e deslizamento dos côndilos
+femorais sobre o platô tibial, de modo que o centro instantâneo de rotação (CIR) descreve
+uma trajetória -- a \emph{centroide} -- em vez de permanecer fixo
+\cite{menschik1974,oconnor1989,dathe2016}. Desde \textcite{menschik1974}, a cinemática
+passiva do joelho é modelada por um quadrilátero articulado cruzado formado pelas
+fibras isométricas dos ligamentos cruzados anterior (LCA) e posterior (LCP) e pelos
+segmentos ósseos que unem suas inserções \cite{oconnor1989,zavatsky1992}.
+
+Esse fato motiva as duas partes deste trabalho, propostas no enunciado da disciplina
+(\cref{fig:enunciado}):
+
+\begin{enumerate}[label=\textbf{Parte \Roman*.},leftmargin=*]
+  \item \textbf{Prótese de joelho e perna}: sintetizar um quadrilátero articulado
+  plano cujo acoplador (perna--pé artificial) reproduza, em três ou mais posições de
+  precisão, o movimento relativo medido entre a perna e a coxa de um indivíduo saudável,
+  determinando os comprimentos dos elos e a localização das articulações na coxa e na
+  perna; construir uma maquete.
+  \item \textbf{Órtese de membro inferior}: para um indivíduo de \SIrange{60}{80}{kg}
+  com a musculatura inativa (sequela de AVC ou lesão por esforço), gerar as
+  configurações intermediárias entre as posições inicial e final
+  (\cref{fig:enunciado}b) por interpolação polinomial de 5º grau e determinar os
+  torques dos atuadores do joelho e do quadril, a partir de propriedades de materiais
+  e de dados antropométricos obtidos na literatura.
+\end{enumerate}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{subfigure}[b]{0.40\textwidth}
+    \centering\includegraphics[width=\textwidth]{figuras/enunciado_fig1.png}
+    \caption{Diagrama cinemático: pivôs $C$, $L$ na coxa e $Q$, $N$ na perna.}
+  \end{subfigure}\hfill
+  \begin{subfigure}[b]{0.56\textwidth}
+    \centering\includegraphics[width=\textwidth]{figuras/enunciado_fig2.png}
+    \caption{Configurações final I, inicial e final II da órtese.}
+  \end{subfigure}
+  \caption{Figuras do enunciado (reproduzidas).}
+  \label{fig:enunciado}
+\end{figure}
+
+Todos os cálculos foram implementados em Python (NumPy, SciPy, SymPy e Matplotlib); os
+códigos estão na pasta \texttt{scripts/} e são descritos no \cref{ap:codigo}. Os
+valores numéricos citados no texto são lidos automaticamente dos resultados
+(\texttt{dados/valores.tex}), o que garante consistência entre simulação e relatório.
+
+% ==================================================================
+\part*{Parte I -- Prótese de joelho e perna}
+\addcontentsline{toc}{part}{Parte I -- Prótese de joelho e perna}
+% ==================================================================
+
+\chapter{Fundamentação teórica}\label{cap:teoria1}
+
+\section{Quadrilátero articulado e o joelho policêntrico}
+
+Um quadrilátero articulado plano possui quatro elos ligados por quatro juntas de
+revolução e, pelo critério de Grübler, um grau de liberdade:
+\begin{equation}
+  M = 3(n-1) - 2j_1 - j_2 = 3(4-1) - 2\cdot 4 - 0 = 1 .
+\end{equation}
+No joelho protético (\cref{fig:enunciado}a) o elo fixo é a coxa (pivôs $C$ e $L$),
+as manivelas/balancins são $CQ$ e $LN$, e o \emph{acoplador} é a perna (pivôs $Q$ e $N$),
+ao qual se fixa rigidamente o pé. Como o acoplador executa um movimento plano geral,
+seu CIR relativo à coxa -- o polo $I_{13}$ -- é, pelo teorema de Aronhold--Kennedy, a
+intersecção das retas $CQ$ e $LN$ e se desloca à medida que o joelho flexiona, tal como
+no joelho natural \cite{norton2010,radcliffe1994}. Joelhos protéticos de quatro barras
+exploram essa propriedade: com o CIR alto e posterior na extensão, obtém-se
+estabilidade voluntária na fase de apoio; com o CIR migrando na flexão, obtém-se
+encurtamento aparente da perna na fase de balanço \cite{radcliffe1994}.
+
+A condição de Grashof classifica o tipo de movimento possível. Sendo $s$ e $l$ os
+comprimentos do menor e do maior elo e $p$, $q$ os demais,
+\begin{equation}
+  s + l \le p + q \quad\Longrightarrow\quad \text{pelo menos um elo dá voltas completas.}
+  \label{eq:grashof}
+\end{equation}
+Na prótese, a flexão útil está limitada a cerca de \SI{120}{\degree}; logo, um mecanismo
+não Grashof (triplo balancim) é aceitável, desde que nenhuma configuração de ponto
+morto ocorra dentro dessa faixa. A qualidade da transmissão de forças é avaliada pelo
+ângulo de transmissão $\mu$ -- ângulo agudo entre o acoplador e o balancim de saída --,
+recomendando-se $\mu \ge \SI{30}{\degree}$ \cite{norton2010}.
+
+\section{Síntese de geração de movimento por três posições de precisão}
+
+Seja $\{P_j, \alpha_j\}$, $j = 1,2,3$, a \emph{pose} do acoplador: posição de um ponto de
+referência da perna e sua orientação, ambas medidas no referencial da coxa. A
+formulação clássica de \textcite{erdman2001} e \textcite{norton2010} representa cada díade
+(manivela $\ve W$ e lado do acoplador $\ve Z$) por números complexos. A condição de
+fechamento entre a posição 1 e a posição $j$ é a \emph{equação da díade padrão}
+\begin{equation}
+  \ve W\left(\e^{\mathrm i\beta_j}-1\right) + \ve Z\left(\e^{\mathrm i\alpha_j}-1\right) = \ve\delta_j,
+  \qquad j = 2,3,
+  \label{eq:diade}
+\end{equation}
+em que $\ve\delta_j = P_j - P_1$ e $\alpha_j$ são dados (rotação e deslocamento do
+acoplador) e $\beta_j$ é a rotação da manivela. São quatro equações escalares com seis
+incógnitas escalares ($\ve W$, $\ve Z$, $\beta_2$, $\beta_3$): há duas escolhas livres por díade.
+Escolhendo $\beta_2,\beta_3$, o sistema \eqref{eq:diade} torna-se linear em $\ve W$ e $\ve Z$
+e é resolvido pela regra de Cramer.
+
+Neste trabalho utiliza-se a formulação equivalente de \emph{ponto-centro}, que é mais
+natural para o projetista: as escolhas livres são as coordenadas do pivô móvel no
+referencial da perna. Seja $\ve u_Q$ a posição (constante) de $Q$ no referencial da
+perna. Na posição $j$,
+\begin{equation}
+  \ve Q_j = \ve P_j + \ve R(\alpha_j)\,\ve u_Q,
+  \qquad
+  \ve R(\alpha) = \begin{bmatrix} \cos\alpha & -\sin\alpha\\ \sin\alpha & \cos\alpha \end{bmatrix}.
+  \label{eq:homologos}
+\end{equation}
+Como $Q$ percorre uma circunferência de centro $C$ (pivô fixo), vale
+$\lVert \ve Q_j - \ve C\rVert = r_{CQ}$ para $j=1,2,3$. Subtraindo a equação $j=1$ das
+demais, eliminam-se $r_{CQ}$ e os termos quadráticos em $\ve C$, restando o sistema linear
+das mediatrizes:
+\begin{equation}
+  2\begin{bmatrix} (\ve Q_2 - \ve Q_1)^{\mathsf T} \\ (\ve Q_3 - \ve Q_1)^{\mathsf T} \end{bmatrix}\ve C
+  = \begin{bmatrix} \lVert\ve Q_2\rVert^2 - \lVert\ve Q_1\rVert^2 \\ \lVert\ve Q_3\rVert^2 - \lVert\ve Q_1\rVert^2 \end{bmatrix},
+  \label{eq:circuncentro}
+\end{equation}
+cuja solução é o circuncentro dos três pontos homólogos. O mesmo procedimento aplicado a
+$\ve u_N$ fornece $\ve L$. O determinante de \eqref{eq:circuncentro} é nulo quando os três
+pontos homólogos são colineares, caso em que o pivô fixo vai ao infinito (junta prismática).
+Os comprimentos são, então,
+\begin{equation}
+  r_{CL} = \lVert \ve C - \ve L\rVert,\quad
+  r_{CQ} = \lVert \ve Q_1 - \ve C\rVert,\quad
+  r_{LN} = \lVert \ve N_1 - \ve L\rVert,\quad
+  r_{QN} = \lVert \ve u_Q - \ve u_N\rVert .
+\end{equation}
+
+\section{Escolha dos pivôs móveis e erro estrutural}
+
+Com três posições, qualquer escolha de $(\ve u_Q, \ve u_N)$ gera um mecanismo que passa
+exatamente pelas posições de precisão; fora delas surge o \emph{erro estrutural}. Neste
+trabalho a escolha é feita por otimização: define-se o erro no tornozelo
+\begin{equation}
+  e(\varphi) = \big\lVert \ve P^{\mathrm{mec}}_{\text{tornozelo}}(\varphi) - \ve P^{\mathrm{ref}}_{\text{tornozelo}}(\varphi) \big\rVert ,
+\end{equation}
+comparando mecanismo e referência para a mesma orientação $\varphi$ da perna (ponto
+situado a \SI{450}{mm} do joelho, onde erros angulares são mais amplificados), e
+minimiza-se
+\begin{equation}
+  J(\ve u_Q,\ve u_N) = \max_{\varphi \in \Phi} e(\varphi) + \text{penalidades},
+  \label{eq:custo}
+\end{equation}
+em que as penalidades impõem: $\mu_{\min}\ge \SI{30}{\degree}$; pivôs fixos dentro do volume
+distal da coxa ($|x| \le \SI{45}{mm}$, $0 \le y \le \SI{90}{mm}$); elos entre
+\SI{20}{mm} e \SI{90}{mm}; montagem contínua (mesmo ramo) de \SIrange{0}{120}{\degree}
+-- o que elimina os defeitos de ramo e de ordem. A busca combina amostragem aleatória
+(1500 candidatos) e refinamento por Nelder--Mead.
+
+\chapter{Materiais e métodos}\label{cap:metodos1}
+
+\section{Protocolo de medição experimental}\label{sec:protocolo}
+
+As posições relativas da perna em relação à coxa devem ser medidas em um indivíduo
+saudável, conforme o protocolo abaixo (baseado em técnicas de videogrametria 2D
+descritas por \textcite{winter2009}):
+
+\begin{enumerate}
+  \item \textbf{Marcadores}: fixar marcadores adesivos (círculos de \SI{15}{mm}) sobre
+  referências ósseas palpáveis da face lateral do membro direito: trocânter maior (TR),
+  epicôndilo lateral do fêmur (EF), cabeça da fíbula (CF), tuberosidade da tíbia
+  projetada lateralmente (TT) e maléolo lateral (ML).
+  \item \textbf{Posicionamento}: indivíduo em decúbito lateral esquerdo sobre maca, com a
+  coxa apoiada e imobilizada (o movimento é passivo, feito por um colega), para que o
+  plano do movimento seja paralelo ao plano da imagem.
+  \item \textbf{Câmera}: celular em tripé a $\geq$~\SI{2,5}{m} do membro, eixo óptico
+  perpendicular ao plano sagital, para reduzir a paralaxe; régua de \SI{500}{mm} no plano
+  dos marcadores para calibração de escala.
+  \item \textbf{Aquisição}: fotografar o membro em flexões de \SIrange{0}{120}{\degree}
+  a cada \SI{15}{\degree}, conferidas com goniômetro; repetir cada série três vezes.
+  \item \textbf{Digitalização}: extrair as coordenadas dos marcadores (em mm) com o
+  software livre Tracker \cite{tracker} ou ImageJ.
+\end{enumerate}
+
+\paragraph{Referencial da coxa.} Para cada foto, define-se a origem em EF (que
+aproxima o eixo de flexão) e o eixo $y$ no sentido EF$\to$TR; o eixo $x$ aponta para a
+frente. As coordenadas de imagem $\ve x^{\mathrm{img}}$ são transformadas por
+\begin{equation}
+  \ve x = \ve R(-\psi)\,\big(\ve x^{\mathrm{img}} - \ve x_{\mathrm{EF}}^{\mathrm{img}}\big),
+  \qquad \psi = \operatorname{atan2}\big(\Delta y, \Delta x\big)_{\mathrm{EF}\to\mathrm{TR}} - \tfrac{\pi}{2}.
+\end{equation}
+
+\paragraph{Pose da perna (problema de Procrustes plano).} Sejam $\ve u_k$ as coordenadas
+dos marcadores da perna (CF, TT, ML) no referencial da perna (obtidas na foto com o joelho
+estendido, quando os dois referenciais coincidem) e $\ve x_k$ suas coordenadas na foto $j$.
+A pose $(\ve P_j, \alpha_j)$ que minimiza $\sum_k \lVert \ve P_j + \ve R(\alpha_j)\ve u_k - \ve x_k\rVert^2$
+tem solução fechada: com as coordenadas centradas $\tilde{\ve u}_k = \ve u_k - \bar{\ve u}$ e
+$\tilde{\ve x}_k = \ve x_k - \bar{\ve x}$,
+\begin{equation}
+  \alpha_j = \operatorname{atan2}\Big(\textstyle\sum_k \tilde{\ve u}_k \times \tilde{\ve x}_k,\;
+                               \sum_k \tilde{\ve u}_k \cdot \tilde{\ve x}_k\Big),
+  \qquad
+  \ve P_j = \bar{\ve x} - \ve R(\alpha_j)\,\bar{\ve u},
+\end{equation}
+em que $\ve a\times\ve b = a_x b_y - a_y b_x$. O uso de três ou mais marcadores reduz o
+efeito dos artefatos de pele, que podem chegar a \SI{10}{mm} no joelho.
+
+O programa \texttt{parte1\_sintese.py} lê o arquivo \texttt{dados/poses\_medidas.csv}
+(flexão; posição do ponto de referência do joelho; posição do tornozelo). \textbf{Para
+o exemplo numérico deste relatório}, esse arquivo foi gerado pelo modelo anatômico
+descrito a seguir; o grupo deve substituí-lo pelas suas medições e executar novamente
+o programa, que refaz toda a síntese, as figuras e as tabelas.
+
+\section{Modelo anatômico de referência}\label{sec:modelo_anat}
+
+Na ausência de artefatos de medição, o movimento passivo do joelho é bem descrito pelo
+quadrilátero cruzado de \textcite{menschik1974} e \textcite{oconnor1989}: as fibras
+isométricas do LCA e do LCP mantêm comprimento constante \cite{zavatsky1992}. Adotaram-se
+inserções típicas (referencial da coxa, joelho estendido, em mm): LCA femoral
+$(-12;\,22)$, LCP femoral $(8;\,20)$, LCA tibial $(12;\,-5)$ e LCP tibial $(-16;\,-10)$, o que
+fornece LCA $=\LACL$~mm, LCP $=\LPCL$~mm, elo femoral $=\Lfem$~mm e elo tibial
+$=\Ltib$~mm, valores compatíveis com as proporções da literatura
+\cite{oconnor1989,dathe2016}. Para cada flexão $\varphi$, a pose da perna é obtida
+resolvendo as duas equações de comprimento constante (método de Newton, com a solução
+anterior como estimativa inicial). As poses resultantes estão na \cref{tab:poses}.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Poses da perna no referencial da coxa (mm). $\star$: posições de precisão.
+  Última coluna: erro estrutural do mecanismo sintetizado no tornozelo.}
+  \label{tab:poses}
+  \begin{tabular}{lrrrrr}
+    \toprule
+    Flexão (\si{\degree}) & $x_{\mathrm{joelho}}$ & $y_{\mathrm{joelho}}$ & $x_{\mathrm{tornozelo}}$ & $y_{\mathrm{tornozelo}}$ & $e$ (mm) \\
+    \midrule
+    \tabelaposes
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+As posições de precisão foram escolhidas em $\varphi = \SI{0}{\degree}$, \SI{45}{\degree} e
+\SI{90}{\degree}, abrangendo a faixa funcional (marcha: $\approx\SI{65}{\degree}$; sentar:
+$\approx\SI{90}{\degree}$). Segundo o espaçamento de Chebyshev para três pontos em
+$[0, 120]$, os valores ótimos seriam \SIlist{8;60;112}{\degree}; optou-se por incluir a
+extensão completa ($\varphi=0$), onde a prótese precisa ser estável.
+
+\chapter{Resultados da síntese}\label{cap:resultados1}
+
+A otimização convergiu para os pivôs móveis e fixos da \cref{tab:pivos}.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Resultado da síntese dimensional (mm).}
+  \label{tab:pivos}
+  \begin{tabular}{lll}
+    \toprule
+    Articulação & Elo & Coordenadas \\
+    \midrule
+    $C$ & coxa (fixo) & $(\Cx;\ \Cy)$ \\
+    $L$ & coxa (fixo) & $(\Lx;\ \Ly)$ \\
+    $Q$ & perna (móvel) & $(\Qx;\ \Qy)$ \\
+    $N$ & perna (móvel) & $(\Nx;\ \Ny)$ \\
+    \midrule
+    \multicolumn{3}{l}{Comprimentos: $r_{CL} = \rCL$, $r_{CQ} = \rCQ$, $r_{LN} = \rLN$, $r_{QN} = \rQN$} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\paragraph{Grashof.} Com $s=\grashofs$, $l=\grashofl$, $p=\grashofp$ e $q=\grashofq$~mm,
+$s+l=\grashofsl > p+q=\grashofpq$: o mecanismo \grashof{} a condição \eqref{eq:grashof},
+ou seja, é um triplo balancim. Isso não é problema, pois a simulação de montagem
+confirma que o mecanismo percorre continuamente \SIrange{0}{120}{\degree} sem atingir
+pontos mortos, com $\mu$ entre \mumin\si{\degree} e \mumax\si{\degree} (\cref{fig:erro}).
+Os pontos mortos do triplo balancim ficam fora da faixa útil e atuam como batentes
+naturais contra a hiperextensão.
+
+\paragraph{Precisão.} O erro nas três posições de precisão é nulo (a menos de
+$10^{-12}$~mm), como esperado, e o erro estrutural máximo no tornozelo é de
+\errmax~mm em toda a faixa -- desprezível diante da dispersão das medições em
+indivíduos. A \cref{fig:mecanismo} mostra o mecanismo em quatro posições e as
+centroides: o polo do mecanismo parte de $(\ciOx;\ \ciOy)$~mm na extensão e migra
+posterior e proximalmente até $(\ciFx;\ \ciFy)$~mm a \SI{120}{\degree}, acompanhando a
+centroide anatômica em forma de ``J'' descrita por \textcite{oconnor1989}.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{figuras/p1_mecanismo.pdf}
+  \caption{Esquerda: quadrilátero sintetizado nas flexões de 0, 45, 90 e
+  \SI{120}{\degree} (tracejado: acoplador $QN$) e centroides do mecanismo e do modelo
+  anatômico. Direita: trajetória do tornozelo.}
+  \label{fig:mecanismo}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{figuras/p1_erro_mu.pdf}
+  \caption{Erro estrutural no tornozelo e ângulo de transmissão em função da flexão.}
+  \label{fig:erro}
+\end{figure}
+
+\paragraph{Discussão.} Como o movimento de referência veio de um modelo que é, ele
+próprio, um quadrilátero, era esperado que a síntese encontrasse uma solução muito
+próxima; com dados experimentais (ruído e artefatos de pele), o erro estrutural
+aumenta, e é recomendável (i) usar mais de três posições em síntese por mínimos
+quadrados, ou (ii) suavizar as poses medidas antes da síntese. Do ponto de vista
+protético, o CIR na extensão fica próximo à linha trocânter--joelho--tornozelo
+(\ciOx~mm à frente do centro do joelho). Para uma prótese transfemoral real,
+recomenda-se deslocá-lo para trás dessa linha, para garantir estabilidade voluntária
+no apoio \cite{radcliffe1994}; isso pode ser feito acrescentando ao custo \eqref{eq:custo}
+uma restrição sobre a posição do polo em $\varphi=0$.
+
+\chapter{Maquete}\label{cap:maquete}
+
+A maquete, em escala 1:1, permite avaliar qualitativamente o funcionamento do
+mecanismo. O programa gera um gabarito em A4 (\texttt{figuras/p1\_gabarito\_maquete.pdf},
+\cref{fig:gabarito}) com a posição exata dos furos.
+
+\begin{itemize}
+  \item \textbf{Material}: MDF ou acrílico de \SI{3}{mm} (corte a laser) para as placas da
+  coxa e da perna; os elos $CQ$ e $LN$ em acrílico de \SI{3}{mm} ou alumínio em chapa de
+  \SI{2}{mm}.
+  \item \textbf{Articulações}: parafusos M4 com arruelas de náilon e porcas
+  autotravantes (ou rebites de repuxo de \SI{4}{mm}), furos de \SI{4,2}{mm}. Os elos
+  $CQ$ e $LN$ devem ficar em planos diferentes (um de cada lado das placas) para que
+  não colidam quando se cruzam.
+  \item \textbf{Segmentos}: a placa da coxa prolonga-se até \SI{400}{mm} (quadril) e a da
+  perna até \SI{450}{mm} (tornozelo), com o pé de \SI{250}{mm} fixado a \SI{90}{\degree}.
+\end{itemize}
+
+\noindent\textbf{Ensaios qualitativos sugeridos}: (1) verificar a faixa de movimento de
+\SIrange{0}{120}{\degree} e o batente natural na extensão; (2) comparar lado a lado com
+o próprio joelho, fotografando a maquete nas mesmas flexões do protocolo da
+\cref{sec:protocolo}; (3) marcar o polo (intersecção de $CQ$ e $LN$) com uma linha
+esticada e observar a migração da centroide; (4) aplicar carga vertical com o joelho
+estendido e observar a tendência de flexão.
+
+\begin{figure}[htbp]
+  \centering
+  \fbox{\includegraphics[width=0.55\textwidth]{figuras/p1_gabarito_maquete.pdf}}
+  \caption{Gabarito da maquete (imprimir em escala 100\%).}
+  \label{fig:gabarito}
+\end{figure}
+
+% ==================================================================
+\part*{Parte II -- Simulação de órtese para membro inferior}
+\addcontentsline{toc}{part}{Parte II -- Simulação de órtese para membro inferior}
+% ==================================================================
+
+\chapter{Modelagem cinemática}\label{cap:cinematica}
+
+\section{Hipóteses}
+
+\begin{hipotese}
+O movimento ocorre no plano sagital, e o tronco está imóvel; o quadril $D$ é, portanto,
+um ponto fixo (base do manipulador).
+\end{hipotese}
+\begin{hipotese}
+O joelho da órtese é modelado como junta de revolução em $O$ (o joelho policêntrico da
+Parte~I pode ser incorporado depois, com efeito pequeno nos torques).
+\end{hipotese}
+\begin{hipotese}
+O pé e a perna formam um único corpo rígido, com o pé $PR$ perpendicular à perna $OP$.
+O enunciado diz ``pé e coxa'', mas a \cref{fig:enunciado}b mostra que $PR \perp OP$ nas
+três configurações; conclui-se tratar-se de um erro de digitação.
+\end{hipotese}
+\begin{hipotese}
+A musculatura está inativa: os torques são fornecidos inteiramente pelos atuadores do
+quadril (fixo no tronco) e do joelho (estator fixo na coxa). Não há contato do pé com o
+solo durante o ciclo, e o atrito nas juntas é desprezado.
+\end{hipotese}
+\begin{hipotese}
+$\overline{DO} = L_1 = \SI{0,40}{m}$, $\overline{OP} = L_2 = \SI{0,45}{m}$,
+$\overline{PR} = L_3 = \SI{0,25}{m}$ (enunciado).
+\end{hipotese}
+
+\section{Coordenadas e cinemática direta}
+
+Adota-se $x$ para a frente e $y$ para cima, com ângulos medidos a partir de $+x$ no
+sentido anti-horário (\cref{fig:modelo}). As coordenadas generalizadas são o ângulo
+absoluto da coxa $\theta_1$ e o ângulo relativo do joelho $\varphi$; o ângulo absoluto da
+perna é $\theta_2 = \theta_1 + \varphi$. Com $\ve e(\theta) = (\cos\theta, \sin\theta)^{\mathsf T}$:
+\begin{equation}
+  \ve O = L_1\,\ve e(\theta_1),\qquad
+  \ve P = \ve O + L_2\,\ve e(\theta_2),\qquad
+  \ve R = \ve P + L_3\,\ve e\big(\theta_2 + \tfrac{\pi}{2}\big).
+\end{equation}
+As velocidades e acelerações angulares absolutas são
+$\omega_1 = \dot\theta_1$, $\omega_2 = \dot\theta_1+\dot\varphi$, $\alpha_1 = \ddot\theta_1$ e
+$\alpha_2 = \ddot\theta_1 + \ddot\varphi$.
+
+\begin{figure}[htbp]
+  \centering
+  \begin{tikzpicture}[scale=5, >=Stealth]
+    \coordinate (D) at (0,0);
+    \coordinate (O) at ({0.40*cos(-35)},{0.40*sin(-35)});
+    \coordinate (P) at ($(O)+({0.45*cos(-120)},{0.45*sin(-120)})$);
+    \coordinate (R) at ($(P)+({0.25*cos(-30)},{0.25*sin(-30)})$);
+    \fill[pattern=north east lines] (-0.08,0) rectangle (0.08,0.05);
+    \draw[very thick,red] (D) -- (O) -- (P) -- (R);
+    \foreach \p in {D,O,P,R} \fill (\p) circle (0.012);
+    \node[above left] at (D) {$D$ (quadril)};
+    \node[above right] at (O) {$O$ (joelho)};
+    \node[left] at (P) {$P$ (tornozelo)};
+    \node[right] at (R) {$R$};
+    \draw[dashed] (D) -- (0.35,0) coordinate (Z);
+    \pic[draw,<-,"$\theta_1$",angle radius=1.3cm,angle eccentricity=1.25] {angle=O--D--Z};
+    \coordinate (X) at ($(O)+(0.35,0)$);
+    \draw[dashed] (O) -- ($(O)+({0.2*cos(-35)},{0.2*sin(-35)})$) coordinate (Oe);
+    \pic[draw,<-,"$\varphi$",angle radius=0.7cm,angle eccentricity=1.45] {angle=P--O--Oe};
+    \draw[dashed] (O) -- (X);
+    \pic[draw,<-,"$\theta_2$",angle radius=1.5cm,angle eccentricity=1.2] {angle=P--O--X};
+    \node[below] at ($(D)!0.5!(O)$) {$L_1$};
+    \node[above left] at ($(O)!0.5!(P)$) {$L_2$};
+    \node[below] at ($(P)!0.5!(R)$) {$L_3$};
+    \draw[->] (-0.3,-0.55) -- (-0.2,-0.55) node[right] {$x$};
+    \draw[->] (-0.3,-0.55) -- (-0.3,-0.45) node[above] {$y$};
+    \draw[->] (0.05,-0.8) -- (0.05,-0.9) node[right] {$\ve g$};
+  \end{tikzpicture}
+  \caption{Modelo plano de dois graus de liberdade da órtese. $\theta_1$ e $\theta_2$ são
+  ângulos absolutos (positivos no sentido anti-horário) e $\varphi = \theta_2 - \theta_1$.}
+  \label{fig:modelo}
+\end{figure}
+
+\section{Configurações extremas}
+
+Os ângulos foram lidos da \cref{fig:enunciado}b. Na configuração final~I, a coxa está a
+\SI{280,13}{\degree} e o ângulo interno do joelho é \SI{60}{\degree}; na final~II, a coxa está
+a \SI{10,07}{\degree} e o ângulo interno é \SI{70,1}{\degree}. Como o ângulo interno entre
+$\overrightarrow{OD}$ e $\overrightarrow{OP}$ é $\SI{180}{\degree} - |\varphi|$, com a flexão
+do joelho no sentido horário ($\varphi<0$):
+
+\begin{table}[htbp]
+  \centering
+  \caption{Configurações extremas do ciclo.}
+  \label{tab:config}
+  \begin{tabular}{lrrrl}
+    \toprule
+    Configuração & $\theta_1$ (\si{\degree}) & $\varphi$ (\si{\degree}) & $\theta_2$ (\si{\degree}) & Movimento \\
+    \midrule
+    inicial  & $-90{,}00$ & $0{,}00$ & $-90{,}00$ & em pé, joelho estendido \\
+    final I  & $-79{,}87$ & $-120{,}00$ & $-199{,}87$ & flexão do joelho (``chute para trás'') \\
+    final II & $10{,}07$ & $-109{,}90$ & $-99{,}83$ & flexão de quadril e joelho (``marcha alta'') \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+A consistência foi conferida com a direção do pé: $\theta_2 + \SI{90}{\degree}$ vale
+\SI{0}{\degree}, \SI{-109,9}{\degree} e \SI{-9,8}{\degree} nas três configurações, de acordo com os
+segmentos $PR$ da figura.
+
+\section{Interpolação polinomial de 5º grau}
+
+Para cada coordenada $q\in\{\theta_1,\varphi\}$, adota-se
+$q(t) = \sum_{k=0}^{5} a_k t^k$, cujos seis coeficientes são determinados pelas condições
+de contorno de posição, velocidade e aceleração no início e no fim do trecho:
+\begin{equation}
+  q(0)=q_0,\ \dot q(0)=0,\ \ddot q(0)=0,\qquad q(T)=q_f,\ \dot q(T)=0,\ \ddot q(T)=0 .
+\end{equation}
+As três primeiras fornecem $a_0 = q_0$, $a_1 = a_2 = 0$; as restantes formam o sistema
+\begin{equation}
+  \begin{bmatrix} T^3 & T^4 & T^5\\ 3T^2 & 4T^3 & 5T^4 \\ 6T & 12T^2 & 20T^3 \end{bmatrix}
+  \begin{bmatrix} a_3\\ a_4\\ a_5\end{bmatrix}
+  = \begin{bmatrix} \Delta q\\ 0\\ 0\end{bmatrix}
+  \;\Rightarrow\;
+  a_3 = \frac{10\,\Delta q}{T^3},\ a_4 = -\frac{15\,\Delta q}{T^4},\ a_5 = \frac{6\,\Delta q}{T^5},
+\end{equation}
+com $\Delta q = q_f - q_0$. Com o tempo normalizado $\tau = t/T\in[0,1]$:
+\begin{align}
+  q(t) &= q_0 + \Delta q\,\big(10\tau^3 - 15\tau^4 + 6\tau^5\big), \label{eq:quint}\\
+  \dot q(t) &= \frac{\Delta q}{T}\,30\tau^2\big(1-\tau\big)^2, \\
+  \ddot q(t) &= \frac{\Delta q}{T^2}\,60\tau\big(1-\tau\big)\big(1-2\tau\big).
+\end{align}
+Os valores extremos são
+\begin{equation}
+  \dot q_{\max} = \frac{15}{8}\frac{\Delta q}{T}\ \ (\tau=\tfrac12),\qquad
+  |\ddot q|_{\max} = \frac{10\sqrt3}{3}\frac{|\Delta q|}{T^2}\ \ \Big(\tau = \tfrac12 \mp \tfrac{\sqrt3}{6}\Big).
+  \label{eq:picos}
+\end{equation}
+A quíntica garante aceleração contínua e nula nas extremidades, portanto torque sem
+descontinuidades e sem excitação de modos flexíveis -- vantagem sobre o polinômio
+cúbico, cuja aceleração salta no início e no fim \cite{craig2005,siciliano2009}.
+
+\paragraph{Ciclo completo e escolha de $T$.} O ciclo é composto pela ida (inicial
+$\to$ final) em $[0,T]$ e pelo retorno em $[T, 2T]$, também por quíntica. Como o
+polinômio normalizado $s(\tau)$ satisfaz $s(1-\tau) = 1 - s(\tau)$, o retorno é o espelho
+temporal da ida, $q(t) = q(2T-t)$: as velocidades trocam de sinal, e as acelerações se
+repetem. Como os termos de velocidade da dinâmica são quadráticos, os torques também
+são simétricos em relação a $t=T$. Adotou-se $T = \SI{2}{s}$ por trecho (ciclo de
+\SI{4}{s}), o que, por \eqref{eq:picos}, resulta em velocidades máximas de
+\SIrange{94}{113}{\degree\per\s}: valores inferiores aos da marcha normal (até cerca de
+\SI{350}{\degree\per\s} no joelho, \cite{winter2009}) e adequados à reabilitação de um
+indivíduo com musculatura inativa. A sensibilidade a $T$ é analisada no
+\cref{cap:resultados2}.
+
+\chapter{Parâmetros de massa e inércia}\label{cap:parametros}
+
+\section{Dados antropométricos}
+
+Utilizaram-se as tabelas de \textcite{winter2009}, baseadas em \textcite{drillis1964}
+e amplamente usadas em análise de marcha. As massas são frações da massa corporal $M$;
+as posições do centro de massa (CM) e o raio de giração baricêntrico $\rho$ são frações
+do comprimento do segmento (\cref{tab:winter}). A estatura correspondente a
+$L_1 = \SI{0,40}{m}$ é $H = L_1/0{,}245 \approx \SI{1,63}{m}$ \cite{drillis1964}.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Parâmetros segmentares \cite{winter2009}.}
+  \label{tab:winter}
+  \small
+  \begin{tabular}{lcccc}
+    \toprule
+    Segmento & $m/M$ & $x_{\mathrm{CM}}/L$ (a partir de) & $\rho_{\mathrm{CM}}/L$ & Comprimento $L$ \\
+    \midrule
+    Coxa  & 0,100  & 0,433 (quadril)   & 0,323 & $L_1 = \SI{0,40}{m}$ \\
+    Perna & 0,0465 & 0,433 (joelho)    & 0,302 & $L_2 = \SI{0,45}{m}$ \\
+    Pé    & 0,0145 & 0,50 (ao longo de $PR$) & 0,475 & $L_3 = \SI{0,25}{m}$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Para cada segmento, o momento de inércia baricêntrico é $I = m(\rho\,L)^2$.
+
+\section{Seleção de materiais da órtese}
+
+A órtese é do tipo joelho--tornozelo--pé (KAFO) ativa, com hastes laterais e mediais,
+braçadeiras e palmilha. Os materiais foram selecionados em referências de elementos de
+máquinas e de materiais \cite{shigley2015,asm1990,callister2018} e de órteses
+\cite{edelstein2011} (\cref{tab:materiais}).
+
+\begin{table}[htbp]
+  \centering
+  \caption{Propriedades dos materiais selecionados.}
+  \label{tab:materiais}
+  \small
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabular}{p{3.0cm}cccccp{2.6cm}}
+    \toprule
+    Material & $\rho$ (\si{kg/m^3}) & $E$ (GPa) & $S_y$ (MPa) & $S_u$ (MPa) & $S_e$ (MPa) & Uso \\
+    \midrule
+    Al 6061-T6 & 2700 & 68,9 & 276 & 310 & 96,5\textsuperscript{a} & hastes, estribo \\
+    Aço inox AISI 304 (recozido) & 8000 & 193 & 215 & 505 & -- & eixo e mancais do joelho \\
+    Polipropileno copolímero & 905 & 1,3 & 28 & 32 & -- & braçadeiras e palmilha \\
+    Compósito carbono/epóxi\textsuperscript{b} & 1550 & 70 & -- & 600 & -- & alternativa às hastes \\
+    \bottomrule
+  \end{tabular}\\[2pt]
+  \footnotesize \textsuperscript{a}Resistência à fadiga para $5\times10^8$ ciclos \cite{asm1990}.
+  \textsuperscript{b}Tecido bidirecional, laminado quase-isotrópico (valores típicos).
+\end{table}
+
+O alumínio 6061-T6 alia boa relação resistência/massa (cerca de 1/3 da densidade do aço),
+usinabilidade e soldabilidade, e é o padrão em hastes de órteses; o polipropileno é
+termoformável sobre o molde do membro; o aço inox é usado nas partes sujeitas a
+desgaste e contato. As hastes têm seção retangular de \qtyproduct{20 x 5}{mm} (\SI{20}{mm} no plano
+sagital). A \cref{tab:ortese} lista as massas dos componentes, calculadas a partir da
+geometria e da densidade; a massa total da órtese é de \massaOrtese~kg, dentro da faixa
+de KAFOs motorizadas.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Componentes da órtese: massa e posição do CM no referencial do elo (m). Elo~1:
+  origem em $D$, $x$ ao longo de $DO$. Elo~2: origem em $O$, $x$ ao longo de $OP$, $y$ no
+  sentido $PR$.}
+  \label{tab:ortese}
+  \small
+  \begin{tabular}{llrl}
+    \toprule
+    Elo & Componente & $m$ (kg) & CM $(x;\,y)$ \\
+    \midrule
+    \tabelaortese
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+O atuador do quadril está fixo ao tronco (cinto pélvico) e não pertence a nenhum elo
+móvel; o do joelho tem o estator fixo na coxa.
+
+\section{Parâmetros equivalentes dos elos}
+
+Cada elo é um corpo rígido composto. Para $n$ componentes de massa $m_k$, CM $\ve r_k$ e
+inércia própria $I_k$:
+\begin{equation}
+  m_i = \sum_k m_k,\qquad
+  \ve r_i = \frac{1}{m_i}\sum_k m_k\,\ve r_k,\qquad
+  I_i = \sum_k \Big[I_k + m_k \lVert\ve r_k - \ve r_i\rVert^2\Big] \quad\text{(Steiner)}.
+\end{equation}
+O elo~2 (perna + pé + órtese) tem o CM fora do eixo $OP$, na posição
+$\ve r_2 = (b_x, b_y)$, que se escreve na forma polar $c_2 = \lVert\ve r_2\rVert$,
+$\gamma = \operatorname{atan2}(b_y, b_x)$.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Parâmetros equivalentes dos elos (membro + órtese).}
+  \label{tab:parametros}
+  \begin{tabular}{lcc}
+    \toprule
+    Parâmetro & $M = \SI{80}{kg}$ & $M = \SI{60}{kg}$ \\
+    \midrule
+    $m_1$ (kg) & \mUmA & \mUmB \\
+    $a_1$ -- CM da coxa a partir de $D$ (m) & \aUmA & \aUmB \\
+    $I_1$ -- baricêntrico (\si{kg.m^2}) & \IUmA & \IUmB \\
+    $m_2$ (kg) & \mDoisA & \mDoisB \\
+    $(b_x;\,b_y)$ -- CM do elo 2 a partir de $O$ (m) & $(\bxDoisA;\ \byDoisA)$ & $(\bxDoisB;\ \byDoisB)$ \\
+    $I_2$ -- baricêntrico (\si{kg.m^2}) & \IDoisA & \IDoisB \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\chapter{Modelagem dinâmica}\label{cap:dinamica}
+
+\section{Equações de Lagrange}
+
+As posições dos centros de massa são
+\begin{equation}
+  \ve x_1 = a_1\,\ve e(\theta_1),\qquad
+  \ve x_2 = L_1\,\ve e(\theta_1) + c_2\,\ve e(\theta_1+\varphi+\gamma).
+\end{equation}
+A energia cinética e a energia potencial valem
+\begin{align}
+  \mathcal T &= \tfrac12 m_1 \lVert\dot{\ve x}_1\rVert^2 + \tfrac12 I_1\dot\theta_1^2
+             + \tfrac12 m_2 \lVert\dot{\ve x}_2\rVert^2 + \tfrac12 I_2\big(\dot\theta_1+\dot\varphi\big)^2,\\
+  \mathcal V &= m_1 g\, a_1 \sin\theta_1 + m_2 g\big[L_1\sin\theta_1 + c_2\sin(\theta_1+\varphi+\gamma)\big],
+\end{align}
+com
+$\lVert\dot{\ve x}_2\rVert^2 = L_1^2\dot\theta_1^2 + c_2^2(\dot\theta_1+\dot\varphi)^2
+ + 2L_1c_2\cos(\varphi+\gamma)\,\dot\theta_1(\dot\theta_1+\dot\varphi)$.
+As equações de Lagrange,
+$\frac{\mathrm d}{\mathrm dt}\frac{\partial\mathcal L}{\partial\dot q_i} - \frac{\partial\mathcal L}{\partial q_i} = \tau_i$
+com $\mathcal L = \mathcal T - \mathcal V$, resultam em
+\begin{equation}
+  \underbrace{\begin{bmatrix} M_{11} & M_{12}\\ M_{12} & M_{22}\end{bmatrix}}_{\ve M(\varphi)}
+  \begin{bmatrix}\ddot\theta_1\\ \ddot\varphi\end{bmatrix}
+  + \begin{bmatrix} -h\,(2\dot\theta_1\dot\varphi + \dot\varphi^2)\\ h\,\dot\theta_1^2\end{bmatrix}
+  + \begin{bmatrix} g_1\\ g_2\end{bmatrix}
+  = \begin{bmatrix}\tau_{\mathrm{Q}}\\ \tau_{\mathrm{J}}\end{bmatrix},
+  \label{eq:dinamica}
+\end{equation}
+em que $\tau_{\mathrm Q}$ é o torque do atuador do quadril (aplicado pelo tronco na coxa) e
+$\tau_{\mathrm J}$ o do joelho (aplicado pela coxa na perna), ambos positivos no sentido
+anti-horário, e
+\begin{align}
+  M_{11} &= I_1 + m_1 a_1^2 + I_2 + m_2\big(L_1^2 + c_2^2 + 2L_1c_2\cos(\varphi+\gamma)\big),\\
+  M_{12} &= I_2 + m_2\big(c_2^2 + L_1c_2\cos(\varphi+\gamma)\big),\qquad
+  M_{22} = I_2 + m_2 c_2^2,\\
+  h &= m_2 L_1 c_2 \sin(\varphi+\gamma),\\
+  g_1 &= (m_1a_1 + m_2L_1)\,g\cos\theta_1 + m_2c_2\,g\cos(\theta_1+\varphi+\gamma),\qquad
+  g_2 = m_2c_2\,g\cos(\theta_1+\varphi+\gamma).
+\end{align}
+Os termos em $h$ são as parcelas centrípetas e de Coriolis, e $g_1$ e $g_2$ as gravitacionais.
+Como as trajetórias são impostas, este é um problema de \emph{dinâmica inversa}: basta
+avaliar \eqref{eq:dinamica} ao longo de $q(t)$, $\dot q(t)$ e $\ddot q(t)$.
+
+\section{Verificação}
+
+A dedução de \eqref{eq:dinamica} foi conferida de duas formas independentes:
+\begin{enumerate}
+  \item \textbf{simbólica}: o programa deriva $\mathcal L$ com o SymPy e aplica as
+  equações de Lagrange, reproduzindo termo a termo as expressões acima;
+  \item \textbf{Newton--Euler}: equilíbrio dinâmico de forças e momentos de cada elo,
+  calculado em um estado aleatório $(q,\dot q,\ddot q)$. Resultados: $\tau_{\mathrm Q} = \neLq$
+  (Lagrange) contra $\neNq$~N\,m (Newton--Euler), e $\tau_{\mathrm J} = \neLj$ contra
+  $\neNj$~N\,m, com concordância na precisão da máquina.
+\end{enumerate}
+Além disso, em repouso ($\dot q = \ddot q = 0$) na configuração inicial, $\theta_1 = \theta_2 = -\pi/2$,
+os torques se anulam exceto pela pequena parcela devida a $b_y \neq 0$ (o pé à frente do
+tornozelo), como é fisicamente esperado.
+
+\chapter{Resultados da simulação}\label{cap:resultados2}
+
+\section{Cinemática}
+
+As \cref{fig:cinI,fig:cinII} mostram as orientações, as velocidades e as acelerações
+angulares da coxa ($\theta_1$), da perna ($\theta_2$) e relativas do joelho ($\varphi$)
+durante o ciclo, e a \cref{fig:estrobo} mostra instantâneos do movimento de ida. Os
+valores extremos (\cref{tab:cinematica}) coincidem com as expressões analíticas
+\eqref{eq:picos}: por exemplo, no joelho em final~I,
+$\dot\varphi_{\max} = \frac{15}{8}\cdot\frac{120}{2} = \SI{112,5}{\degree\per\s}$.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Valores absolutos máximos de velocidade (\si{\degree\per\s}) e aceleração
+  angular (\si{\degree\per\s\squared}), $T=\SI{2}{s}$.}
+  \label{tab:cinematica}
+  \begin{tabular}{lrrrrrr}
+    \toprule
+    & \multicolumn{3}{c}{Velocidade} & \multicolumn{3}{c}{Aceleração} \\
+    \cmidrule(lr){2-4}\cmidrule(lr){5-7}
+    Configuração & coxa & perna & joelho & coxa & perna & joelho \\
+    \midrule
+    \tabelacinematica
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\textwidth]{figuras/p2_cinematica_I.pdf}
+  \caption{Orientação, velocidade e aceleração angulares -- configuração final~I.}
+  \label{fig:cinI}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\textwidth]{figuras/p2_cinematica_II.pdf}
+  \caption{Orientação, velocidade e aceleração angulares -- configuração final~II.}
+  \label{fig:cinII}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{subfigure}[b]{0.45\textwidth}
+    \includegraphics[width=\textwidth]{figuras/p2_estrobo_I.pdf}
+  \end{subfigure}\hfill
+  \begin{subfigure}[b]{0.45\textwidth}
+    \includegraphics[width=\textwidth]{figuras/p2_estrobo_II.pdf}
+  \end{subfigure}
+  \caption{Instantâneos do movimento de ida (intervalos de $T/8$).}
+  \label{fig:estrobo}
+\end{figure}
+
+\section{Torques dos atuadores}
+
+As \cref{fig:torI,fig:torII} decompõem os torques nas parcelas gravitacional, inercial e
+centrípeta/Coriolis, e a \cref{tab:torques} resume os valores máximos, os valores eficazes
+(RMS, relevantes para o aquecimento dos motores) e as potências mecânicas máximas
+$P = \tau\,\dot q$.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Torques (N\,m) e potências (W) dos atuadores, $T=\SI{2}{s}$.}
+  \label{tab:torques}
+  \begin{tabular}{lcrrrrrr}
+    \toprule
+    & & \multicolumn{3}{c}{Quadril} & \multicolumn{3}{c}{Joelho} \\
+    \cmidrule(lr){3-5}\cmidrule(lr){6-8}
+    Configuração & $M$ (kg) & $|\tau|_{\max}$ & $\tau_{\mathrm{RMS}}$ & $|P|_{\max}$ & $|\tau|_{\max}$ & $\tau_{\mathrm{RMS}}$ & $|P|_{\max}$ \\
+    \midrule
+    \tabelatorques
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.9\textwidth]{figuras/p2_torques_I.pdf}
+  \caption{Torques no quadril e no joelho -- configuração final~I.}
+  \label{fig:torI}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.9\textwidth]{figuras/p2_torques_II.pdf}
+  \caption{Torques no quadril e no joelho -- configuração final~II.}
+  \label{fig:torII}
+\end{figure}
+
+\paragraph{Análise.}
+\begin{itemize}
+  \item Na \textbf{configuração final~I}, o esforço concentra-se no joelho
+  (\tjImax~N\,m): a perna e o pé, com braço de alavanca crescente à medida que a perna se
+  aproxima da horizontal ($\theta_2 \approx \SI{-180}{\degree}$), exigem torque para vencer o
+  peso. O quadril move-se apenas \SI{10}{\degree} e seu torque é pequeno.
+  \item Na \textbf{configuração final~II}, o quadril é crítico (\tqIImax~N\,m), pois precisa
+  sustentar a coxa na horizontal com a perna pendente: toda a massa do membro e da
+  órtese tem braço de alavanca máximo. O joelho quase não trabalha, pois a perna
+  permanece aproximadamente vertical ($\theta_2$ varia de \SI{-90}{\degree} a
+  \SI{-99,8}{\degree}).
+  \item Em ambos os casos a \textbf{parcela gravitacional domina}: no atuador mais
+  solicitado de cada configuração (joelho em final~I, quadril em final~II), as parcelas
+  inercial e de Coriolis somadas não passam de \SI{12}{\percent} do torque máximo para
+  $T = \SI{2}{s}$. Nos atuadores pouco solicitados, elas representam de \SIrange{40}{50}{\percent}
+  do máximo, mas não passam de \SI{2,6}{N.m} em valor absoluto.
+  Isso sugere o uso de molas de compensação gravitacional ou de redutores
+  irreversíveis/freios para manter posturas estáticas sem consumo de energia.
+  \item A passagem de \SI{80}{kg} para \SI{60}{kg} reduz os torques em cerca de
+  \SIrange{20}{25}{\percent}, um pouco menos que a redução de \SI{25}{\percent} da massa
+  corporal, pois a massa da órtese não varia com o indivíduo.
+\end{itemize}
+
+\section{Sensibilidade ao tempo de movimento}
+
+A \cref{tab:sens} mostra que os torques dos atuadores críticos (joelho em final~I e
+quadril em final~II) independem de $T$: o máximo ocorre na configuração final, em
+repouso, e é puramente gravitacional. Nos demais, as acelerações (proporcionais a
+$1/T^2$) passam a contribuir significativamente para $T = \SI{1}{s}$. No quadril em
+final~I, $|\tau|_{\max}$ volta a crescer para $T$ longo: o máximo ocorre no meio do
+trajeto, onde a parcela inercial se opõe à gravitacional; com $T$ grande, a parcela
+inercial desaparece, e o torque tende ao máximo gravitacional ao longo do caminho
+(cerca de \SI{8}{N.m}).
+
+\begin{table}[htbp]
+  \centering
+  \caption{Torques máximos (N\,m) em função do tempo $T$ de cada trecho ($M=\SI{80}{kg}$).}
+  \label{tab:sens}
+  \begin{tabular}{crrrr}
+    \toprule
+    & \multicolumn{2}{c}{Final I} & \multicolumn{2}{c}{Final II} \\
+    \cmidrule(lr){2-3}\cmidrule(lr){4-5}
+    $T$ (s) & quadril & joelho & quadril & joelho \\
+    \midrule
+    \tabelasens
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\chapter{Dimensionamento dos atuadores e verificação estrutural}\label{cap:dimensionamento}
+
+\section{Especificação dos atuadores}
+
+Com o pior caso (\SI{80}{kg}) e um fator de serviço de 1,5, as especificações de saída são:
+joelho com \SI{20}{N.m} e \SI{2,0}{rad/s} (\SI{112,5}{\degree\per\s}), e quadril com
+\SI{60}{N.m} e \SI{1,6}{rad/s}. Com um redutor harmônico de razão $N=100$ e rendimento
+$\eta = 0{,}70$, o motor deve fornecer
+\begin{equation}
+  \tau_m = \frac{\tau_{\mathrm{saída}}}{N\eta},\qquad \omega_m = N\,\omega_{\mathrm{saída}},
+\end{equation}
+ou seja, cerca de \SI{0,29}{N.m} a \SI{1900}{rpm} no joelho e \SI{0,86}{N.m} a
+\SI{1600}{rpm} no quadril. Essa faixa é atendida por motores CC sem escovas de 70 a
+\SI{150}{W}, compatíveis com a massa de \SI{1,2}{kg} adotada para o atuador do joelho. O
+torque RMS, bem menor que o de pico, deve ser comparado ao torque contínuo do motor.
+
+\section{Verificação das hastes de alumínio}
+
+As hastes medial e lateral dividem igualmente o momento fletor transmitido pelos
+atuadores. Para a seção retangular $b\times h = \qtyproduct{20 x 5}{mm}$, com flexão no plano sagital,
+\begin{equation}
+  W = \frac{h\,b^2}{6} = \SI{\Wmod}{mm^3},\qquad \sigma = \frac{M_f}{2W}.
+\end{equation}
+O carregamento é repetido, de zero a máximo, a cada ciclo; assim,
+$\sigma_a = \sigma_m = \sigma/2$, e o coeficiente de segurança à fadiga é obtido pelo
+critério de Goodman modificado \cite{shigley2015}:
+\begin{equation}
+  \frac{\sigma_a}{S_e} + \frac{\sigma_m}{S_u} = \frac{1}{n_f}.
+\end{equation}
+
+\begin{table}[htbp]
+  \centering
+  \caption{Verificação estrutural das hastes em Al 6061-T6.}
+  \label{tab:estrutural}
+  \begin{tabular}{lrrr}
+    \toprule
+    Haste & $\sigma_{\max}$ (MPa) & $n_y = S_y/\sigma$ & $n_f$ (Goodman) \\
+    \midrule
+    Perna (torque do joelho) & \sigPerna & \nyPerna & \ngPerna \\
+    Coxa (torque do quadril) & \sigCoxa & \nyCoxa & \ngCoxa \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Todos os coeficientes são superiores a 2. Deve-se, contudo, verificar os furos das
+articulações (concentração de tensão, $K_t\approx 2{,}5$) e considerar a carga de apoio
+durante a marcha, não incluída no ciclo analisado, que pode exigir espessuras maiores
+ou a substituição pelo compósito de carbono da \cref{tab:materiais}.
+
+\chapter{Conclusões}
+
+\begin{itemize}
+  \item \textbf{Parte I}: a síntese por três posições de precisão, formulada como
+  cálculo de circuncentros dos pontos homólogos e com a escolha dos pivôs móveis por
+  otimização, produziu um quadrilátero compacto (elos de \SIrange{20}{43}{mm}) que
+  reproduz o movimento relativo perna--coxa com erro inferior a \SI{0,5}{mm} no tornozelo
+  entre \SI{0}{\degree} e \SI{120}{\degree}, $\mu\ge\mumin\si{\degree}$ e centroide semelhante à
+  anatômica. O procedimento está automatizado e aceita diretamente as medições
+  experimentais do grupo.
+  \item \textbf{Parte II}: a interpolação quíntica fornece trajetórias suaves, com
+  velocidade e aceleração nulas nos extremos. Os torques necessários (até
+  \tqIImax~N\,m no quadril e \tjImax~N\,m no joelho para \SI{80}{kg}) são dominados pela
+  gravidade, o que orienta o projeto para a compensação gravitacional. As hastes em
+  Al 6061-T6 de \qtyproduct{20 x 5}{mm} atendem com folga ao ciclo analisado.
+  \item \textbf{Trabalhos futuros}: incorporar o joelho policêntrico da Parte~I na órtese
+  (evitando o desalinhamento entre as articulações humana e artificial, que gera forças
+  parasitas na pele), incluir o contato com o solo e validar os torques com um protótipo
+  instrumentado.
+\end{itemize}
+
+\printbibliography[heading=bibintoc,title={Referências}]
+
+\appendix
+\chapter{Códigos}\label{ap:codigo}
+
+Todos os programas estão na pasta \texttt{scripts/} e são executados pelo \texttt{Makefile}
+(\texttt{make}), que regenera figuras, tabelas e o PDF.
+
+\begin{description}
+  \item[\texttt{parte1\_sintese.py}] modelo anatômico de referência; leitura das poses
+  medidas; síntese por circuncentros; simulação de montagem; otimização dos pivôs
+  móveis; erro estrutural, ângulo de transmissão e centroides; gabarito da maquete.
+  \item[\texttt{parte2\_ortese.py}] parâmetros antropométricos e da órtese; trajetórias
+  quínticas; dedução simbólica (SymPy) e forma fechada da dinâmica; verificação por
+  Newton--Euler; análise de sensibilidade; verificação estrutural.
+  \item[\texttt{gera\_valores\_tex.py}] exporta os resultados para \texttt{dados/valores.tex}.
+\end{description}
+
+Trecho central da Parte II (dinâmica inversa):
+\begin{lstlisting}[language=Python]
+M11 = I1 + m1*a1**2 + I2 + m2*(L1**2 + c2**2 + 2*L1*c2*cos(ph + gam))
+M12 = I2 + m2*(c2**2 + L1*c2*cos(ph + gam))
+M22 = I2 + m2*c2**2
+h   = m2*L1*c2*sin(ph + gam)
+g1  = (m1*a1 + m2*L1)*G*cos(th1) + m2*c2*G*cos(th1 + ph + gam)
+g2  = m2*c2*G*cos(th1 + ph + gam)
+tau_quadril = M11*dd_th1 + M12*dd_ph - h*(2*d_th1*d_ph + d_ph**2) + g1
+tau_joelho  = M12*dd_th1 + M22*dd_ph + h*d_th1**2 + g2
+\end{lstlisting}
+
+\end{document}
