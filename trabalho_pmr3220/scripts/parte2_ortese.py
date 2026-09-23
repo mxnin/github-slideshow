@@ -3,10 +3,12 @@ PMR3220 - Parte II: simulacao cinematica e dinamica de uma ortese de membro infe
 
 Modelo plano de 2 graus de liberdade com base fixa no quadril D (tronco imovel):
   elo 1 = coxa (D -> O), elo 2 = perna + pe (O -> P -> R, com PR perpendicular a OP).
-Coordenadas generalizadas:
-  theta1 = angulo absoluto da coxa (a partir de +x, anti-horario),
-  phi    = angulo relativo do joelho (perna em relacao a coxa),
-  theta2 = theta1 + phi = angulo absoluto da perna.
+Notacao do metodo matricial (PMR3220): bases 0 (fixa, em D), 1 (coxa) e 2 (perna+pe),
+  0T1 = [Rot(theta1, z1) | 0], 1T2 = [Rot(theta2, z2) | (l1, 0)].
+Coordenadas generalizadas q = [theta1, theta2]:
+  theta1 = angulo de X0 para X1 (quadril),
+  theta2 = angulo RELATIVO de X1 para X2 (joelho);
+  theta1 + theta2 = orientacao absoluta da perna.
 Trajetorias: polinomio de 5o grau com velocidade e aceleracao nulas nos extremos.
 Torques: equacoes de Lagrange (verificadas simbolicamente com sympy).
 """
@@ -121,43 +123,67 @@ def quintica(q0, qf, T, t):
 # ---------------------------------------------------------------------------
 # Dinamica: Lagrange simbolico (verificacao) + forma fechada numerica
 # ---------------------------------------------------------------------------
+def T_hom(theta, tx, ty, mod=sp):
+    """Transformacao homogenea plana: [Rot(theta, z) | (tx, ty); 0 0 1]."""
+    c, s = mod.cos(theta), mod.sin(theta)
+    M = [[c, -s, tx], [s, c, ty], [0, 0, 1]]
+    return sp.Matrix(M) if mod is sp else np.array(M, dtype=float)
+
+
 def deduz_lagrange():
+    """Lagrange simbolico com 0T1 1T2 (metodo matricial). Retorna os torques e a
+    diferenca em relacao a forma fechada usada em torques() (deve ser zero)."""
     t = sp.symbols("t")
-    m1, m2, I1, I2, a1, c2, gam, l1, g = sp.symbols("m1 m2 I1 I2 a1 c2 gamma L1 g", positive=True)
+    m1, m2, I1, I2, a1, bx, by, l1, g = sp.symbols("m1 m2 I1 I2 a1 b_x b_y l1 g", real=True)
     th1 = sp.Function("theta1")(t)
-    ph = sp.Function("phi")(t)
-    x1 = a1 * sp.Matrix([sp.cos(th1), sp.sin(th1)])
-    x2 = l1 * sp.Matrix([sp.cos(th1), sp.sin(th1)]) + c2 * sp.Matrix([sp.cos(th1 + ph + gam), sp.sin(th1 + ph + gam)])
-    v1, v2 = x1.diff(t), x2.diff(t)
-    T = sp.Rational(1, 2) * (m1 * v1.dot(v1) + m2 * v2.dot(v2) + I1 * th1.diff(t) ** 2 + I2 * (th1.diff(t) + ph.diff(t)) ** 2)
-    V = g * (m1 * x1[1] + m2 * x2[1])
+    th2 = sp.Function("theta2")(t)
+    T01 = T_hom(th1, 0, 0)
+    T12 = T_hom(th2, l1, 0)
+    rG1 = T01 * sp.Matrix([a1, 0, 1])
+    rG2 = T01 * T12 * sp.Matrix([bx, by, 1])
+    v1, v2 = rG1.diff(t), rG2.diff(t)
+    w1, w2 = th1.diff(t), th1.diff(t) + th2.diff(t)
+    T = sp.Rational(1, 2) * (m1 * v1.dot(v1) + m2 * v2.dot(v2) + I1 * w1**2 + I2 * w2**2)
+    V = g * (m1 * rG1[1] + m2 * rG2[1])
     Lg = T - V
-    tau = [sp.simplify(sp.diff(Lg.diff(q.diff(t)), t) - Lg.diff(q)) for q in (th1, ph)]
-    return tau, (th1, ph, t)
+    tau = [sp.simplify(sp.diff(Lg.diff(q.diff(t)), t) - Lg.diff(q)) for q in (th1, th2)]
+    # forma fechada (mesma de torques())
+    d1, d2 = th1.diff(t), th2.diff(t)
+    dd1, dd2 = th1.diff(t, 2), th2.diff(t, 2)
+    c2, s2 = sp.cos(th2), sp.sin(th2)
+    k = bx * c2 - by * s2
+    M11 = I1 + m1 * a1**2 + I2 + m2 * (l1**2 + bx**2 + by**2 + 2 * l1 * k)
+    M12 = I2 + m2 * (bx**2 + by**2 + l1 * k)
+    M22 = I2 + m2 * (bx**2 + by**2)
+    h = m2 * l1 * (bx * s2 + by * c2)
+    gg = m2 * g * (bx * sp.cos(th1 + th2) - by * sp.sin(th1 + th2))
+    g1 = (m1 * a1 + m2 * l1) * g * sp.cos(th1) + gg
+    fechada = [M11 * dd1 + M12 * dd2 - h * (2 * d1 * d2 + d2**2) + g1, M12 * dd1 + M22 * dd2 + h * d1**2 + gg]
+    dif = [sp.simplify(sp.expand_trig(a - b)) for a, b in zip(tau, fechada)]
+    return tau, dif
 
 
 def torques(par, q, qd, qdd):
-    """q = (theta1, phi). Retorna (tau_quadril, tau_joelho) em N.m."""
-    th1, ph = q
-    w1, wp = qd
-    a1d, apd = qdd
+    """q = [theta1, theta2] (theta2 relativo). Retorna (tau_quadril, tau_joelho) em N.m."""
+    th1, th2 = q
+    d1, d2 = qd
+    dd1, dd2 = qdd
     m1, I1, a1 = par["coxa"]["m"], par["coxa"]["I"], par["coxa"]["r"][0]
     m2, I2 = par["perna"]["m"], par["perna"]["I"]
-    r2 = par["perna"]["r"]
-    c2 = np.hypot(*r2)
-    gam = np.arctan2(r2[1], r2[0])
-    cb = np.cos(ph + gam)
-    sb = np.sin(ph + gam)
-    M11 = I1 + m1 * a1**2 + I2 + m2 * (L1**2 + c2**2 + 2 * L1 * c2 * cb)
-    M12 = I2 + m2 * (c2**2 + L1 * c2 * cb)
-    M22 = I2 + m2 * c2**2
-    h = m2 * L1 * c2 * sb
-    g1 = (m1 * a1 + m2 * L1) * G * np.cos(th1) + m2 * c2 * G * np.cos(th1 + ph + gam)
-    g2 = m2 * c2 * G * np.cos(th1 + ph + gam)
-    tau1 = M11 * a1d + M12 * apd - h * (2 * w1 * wp + wp**2) + g1
-    tau2 = M12 * a1d + M22 * apd + h * w1**2 + g2
-    return tau1, tau2, dict(inercial1=M11 * a1d + M12 * apd, centr1=-h * (2 * w1 * wp + wp**2), grav1=g1,
-                            inercial2=M12 * a1d + M22 * apd, centr2=h * w1**2, grav2=g2)
+    bx, by = par["perna"]["r"]                      # 2rG2 = [bx, by]
+    c1, c2, s2 = np.cos(th1), np.cos(th2), np.sin(th2)
+    c12, s12 = np.cos(th1 + th2), np.sin(th1 + th2)
+    k = bx * c2 - by * s2
+    M11 = I1 + m1 * a1**2 + I2 + m2 * (L1**2 + bx**2 + by**2 + 2 * L1 * k)
+    M12 = I2 + m2 * (bx**2 + by**2 + L1 * k)
+    M22 = I2 + m2 * (bx**2 + by**2)
+    h = m2 * L1 * (bx * s2 + by * c2)
+    g2 = m2 * G * (bx * c12 - by * s12)
+    g1 = (m1 * a1 + m2 * L1) * G * c1 + g2
+    tau1 = M11 * dd1 + M12 * dd2 - h * (2 * d1 * d2 + d2**2) + g1
+    tau2 = M12 * dd1 + M22 * dd2 + h * d1**2 + g2
+    return tau1, tau2, dict(inercial1=M11 * dd1 + M12 * dd2, centr1=-h * (2 * d1 * d2 + d2**2), grav1=g1,
+                            inercial2=M12 * dd1 + M22 * dd2, centr2=h * d1**2, grav2=g2)
 
 
 def ciclo(par, final, T, n=801):
@@ -174,30 +200,43 @@ def ciclo(par, final, T, n=801):
     return t, Q, Qd, Qdd, tau1, tau2, parc
 
 
+def til(a):
+    """Matriz antissimetrica do produto vetorial: a x b = til(a) @ b (vetores 3D)."""
+    ax_, ay, az = a
+    return np.array([[0.0, -az, ay], [az, 0.0, -ax_], [-ay, ax_, 0.0]])
+
+
 def verifica_newton_euler(par, q, qd, qdd):
-    """Verificacao independente por Newton-Euler (equilibrio dinamico de cada elo)."""
-    th1, ph = q
-    w1, wp = qd
-    al1, alp = qdd
-    th2, w2, al2 = th1 + ph, w1 + wp, al1 + alp
+    """Verificacao independente por Newton-Euler (equilibrio dinamico de cada elo),
+    com posicoes obtidas por 0T1 1T2 e momentos por M = til(r) F."""
+    th1, th2 = q
+    d1, d2 = qd
+    dd1, dd2 = qdd
+    w2, al2 = d1 + d2, dd1 + dd2
     m1, I1, a1 = par["coxa"]["m"], par["coxa"]["I"], par["coxa"]["r"][0]
     m2, I2, r2 = par["perna"]["m"], par["perna"]["I"], par["perna"]["r"]
-    e = lambda a: np.array([np.cos(a), np.sin(a)])
-    n = lambda a: np.array([-np.sin(a), np.cos(a)])
-    O = L1 * e(th1)
-    aO = L1 * (al1 * n(th1) - w1**2 * e(th1))
-    R2 = np.array([[np.cos(th2), -np.sin(th2)], [np.sin(th2), np.cos(th2)]])
-    rc2 = R2 @ r2
-    a_c2 = aO + al2 * np.array([-rc2[1], rc2[0]]) - w2**2 * rc2
-    a_c1 = a1 * (al1 * n(th1) - w1**2 * e(th1))
-    gv = np.array([0, -G])
-    F_O = m2 * (a_c2 - gv)                         # forca do elo 1 no elo 2
-    cross = lambda u, v: u[0] * v[1] - u[1] * v[0]
-    tau2 = I2 * al2 + cross(rc2, F_O)              # momentos em torno do CM2: tau2 + (-rc2) x F_O = I2 al2
-    # elo 1: forcas em D (F_D) e -F_O em O
-    F_D = m1 * (a_c1 - gv) + F_O
-    rc1 = a1 * e(th1)
-    tau1 = I1 * al1 + tau2 - cross(-rc1, F_D) - cross(O - rc1, -F_O)
+    T01 = T_hom(th1, 0.0, 0.0, mod=np)
+    T12 = T_hom(th2, L1, 0.0, mod=np)
+    T02 = T01 @ T12
+    O = T01 @ np.array([L1, 0.0, 1.0])
+    G1 = T01 @ np.array([a1, 0.0, 1.0])
+    G2 = T02 @ np.array([r2[0], r2[1], 1.0])
+    k = np.array([0.0, 0.0, 1.0])
+    em3 = lambda v: np.array([v[0], v[1], 0.0])
+    O, G1, G2 = em3(O), em3(G1), em3(G2)
+    w1v, w2v = d1 * k, w2 * k
+    # aceleracoes: a_B = a_A + alfa x r_AB + w x (w x r_AB)
+    aO = til(dd1 * k) @ O + til(w1v) @ (til(w1v) @ O)
+    aG1 = til(dd1 * k) @ G1 + til(w1v) @ (til(w1v) @ G1)
+    rOG2 = G2 - O
+    aG2 = aO + til(al2 * k) @ rOG2 + til(w2v) @ (til(w2v) @ rOG2)
+    gv = np.array([0.0, -G, 0.0])
+    F_O = m2 * (aG2 - gv)                          # forca do elo 1 sobre o elo 2 (em O)
+    # elo 2, momentos em torno de G2: tau_J k + (O - G2) x F_O = I2 al2 k
+    tau2 = I2 * al2 - (til(O - G2) @ F_O)[2]
+    # elo 1: forca F_D em D, -F_O em O, torque tau_Q e reacao -tau_J
+    F_D = m1 * (aG1 - gv) + F_O
+    tau1 = I1 * dd1 + tau2 - (til(-G1) @ F_D)[2] - (til(O - G1) @ (-F_O))[2]
     return tau1, tau2
 
 
@@ -205,8 +244,10 @@ def main():
     os.makedirs(FIG, exist_ok=True)
     res = {}
     # verificacao simbolica
-    tau_sym, _ = deduz_lagrange()
-    res["lagrange_simbolico"] = [str(sp.simplify(x)) for x in tau_sym]
+    tau_sym, dif = deduz_lagrange()
+    assert all(d == 0 for d in dif), dif
+    res["lagrange_simbolico"] = [str(x) for x in tau_sym]
+    res["lagrange_menos_forma_fechada"] = [str(d) for d in dif]
 
     par80 = parametros(80.0)
     par60 = parametros(60.0)
@@ -257,8 +298,8 @@ def main():
         fig, ax = plt.subplots(3, 1, figsize=(6.6, 6.2), sharex=True)
         th2 = Q[:, 0] + Q[:, 1]
         ax[0].plot(t, np.degrees(Q[:, 0]), label=r"$\theta_1$ (coxa)")
-        ax[0].plot(t, np.degrees(th2), label=r"$\theta_2=\theta_1+\varphi$ (perna)")
-        ax[0].plot(t, np.degrees(Q[:, 1]), "--", label=r"$\varphi$ (joelho, relativo)")
+        ax[0].plot(t, np.degrees(th2), label=r"$\theta_1+\theta_2$ (perna)")
+        ax[0].plot(t, np.degrees(Q[:, 1]), "--", label=r"$\theta_2$ (joelho, relativo)")
         ax[0].set_ylabel("orientação (°)")
         ax[1].plot(t, np.degrees(Qd[:, 0]))
         ax[1].plot(t, np.degrees(Qd[:, 0] + Qd[:, 1]))

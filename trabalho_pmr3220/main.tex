@@ -29,6 +29,20 @@
 \input{dados/valores.tex}
 
 \newcommand{\ve}[1]{\bm{#1}}
+% --- notacao do metodo matricial (PMR3220) ---
+\DeclareMathOperator{\sen}{sen}
+\newcommand{\rv}[2]{{}^{#1}\mathbf{r}_{#2}}          % vetor posicao do ponto #2 na base #1
+\newcommand{\rvd}[2]{{}^{#1}\dot{\mathbf{r}}_{#2}}
+\newcommand{\rvdd}[2]{{}^{#1}\ddot{\mathbf{r}}_{#2}}
+\newcommand{\vv}[2]{{}^{#1}\mathbf{v}_{#2}}
+\newcommand{\Tm}[2]{{}^{#1}T_{#2}}                   % transformacao homogenea da base #2 para a base #1
+\newcommand{\Tmd}[2]{{}^{#1}\dot T_{#2}}
+\newcommand{\Tmdd}[2]{{}^{#1}\ddot T_{#2}}
+\newcommand{\Rm}[2]{[{}^{#1}R_{#2}]}                 % matriz de rotacao
+\newcommand{\Rot}[2]{\mathrm{Rot}(#1,\,#2)}
+\newcommand{\hmg}[1]{\begin{bmatrix} #1 \\ 1 \end{bmatrix}}
+\newcommand{\hoz}[1]{\begin{bmatrix} #1 \\ 0 \end{bmatrix}}
+\newcommand{\Jm}[1]{[J_{#1}]}
 \newcommand{\e}{\mathrm{e}}
 \newcommand{\dd}{\,\mathrm{d}}
 \newtheorem{hipotese}{Hipótese}
@@ -134,6 +148,46 @@ Esse fato motiva as duas partes deste trabalho, propostas no enunciado da discip
   \label{fig:enunciado}
 \end{figure}
 
+\section{Notação}\label{sec:notacao}
+
+A modelagem cinemática segue o \emph{método matricial} adotado na disciplina, baseado em
+transformações homogêneas. A cada elo $i$ associa-se uma base (sistema de referência)
+$O_iX_iY_iZ_i$, de versores $\mathbf i_i$, $\mathbf j_i$, $\mathbf k_i$; a base $0$ é fixa. As
+convenções são:
+\begin{itemize}
+  \item $\rv{A}{P}$: vetor posição do ponto $P$ escrito na base $A$ (o sobrescrito à esquerda
+  indica a base);
+  \item $\Rm{A}{B} = [\,{}^{A}\mathbf i_B,\ {}^{A}\mathbf j_B,\ {}^{A}\mathbf k_B\,]$: matriz de rotação
+  cujas colunas são os versores da base $B$ escritos na base $A$, com
+  $\Rm{B}{A} = \Rm{A}{B}^{-1} = \Rm{A}{B}^{\mathsf T}$;
+  \item rotação simples de ângulo $\gamma$ em torno do eixo $z_B$ (movimento plano):
+  \begin{equation}
+    \Rm{A}{B} = \Rot{\gamma}{z_B} =
+    \begin{bmatrix} \cos\gamma & -\sen\gamma & 0\\ \sen\gamma & \cos\gamma & 0\\ 0 & 0 & 1 \end{bmatrix},
+    \qquad
+    \begin{aligned}
+      \mathbf i_B &= \cos\gamma\,\mathbf i_A + \sen\gamma\,\mathbf j_A,\\
+      \mathbf j_B &= -\sen\gamma\,\mathbf i_A + \cos\gamma\,\mathbf j_A,\\
+      \mathbf k_B &= \mathbf k_A;
+    \end{aligned}
+  \end{equation}
+  no plano, usa-se apenas o bloco $2\times2$ superior;
+  \item mudança de base de um ponto: $\rv{A}{P} = \Rm{A}{B}\,\rv{B}{P} + \rv{A}{O_B}$, ou, na forma
+  homogênea,
+  \begin{equation}
+    \hmg{\rv{A}{P}} = \Tm{A}{B}\hmg{\rv{B}{P}},
+    \qquad
+    \Tm{A}{B} = \left[\begin{array}{c|c} \Rm{A}{B} & \rv{A}{O_B} \\ \hline \mathbf 0 & 1 \end{array}\right],
+    \label{eq:homogenea}
+  \end{equation}
+  e, para uma cadeia de elos, $\Tm{0}{n} = \Tm{0}{1}\,\Tm{1}{2}\cdots\Tm{n-1}{n}$;
+  \item abreviações: $c_i = \cos\theta_i$, $s_i = \sen\theta_i$, $c_{ij} = \cos(\theta_i+\theta_j)$,
+  $s_{ij} = \sen(\theta_i+\theta_j)$; o ângulo $\theta_i$ da junta $i$ é medido do eixo $X_{i-1}$ ao
+  eixo $X_i$ (ângulo \emph{relativo}), positivo no sentido anti-horário;
+  \item produto vetorial na forma matricial: $\mathbf a \times \mathbf b = \tilde{\mathbf a}\,\mathbf b$, com
+  $\tilde{\mathbf a} = \begin{bmatrix} 0 & -a_z & a_y\\ a_z & 0 & -a_x\\ -a_y & a_x & 0\end{bmatrix}$.
+\end{itemize}
+
 Todos os cálculos foram implementados em Python (NumPy, SciPy, SymPy e Matplotlib); os
 códigos estão na pasta \texttt{scripts/} e são descritos no \cref{ap:codigo}. Os
 valores numéricos citados no texto são lidos automaticamente dos resultados
@@ -175,67 +229,158 @@ morto ocorra dentro dessa faixa. A qualidade da transmissão de forças é avali
 ângulo de transmissão $\mu$ -- ângulo agudo entre o acoplador e o balancim de saída --,
 recomendando-se $\mu \ge \SI{30}{\degree}$ \cite{norton2010}.
 
+\section{Bases e análise de posição do quadrilátero (cadeia fechada)}\label{sec:cadeia_fechada}
+
+A \cref{fig:quadrilatero} mostra as bases adotadas, seguindo a convenção da
+\cref{sec:notacao}. A base $0$ (fixa) está presa à coxa, com origem no centro do joelho em
+extensão, $X_0$ para a frente (anterior) e $Y_0$ para cima (proximal). As bases $1$, $2$ e $3$
+estão presas, respectivamente, ao elo $CQ$ (origem em $C$, $X_1$ ao longo de $CQ$), ao
+acoplador (origem em $Q$, $X_2$ ao longo de $QN$) e ao elo $LN$ (origem em $L$, $X_3$ ao longo
+de $LN$). A base $4$ também está presa à perna, com origem no ponto de referência do
+joelho e $Y_4$ ao longo do eixo da perna (é a base em que se fazem as medições). Os
+comprimentos são $\ell_0 = \overline{CL}$, $\ell_1 = \overline{CQ}$, $\ell_2 = \overline{QN}$ e
+$\ell_3 = \overline{LN}$.
+
+\begin{figure}[htbp]
+  \centering
+  \begin{tikzpicture}[scale=1.35, >=Stealth]
+    \coordinate (C) at (0,0);
+    \coordinate (L) at (3,0.6);
+    \coordinate (Q) at ({1.6*cos(115)},{1.6*sin(115)});
+    \coordinate (N) at ($(L)+({2.4*cos(128)},{2.4*sin(128)})$);
+    \draw[thick] (C) -- node[left, pos=0.6] {$\ell_1$} (Q) -- node[above left, pos=0.6] {$\ell_2$} (N) -- node[right] {$\ell_3$} (L);
+    \draw[thick,dashed,gray] (C) -- node[below] {$\ell_0$} (L);
+    \foreach \p in {C,Q,N,L} \draw[fill=white] (\p) circle (0.06);
+    \node[below left] at (C) {$C$}; \node[below right] at (L) {$L$};
+    \node[left] at (Q) {$Q$}; \node[above right] at (N) {$N$};
+    % base 0
+    \draw[->,thick] (-1.2,-0.8) -- (-0.4,-0.8) node[below] {$X_0$};
+    \draw[->,thick] (-1.2,-0.8) -- (-1.2,0) node[left] {$Y_0$};
+    % base 1
+    \draw[->,teal] (C) -- ($(C)!0.45!(Q)$) node[right=2pt] {$X_1$};
+    \draw[dashed,blue] (C) -- (1,0) coordinate (Ce);
+    \pic[draw,->,blue,"$\theta_1$",angle radius=0.5cm,angle eccentricity=1.45] {angle=Ce--C--Q};
+    % base 2
+    \coordinate (Qe) at ($(Q)!-0.5!(C)$);
+    \draw[dashed,blue] (Q) -- (Qe);
+    \draw[->,teal] (Q) -- ($(Q)!0.3!(N)$) node[below] {$X_2$};
+    \pic[draw,->,blue,"$\theta_2$",angle radius=0.45cm,angle eccentricity=1.5] {angle=N--Q--Qe};
+    % base 3
+    \draw[dashed,blue] (L) -- ($(L)+(0.8,0.16)$) coordinate (Le);
+    \draw[->,teal] (L) -- ($(L)!0.25!(N)$) node[left] {$X_3$};
+    \pic[draw,->,blue,"$\theta_3$",angle radius=0.45cm,angle eccentricity=1.5] {angle=Le--L--N};
+    \node[gray] at (0.4,2.8) {perna (acoplador)};
+    \node[gray] at (1.5,-0.6) {coxa (elo fixo 0)};
+  \end{tikzpicture}
+  \caption{Quadrilátero articulado do joelho: bases, ângulos e comprimentos (a base $1$ e a
+  base $3$ têm os ângulos medidos a partir de $X_0$; $\theta_2$ é medido a partir de $X_1$).}
+  \label{fig:quadrilatero}
+\end{figure}
+
+As transformações homogêneas \eqref{eq:homogenea} de cada elo são
+\begin{equation}
+  \Tm{0}{1} = \left[\begin{array}{cc|c} c_1 & -s_1 & {}^0x_C\\ s_1 & c_1 & {}^0y_C\\ \hline 0 & 0 & 1\end{array}\right],\quad
+  \Tm{1}{2} = \left[\begin{array}{cc|c} c_2 & -s_2 & \ell_1\\ s_2 & c_2 & 0\\ \hline 0 & 0 & 1\end{array}\right],\quad
+  \Tm{0}{3} = \left[\begin{array}{cc|c} c_3 & -s_3 & {}^0x_L\\ s_3 & c_3 & {}^0y_L\\ \hline 0 & 0 & 1\end{array}\right],
+\end{equation}
+com $\rv{2}{N} = [\ell_2\ \ 0]^{\mathsf T}$ e $\rv{3}{N} = [\ell_3\ \ 0]^{\mathsf T}$. O ponto $N$ pertence
+simultaneamente ao ramo $0\text{--}1\text{--}2$ e ao ramo $0\text{--}3$ da cadeia; a
+\emph{equação de fechamento} é
+\begin{equation}
+  \hmg{\rv{0}{N}} = \Tm{0}{1}\,\Tm{1}{2}\hmg{\rv{2}{N}} = \Tm{0}{3}\hmg{\rv{3}{N}}
+  \;\Longrightarrow\;
+  \begin{bmatrix} {}^0x_C + \ell_1 c_1 + \ell_2 c_{12} \\ {}^0y_C + \ell_1 s_1 + \ell_2 s_{12} \\ 1 \end{bmatrix}
+  = \begin{bmatrix} {}^0x_L + \ell_3 c_3 \\ {}^0y_L + \ell_3 s_3 \\ 1 \end{bmatrix}.
+  \label{eq:fechamento}
+\end{equation}
+Na prótese, a variável de entrada é a orientação da perna, $\psi = \theta_1 + \theta_2$
+(ângulo de $X_2$ em relação a $X_0$), e as incógnitas são $\mathbf q = [\theta_1\ \ \theta_3]^{\mathsf T}$.
+Escrevendo \eqref{eq:fechamento} como $\mathbf f(\mathbf q) = \mathbf 0$, a solução é obtida pelo
+método de Newton--Raphson,
+\begin{equation}
+  \mathbf q^{(i+1)} = \mathbf q^{(i)} - [J]^{-1}\,\mathbf f\big(\mathbf q^{(i)}\big),
+  \qquad
+  [J] = \frac{\partial\mathbf f}{\partial\mathbf q} =
+  \begin{bmatrix} -\ell_1 s_1 & \ell_3 s_3 \\ \ell_1 c_1 & -\ell_3 c_3 \end{bmatrix},
+  \label{eq:newton}
+\end{equation}
+partindo da solução do passo anterior, o que mantém o mecanismo no mesmo ramo de
+montagem. Como $\det[J] = \ell_1\ell_3\,\sen(\theta_1 - \theta_3)$, a matriz é singular quando
+$CQ \parallel LN$ (polo no infinito). Uma vez conhecidos $\theta_1$ e $\theta_3$, o polo
+$I_{13}$ (CIR da perna em relação à coxa) é a intersecção dos eixos $X_1$ e $X_3$,
+\begin{equation}
+  \rv{0}{I} = \rv{0}{C} + \lambda\begin{bmatrix} c_1\\ s_1\end{bmatrix} = \rv{0}{L} + \kappa\begin{bmatrix} c_3\\ s_3\end{bmatrix},
+\end{equation}
+e o ângulo de transmissão é o ângulo agudo entre $X_2$ e $X_3$, $\mu = |\psi - \theta_3|$
+(reduzido a $[0, \SI{90}{\degree}]$).
+
 \section{Síntese de geração de movimento por três posições de precisão}
 
-Seja $\{P_j, \alpha_j\}$, $j = 1,2,3$, a \emph{pose} do acoplador: posição de um ponto de
-referência da perna e sua orientação, ambas medidas no referencial da coxa. A
-formulação clássica de \textcite{erdman2001} e \textcite{norton2010} representa cada díade
-(manivela $\ve W$ e lado do acoplador $\ve Z$) por números complexos. A condição de
-fechamento entre a posição 1 e a posição $j$ é a \emph{equação da díade padrão}
+A pose da perna na posição de precisão $j$ ($j = 1,2,3$) é a transformação homogênea da
+base $4$ para a base $0$,
 \begin{equation}
-  \ve W\left(\e^{\mathrm i\beta_j}-1\right) + \ve Z\left(\e^{\mathrm i\alpha_j}-1\right) = \ve\delta_j,
-  \qquad j = 2,3,
+  \Tm{0}{4}^{(j)} = \left[\begin{array}{c|c} \Rot{\alpha_j}{z_4} & \rv{0}{O_4}^{(j)} \\ \hline \mathbf 0 & 1 \end{array}\right],
+\end{equation}
+em que $\alpha_j$ é a rotação da perna e $\rv{0}{O_4}^{(j)}$ a posição do ponto de referência
+do joelho, ambos medidos (\cref{sec:protocolo}).
+
+\paragraph{Equação da díade padrão.} Na formulação clássica de
+\textcite{erdman2001} e \textcite{norton2010}, cada díade é formada pela manivela
+$\mathbf W = \rv{0}{Q}^{(1)} - \rv{0}{C}$ e pelo lado do acoplador $\mathbf Z = \rv{0}{O_4}^{(1)} - \rv{0}{Q}^{(1)}$.
+Entre a posição $1$ e a posição $j$, $\mathbf W$ gira de $\beta_j$ e $\mathbf Z$ gira de $\alpha_j$, de
+modo que o fechamento da díade, em forma matricial, é
+\begin{equation}
+  \big[\Rot{\beta_j}{z} - I\big]\,\mathbf W + \big[\Rot{\alpha_j}{z} - I\big]\,\mathbf Z = \boldsymbol\delta_j,
+  \qquad \boldsymbol\delta_j = \rv{0}{O_4}^{(j)} - \rv{0}{O_4}^{(1)},\quad j = 2,3,
   \label{eq:diade}
 \end{equation}
-em que $\ve\delta_j = P_j - P_1$ e $\alpha_j$ são dados (rotação e deslocamento do
-acoplador) e $\beta_j$ é a rotação da manivela. São quatro equações escalares com seis
-incógnitas escalares ($\ve W$, $\ve Z$, $\beta_2$, $\beta_3$): há duas escolhas livres por díade.
-Escolhendo $\beta_2,\beta_3$, o sistema \eqref{eq:diade} torna-se linear em $\ve W$ e $\ve Z$
-e é resolvido pela regra de Cramer.
+com $\Rot{\cdot}{z}$ restrita ao bloco $2\times2$. São quatro equações escalares para seis
+incógnitas ($\mathbf W$, $\mathbf Z$, $\beta_2$, $\beta_3$), ou seja, há duas escolhas livres por
+díade. Escolhidos $\beta_2$ e $\beta_3$, o sistema \eqref{eq:diade} é linear em $\mathbf W$ e $\mathbf Z$.
 
-Neste trabalho utiliza-se a formulação equivalente de \emph{ponto-centro}, que é mais
-natural para o projetista: as escolhas livres são as coordenadas do pivô móvel no
-referencial da perna. Seja $\ve u_Q$ a posição (constante) de $Q$ no referencial da
-perna. Na posição $j$,
+\paragraph{Formulação ponto-centro (adotada).} É equivalente, e mais natural para o
+projetista, escolher como variáveis livres as coordenadas do pivô móvel na base da perna,
+$\rv{4}{Q}$ (constante). Os \emph{pontos homólogos} de $Q$ nas três posições são
 \begin{equation}
-  \ve Q_j = \ve P_j + \ve R(\alpha_j)\,\ve u_Q,
-  \qquad
-  \ve R(\alpha) = \begin{bmatrix} \cos\alpha & -\sin\alpha\\ \sin\alpha & \cos\alpha \end{bmatrix}.
+  \hmg{\rv{0}{Q}^{(j)}} = \Tm{0}{4}^{(j)}\hmg{\rv{4}{Q}},\qquad j = 1,2,3.
   \label{eq:homologos}
 \end{equation}
-Como $Q$ percorre uma circunferência de centro $C$ (pivô fixo), vale
-$\lVert \ve Q_j - \ve C\rVert = r_{CQ}$ para $j=1,2,3$. Subtraindo a equação $j=1$ das
-demais, eliminam-se $r_{CQ}$ e os termos quadráticos em $\ve C$, restando o sistema linear
-das mediatrizes:
+Como $Q$ percorre uma circunferência de centro $C$, vale
+$\big\lVert \rv{0}{Q}^{(j)} - \rv{0}{C}\big\rVert = \ell_1$ para $j=1,2,3$. Subtraindo a equação $j=1$
+das demais, eliminam-se $\ell_1$ e os termos quadráticos em $\rv{0}{C}$, restando o sistema
+linear das mediatrizes:
 \begin{equation}
-  2\begin{bmatrix} (\ve Q_2 - \ve Q_1)^{\mathsf T} \\ (\ve Q_3 - \ve Q_1)^{\mathsf T} \end{bmatrix}\ve C
-  = \begin{bmatrix} \lVert\ve Q_2\rVert^2 - \lVert\ve Q_1\rVert^2 \\ \lVert\ve Q_3\rVert^2 - \lVert\ve Q_1\rVert^2 \end{bmatrix},
+  2\begin{bmatrix} \big(\rv{0}{Q}^{(2)} - \rv{0}{Q}^{(1)}\big)^{\mathsf T} \\[2pt] \big(\rv{0}{Q}^{(3)} - \rv{0}{Q}^{(1)}\big)^{\mathsf T} \end{bmatrix}\rv{0}{C}
+  = \begin{bmatrix} \rv{0}{Q}^{(2)\mathsf T}\rv{0}{Q}^{(2)} - \rv{0}{Q}^{(1)\mathsf T}\rv{0}{Q}^{(1)} \\[2pt]
+                    \rv{0}{Q}^{(3)\mathsf T}\rv{0}{Q}^{(3)} - \rv{0}{Q}^{(1)\mathsf T}\rv{0}{Q}^{(1)} \end{bmatrix},
   \label{eq:circuncentro}
 \end{equation}
 cuja solução é o circuncentro dos três pontos homólogos. O mesmo procedimento aplicado a
-$\ve u_N$ fornece $\ve L$. O determinante de \eqref{eq:circuncentro} é nulo quando os três
+$\rv{4}{N}$ fornece $\rv{0}{L}$. O determinante de \eqref{eq:circuncentro} é nulo quando os três
 pontos homólogos são colineares, caso em que o pivô fixo vai ao infinito (junta prismática).
-Os comprimentos são, então,
+Os comprimentos dos elos são, então,
 \begin{equation}
-  r_{CL} = \lVert \ve C - \ve L\rVert,\quad
-  r_{CQ} = \lVert \ve Q_1 - \ve C\rVert,\quad
-  r_{LN} = \lVert \ve N_1 - \ve L\rVert,\quad
-  r_{QN} = \lVert \ve u_Q - \ve u_N\rVert .
+  \ell_0 = \big\lVert \rv{0}{L} - \rv{0}{C}\big\rVert,\quad
+  \ell_1 = \big\lVert \rv{0}{Q}^{(1)} - \rv{0}{C}\big\rVert,\quad
+  \ell_2 = \big\lVert \rv{4}{N} - \rv{4}{Q}\big\rVert,\quad
+  \ell_3 = \big\lVert \rv{0}{N}^{(1)} - \rv{0}{L}\big\rVert .
 \end{equation}
 
 \section{Escolha dos pivôs móveis e erro estrutural}
 
-Com três posições, qualquer escolha de $(\ve u_Q, \ve u_N)$ gera um mecanismo que passa
-exatamente pelas posições de precisão; fora delas surge o \emph{erro estrutural}. Neste
-trabalho a escolha é feita por otimização: define-se o erro no tornozelo
+Com três posições, qualquer escolha de $\big(\rv{4}{Q}, \rv{4}{N}\big)$ gera um mecanismo que
+passa exatamente pelas posições de precisão; fora delas surge o \emph{erro estrutural}.
+Neste trabalho a escolha é feita por otimização. Para uma flexão $\varphi$ do joelho, a
+posição do tornozelo $P$, com $\rv{4}{P} = [0\ \ {-450}]^{\mathsf T}$~mm, é
+$\big[\rv{0}{P};\,1\big] = \Tm{0}{4}\,\big[\rv{4}{P};\,1\big]$, e o erro é
 \begin{equation}
-  e(\varphi) = \big\lVert \ve P^{\mathrm{mec}}_{\text{tornozelo}}(\varphi) - \ve P^{\mathrm{ref}}_{\text{tornozelo}}(\varphi) \big\rVert ,
+  e(\varphi) = \Big\lVert \rv{0}{P}^{\,\mathrm{mec}}(\varphi) - \rv{0}{P}^{\,\mathrm{ref}}(\varphi) \Big\rVert ,
 \end{equation}
-comparando mecanismo e referência para a mesma orientação $\varphi$ da perna (ponto
-situado a \SI{450}{mm} do joelho, onde erros angulares são mais amplificados), e
-minimiza-se
+em que $\Tm{0}{4}^{\mathrm{mec}}$ vem da solução de \eqref{eq:fechamento} e $\Tm{0}{4}^{\mathrm{ref}}$ das
+medições, para a mesma orientação da perna. O tornozelo, a \SI{450}{mm} do joelho, é o
+ponto em que erros angulares são mais amplificados. Minimiza-se
 \begin{equation}
-  J(\ve u_Q,\ve u_N) = \max_{\varphi \in \Phi} e(\varphi) + \text{penalidades},
+  J\big(\rv{4}{Q},\rv{4}{N}\big) = \max_{\varphi \in \Phi} e(\varphi) + \text{penalidades},
   \label{eq:custo}
 \end{equation}
 em que as penalidades impõem: $\mu_{\min}\ge \SI{30}{\degree}$; pivôs fixos dentro do volume
@@ -269,28 +414,32 @@ descritas por \textcite{winter2009}):
   software livre Tracker \cite{tracker} ou ImageJ.
 \end{enumerate}
 
-\paragraph{Referencial da coxa.} Para cada foto, define-se a origem em EF (que
-aproxima o eixo de flexão) e o eixo $y$ no sentido EF$\to$TR; o eixo $x$ aponta para a
-frente. As coordenadas de imagem $\ve x^{\mathrm{img}}$ são transformadas por
+\paragraph{Base da coxa.} Seja $im$ a base da imagem (pixels convertidos em mm). Em cada
+foto, a base $0$ tem origem no marcador EF (que aproxima o eixo de flexão) e o eixo $Y_0$ no
+sentido EF$\to$TR, ou seja, $\Rm{im}{0} = \Rot{\psi}{z_0}$, com
+$\psi = \operatorname{atan2}\big({}^{im}y_{TR} - {}^{im}y_{EF},\ {}^{im}x_{TR} - {}^{im}x_{EF}\big) - \pi/2$. Como
+$\hmg{\rv{im}{X}} = \Tm{im}{0}\hmg{\rv{0}{X}}$ e $\Rm{0}{im} = \Rm{im}{0}^{\mathsf T}$, as coordenadas de
+qualquer marcador $X$ na base da coxa são
 \begin{equation}
-  \ve x = \ve R(-\psi)\,\big(\ve x^{\mathrm{img}} - \ve x_{\mathrm{EF}}^{\mathrm{img}}\big),
-  \qquad \psi = \operatorname{atan2}\big(\Delta y, \Delta x\big)_{\mathrm{EF}\to\mathrm{TR}} - \tfrac{\pi}{2}.
+  \rv{0}{X} = \Rm{im}{0}^{\mathsf T}\big(\rv{im}{X} - \rv{im}{EF}\big).
 \end{equation}
 
-\paragraph{Pose da perna (problema de Procrustes plano).} Sejam $\ve u_k$ as coordenadas
-dos marcadores da perna (CF, TT, ML) no referencial da perna (obtidas na foto com o joelho
-estendido, quando os dois referenciais coincidem) e $\ve x_k$ suas coordenadas na foto $j$.
-A pose $(\ve P_j, \alpha_j)$ que minimiza $\sum_k \lVert \ve P_j + \ve R(\alpha_j)\ve u_k - \ve x_k\rVert^2$
-tem solução fechada: com as coordenadas centradas $\tilde{\ve u}_k = \ve u_k - \bar{\ve u}$ e
-$\tilde{\ve x}_k = \ve x_k - \bar{\ve x}$,
+\paragraph{Pose da perna (problema de Procrustes plano).} Sejam $\rv{4}{k}$ as coordenadas
+dos marcadores da perna ($k \in \{$CF, TT, ML$\}$) na base $4$, obtidas na foto com o joelho
+estendido (quando as bases $0$ e $4$ coincidem), e $\rv{0}{k}$ suas coordenadas na foto $j$.
+A pose $\Tm{0}{4}^{(j)}$ é a que minimiza
+$\sum_k \big\lVert \Rot{\alpha_j}{z_4}\,\rv{4}{k} + \rv{0}{O_4}^{(j)} - \rv{0}{k}\big\rVert^2$. Com as
+coordenadas centradas $\mathbf u_k = \rv{4}{k} - \overline{\rv{4}{}}$ e $\mathbf x_k = \rv{0}{k} - \overline{\rv{0}{}}$
+(a barra indica média sobre os marcadores), a solução é
 \begin{equation}
-  \alpha_j = \operatorname{atan2}\Big(\textstyle\sum_k \tilde{\ve u}_k \times \tilde{\ve x}_k,\;
-                               \sum_k \tilde{\ve u}_k \cdot \tilde{\ve x}_k\Big),
+  \alpha_j = \operatorname{atan2}\Big(\textstyle\sum_k \mathbf k\cdot(\tilde{\mathbf u}_k\,\mathbf x_k),\;
+                               \sum_k \mathbf u_k^{\mathsf T}\mathbf x_k\Big),
   \qquad
-  \ve P_j = \bar{\ve x} - \ve R(\alpha_j)\,\bar{\ve u},
+  \rv{0}{O_4}^{(j)} = \overline{\rv{0}{}} - \Rot{\alpha_j}{z_4}\,\overline{\rv{4}{}},
 \end{equation}
-em que $\ve a\times\ve b = a_x b_y - a_y b_x$. O uso de três ou mais marcadores reduz o
-efeito dos artefatos de pele, que podem chegar a \SI{10}{mm} no joelho.
+em que $\mathbf k\cdot(\tilde{\mathbf u}\,\mathbf x) = u_x x_y - u_y x_x$ é a componente $z$ do produto
+vetorial. O uso de três ou mais marcadores reduz o efeito dos artefatos de pele, que podem
+chegar a \SI{10}{mm} no joelho.
 
 O programa \texttt{parte1\_sintese.py} lê o arquivo \texttt{dados/poses\_medidas.csv}
 (flexão; posição do ponto de referência do joelho; posição do tornozelo). \textbf{Para
@@ -307,18 +456,27 @@ inserções típicas (referencial da coxa, joelho estendido, em mm): LCA femoral
 $(-12;\,22)$, LCP femoral $(8;\,20)$, LCA tibial $(12;\,-5)$ e LCP tibial $(-16;\,-10)$, o que
 fornece LCA $=\LACL$~mm, LCP $=\LPCL$~mm, elo femoral $=\Lfem$~mm e elo tibial
 $=\Ltib$~mm, valores compatíveis com as proporções da literatura
-\cite{oconnor1989,dathe2016}. Para cada flexão $\varphi$, a pose da perna é obtida
-resolvendo as duas equações de comprimento constante (método de Newton, com a solução
-anterior como estimativa inicial). As poses resultantes estão na \cref{tab:poses}.
+\cite{oconnor1989,dathe2016}. Para cada flexão $\varphi$, a pose
+$\Tm{0}{4}(\varphi)$, com $\Rm{0}{4} = \Rot{-\varphi}{z_4}$, é obtida impondo comprimento constante às
+duas fibras:
+\begin{equation}
+  \Big\lVert \Tm{0}{4}\hmg{\rv{4}{A_t}} - \hmg{\rv{0}{A_f}} \Big\rVert = \ell_{\mathrm{LCA}},
+  \qquad
+  \Big\lVert \Tm{0}{4}\hmg{\rv{4}{P_t}} - \hmg{\rv{0}{P_f}} \Big\rVert = \ell_{\mathrm{LCP}},
+\end{equation}
+em que $A$ e $P$ indicam as inserções do LCA e do LCP e os índices $f$ e $t$, femoral (base
+$0$) e tibial (base $4$). As duas incógnitas são as componentes de $\rv{0}{O_4}$, resolvidas
+por Newton--Raphson \eqref{eq:newton}, com a solução anterior como estimativa inicial. As
+poses resultantes estão na \cref{tab:poses}.
 
 \begin{table}[htbp]
   \centering
-  \caption{Poses da perna no referencial da coxa (mm). $\star$: posições de precisão.
+  \caption{Poses da perna na base $0$ (mm): ponto de referência do joelho $O_4$ e tornozelo $P$. $\star$: posições de precisão.
   Última coluna: erro estrutural do mecanismo sintetizado no tornozelo.}
   \label{tab:poses}
   \begin{tabular}{lrrrrr}
     \toprule
-    Flexão (\si{\degree}) & $x_{\mathrm{joelho}}$ & $y_{\mathrm{joelho}}$ & $x_{\mathrm{tornozelo}}$ & $y_{\mathrm{tornozelo}}$ & $e$ (mm) \\
+    Flexão (\si{\degree}) & ${}^0x_{O_4}$ & ${}^0y_{O_4}$ & ${}^0x_{P}$ & ${}^0y_{P}$ & $e$ (mm) \\
     \midrule
     \tabelaposes
     \bottomrule
@@ -343,12 +501,12 @@ A otimização convergiu para os pivôs móveis e fixos da \cref{tab:pivos}.
     \toprule
     Articulação & Elo & Coordenadas \\
     \midrule
-    $C$ & coxa (fixo) & $(\Cx;\ \Cy)$ \\
-    $L$ & coxa (fixo) & $(\Lx;\ \Ly)$ \\
-    $Q$ & perna (móvel) & $(\Qx;\ \Qy)$ \\
-    $N$ & perna (móvel) & $(\Nx;\ \Ny)$ \\
+    $C$ & coxa (fixo) & $\rv{0}{C} = [\Cx\ \ \Cy]^{\mathsf T}$ \\
+    $L$ & coxa (fixo) & $\rv{0}{L} = [\Lx\ \ \Ly]^{\mathsf T}$ \\
+    $Q$ & perna (móvel) & $\rv{4}{Q} = [\Qx\ \ \Qy]^{\mathsf T}$ \\
+    $N$ & perna (móvel) & $\rv{4}{N} = [\Nx\ \ \Ny]^{\mathsf T}$ \\
     \midrule
-    \multicolumn{3}{l}{Comprimentos: $r_{CL} = \rCL$, $r_{CQ} = \rCQ$, $r_{LN} = \rLN$, $r_{QN} = \rQN$} \\
+    \multicolumn{3}{l}{Comprimentos: $\ell_0 = \overline{CL} = \rCL$, $\ell_1 = \overline{CQ} = \rCQ$, $\ell_2 = \overline{QN} = \rQN$, $\ell_3 = \overline{LN} = \rLN$} \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -456,55 +614,104 @@ quadril (fixo no tronco) e do joelho (estator fixo na coxa). Não há contato do
 solo durante o ciclo, e o atrito nas juntas é desprezado.
 \end{hipotese}
 \begin{hipotese}
-$\overline{DO} = L_1 = \SI{0,40}{m}$, $\overline{OP} = L_2 = \SI{0,45}{m}$,
-$\overline{PR} = L_3 = \SI{0,25}{m}$ (enunciado).
+$\overline{DO} = \ell_1 = \SI{0,40}{m}$, $\overline{OP} = \ell_2 = \SI{0,45}{m}$,
+$\overline{PR} = \ell_3 = \SI{0,25}{m}$ (enunciado).
 \end{hipotese}
 
-\section{Coordenadas e cinemática direta}
+\section{Bases e cinemática direta (cadeia aberta RR)}
 
-Adota-se $x$ para a frente e $y$ para cima, com ângulos medidos a partir de $+x$ no
-sentido anti-horário (\cref{fig:modelo}). As coordenadas generalizadas são o ângulo
-absoluto da coxa $\theta_1$ e o ângulo relativo do joelho $\varphi$; o ângulo absoluto da
-perna é $\theta_2 = \theta_1 + \varphi$. Com $\ve e(\theta) = (\cos\theta, \sin\theta)^{\mathsf T}$:
+O membro com a órtese é uma cadeia aberta de duas juntas de revolução, análoga ao
+mecanismo RR do método matricial. As bases são (\cref{fig:modelo}):
+\begin{itemize}
+  \item base $0$ (fixa, tronco): origem em $D$, $X_0$ horizontal para a frente, $Y_0$
+  vertical para cima;
+  \item base $1$ (coxa): origem em $D$, $X_1$ ao longo de $DO$; $\theta_1$ é o ângulo de $X_0$
+  para $X_1$ (junta do quadril);
+  \item base $2$ (perna + pé): origem em $O$, $X_2$ ao longo de $OP$ e $Y_2$ no sentido $PR$;
+  $\theta_2$ é o ângulo \emph{relativo} de $X_1$ para $X_2$ (junta do joelho).
+\end{itemize}
+A orientação absoluta da perna é, portanto, $\theta_1 + \theta_2$, e as coordenadas
+generalizadas são $\mathbf q = [\theta_1\ \ \theta_2]^{\mathsf T}$. As transformações homogêneas são
 \begin{equation}
-  \ve O = L_1\,\ve e(\theta_1),\qquad
-  \ve P = \ve O + L_2\,\ve e(\theta_2),\qquad
-  \ve R = \ve P + L_3\,\ve e\big(\theta_2 + \tfrac{\pi}{2}\big).
+  \Tm{0}{1} = \left[\begin{array}{c|c} \Rm{0}{1} & \rv{0}{O_1} \\ \hline \mathbf 0 & 1 \end{array}\right]
+            = \left[\begin{array}{cc|c} c_1 & -s_1 & 0\\ s_1 & c_1 & 0\\ \hline 0 & 0 & 1\end{array}\right],
+  \qquad
+  \Tm{1}{2} = \left[\begin{array}{c|c} \Rm{1}{2} & \rv{1}{O_2} \\ \hline \mathbf 0 & 1 \end{array}\right]
+            = \left[\begin{array}{cc|c} c_2 & -s_2 & \ell_1\\ s_2 & c_2 & 0\\ \hline 0 & 0 & 1\end{array}\right],
 \end{equation}
-As velocidades e acelerações angulares absolutas são
-$\omega_1 = \dot\theta_1$, $\omega_2 = \dot\theta_1+\dot\varphi$, $\alpha_1 = \ddot\theta_1$ e
-$\alpha_2 = \ddot\theta_1 + \ddot\varphi$.
+com $\Rm{0}{1} = \Rot{\theta_1}{z_1}$ e $\Rm{1}{2} = \Rot{\theta_2}{z_2}$. Os pontos de interesse têm
+coordenadas constantes nas bases dos seus elos: $\rv{1}{O} = [\ell_1\ \ 0]^{\mathsf T}$,
+$\rv{2}{P} = [\ell_2\ \ 0]^{\mathsf T}$ e $\rv{2}{R} = [\ell_2\ \ \ell_3]^{\mathsf T}$. Assim,
+\begin{align}
+  \hmg{\rv{0}{P}} &= \Tm{0}{1}\,\Tm{1}{2}\hmg{\rv{2}{P}}
+   = \begin{bmatrix} c_1 & -s_1 & 0\\ s_1 & c_1 & 0\\ 0 & 0 & 1\end{bmatrix}
+     \begin{bmatrix} \ell_2 c_2 + \ell_1\\ \ell_2 s_2 \\ 1\end{bmatrix}
+   = \begin{bmatrix} \ell_1 c_1 + \ell_2 c_{12}\\ \ell_1 s_1 + \ell_2 s_{12} \\ 1\end{bmatrix},
+  \label{eq:posP}\\
+  \hmg{\rv{0}{R}} &= \Tm{0}{1}\,\Tm{1}{2}\hmg{\rv{2}{R}}
+   = \begin{bmatrix} \ell_1 c_1 + \ell_2 c_{12} - \ell_3 s_{12}\\ \ell_1 s_1 + \ell_2 s_{12} + \ell_3 c_{12} \\ 1\end{bmatrix},
+\end{align}
+e $\hmg{\rv{0}{O}} = \Tm{0}{1}\hmg{\rv{1}{O}} = [\ell_1 c_1\ \ \ell_1 s_1\ \ 1]^{\mathsf T}$.
+
+\paragraph{Velocidades e acelerações.} Derivando \eqref{eq:posP} no tempo, com $\rv{2}{P}$
+constante,
+\begin{align}
+  \hoz{\rvd{0}{P}} &= \big(\Tmd{0}{1}\,\Tm{1}{2} + \Tm{0}{1}\,\Tmd{1}{2}\big)\hmg{\rv{2}{P}},\\
+  \hoz{\rvdd{0}{P}} &= \big(\Tmdd{0}{1}\,\Tm{1}{2} + 2\,\Tmd{0}{1}\,\Tmd{1}{2} + \Tm{0}{1}\,\Tmdd{1}{2}\big)\hmg{\rv{2}{P}},
+\end{align}
+em que
+\begin{equation}
+  \Tmd{0}{1} = \begin{bmatrix} -s_1 & -c_1 & 0\\ c_1 & -s_1 & 0\\ 0 & 0 & 0\end{bmatrix}\dot\theta_1,
+  \qquad
+  \Tmdd{0}{1} = \begin{bmatrix} -c_1 & s_1 & 0\\ -s_1 & -c_1 & 0\\ 0 & 0 & 0\end{bmatrix}\dot\theta_1^2
+              + \begin{bmatrix} -s_1 & -c_1 & 0\\ c_1 & -s_1 & 0\\ 0 & 0 & 0\end{bmatrix}\ddot\theta_1,
+\end{equation}
+e analogamente para $\Tmd{1}{2}$ e $\Tmdd{1}{2}$ com $\theta_2$ (a translação $\ell_1$ é constante e
+some na derivada). Efetuando os produtos,
+\begin{equation}
+  \rvd{0}{P} = \begin{bmatrix} -\ell_1 s_1 - \ell_2 s_{12} & -\ell_2 s_{12}\\ \ell_1 c_1 + \ell_2 c_{12} & \ell_2 c_{12}\end{bmatrix}
+               \begin{bmatrix}\dot\theta_1\\ \dot\theta_2\end{bmatrix} = \Jm{P}\,\dot{\mathbf q},
+\end{equation}
+em que $\Jm{P}$ é a matriz jacobiana do ponto $P$. As velocidades e acelerações angulares
+dos elos são
+\begin{equation}
+  {}^0\boldsymbol\omega_1 = \dot\theta_1\,\mathbf k_0,\quad
+  {}^0\boldsymbol\omega_2 = (\dot\theta_1+\dot\theta_2)\,\mathbf k_0,\quad
+  {}^0\dot{\boldsymbol\omega}_1 = \ddot\theta_1\,\mathbf k_0,\quad
+  {}^0\dot{\boldsymbol\omega}_2 = (\ddot\theta_1+\ddot\theta_2)\,\mathbf k_0 .
+\end{equation}
 
 \begin{figure}[htbp]
   \centering
-  \begin{tikzpicture}[scale=5, >=Stealth]
+  \begin{tikzpicture}[scale=7.5, >=Stealth]
     \coordinate (D) at (0,0);
     \coordinate (O) at ({0.40*cos(-35)},{0.40*sin(-35)});
     \coordinate (P) at ($(O)+({0.45*cos(-120)},{0.45*sin(-120)})$);
     \coordinate (R) at ($(P)+({0.25*cos(-30)},{0.25*sin(-30)})$);
-    \fill[pattern=north east lines] (-0.08,0) rectangle (0.08,0.05);
-    \draw[very thick,red] (D) -- (O) -- (P) -- (R);
-    \foreach \p in {D,O,P,R} \fill (\p) circle (0.012);
-    \node[above left] at (D) {$D$ (quadril)};
-    \node[above right] at (O) {$O$ (joelho)};
-    \node[left] at (P) {$P$ (tornozelo)};
+    \fill[pattern=north east lines] (-0.1,0.0) rectangle (-0.04,0.06);
+    \draw[very thick] (D) -- node[below left, pos=0.7] {$\ell_1$} (O) -- node[left] {$\ell_2$} (P) -- node[below left] {$\ell_3$} (R);
+    \foreach \p in {D,O} \draw[fill=white] (\p) circle (0.018);
+    \foreach \p in {P,R} \fill (\p) circle (0.012);
+    \node[left] at ($(D)+(-0.1,0)$) {$D$};
+    \node[above right] at ($(O)+(0.01,0.01)$) {$O$};
+    \node[left] at (P) {$P$};
     \node[right] at (R) {$R$};
-    \draw[dashed] (D) -- (0.35,0) coordinate (Z);
-    \pic[draw,<-,"$\theta_1$",angle radius=1.3cm,angle eccentricity=1.25] {angle=O--D--Z};
-    \coordinate (X) at ($(O)+(0.35,0)$);
-    \draw[dashed] (O) -- ($(O)+({0.2*cos(-35)},{0.2*sin(-35)})$) coordinate (Oe);
-    \pic[draw,<-,"$\varphi$",angle radius=0.7cm,angle eccentricity=1.45] {angle=P--O--Oe};
-    \draw[dashed] (O) -- (X);
-    \pic[draw,<-,"$\theta_2$",angle radius=1.5cm,angle eccentricity=1.2] {angle=P--O--X};
-    \node[below] at ($(D)!0.5!(O)$) {$L_1$};
-    \node[above left] at ($(O)!0.5!(P)$) {$L_2$};
-    \node[below] at ($(P)!0.5!(R)$) {$L_3$};
-    \draw[->] (-0.3,-0.55) -- (-0.2,-0.55) node[right] {$x$};
-    \draw[->] (-0.3,-0.55) -- (-0.3,-0.45) node[above] {$y$};
-    \draw[->] (0.05,-0.8) -- (0.05,-0.9) node[right] {$\ve g$};
+    % base 0
+    \draw[->,thick] (D) -- (0.25,0) coordinate (Z0) node[right] {$X_0$};
+    \draw[->,thick] (D) -- (0,0.15) node[above] {$Y_0$};
+    % base 1
+    \draw[->,teal,thick] (D) -- ($(D)!0.35!(O)$) node[below left] {$X_1$};
+    \pic[draw,<-,blue,"$\theta_1$",angle radius=1.6cm,angle eccentricity=1.2] {angle=O--D--Z0};
+    % base 2
+    \draw[dashed,blue] (O) -- ($(O)+({0.25*cos(-35)},{0.25*sin(-35)})$) coordinate (Oe);
+    \draw[->,teal,thick] (O) -- ($(O)!0.3!(P)$) node[left] {$X_2$};
+    \draw[->,teal,thick] (O) -- ($(O)+({0.15*cos(-30)},{0.15*sin(-30)})$) node[right] {$Y_2$};
+    \pic[draw,<-,blue,"$\theta_2$",angle radius=1.3cm,angle eccentricity=1.2] {angle=P--O--Oe};
+    \draw[->] (-0.25,-0.6) -- (-0.25,-0.7) node[right] {$\mathbf g$};
   \end{tikzpicture}
-  \caption{Modelo plano de dois graus de liberdade da órtese. $\theta_1$ e $\theta_2$ são
-  ângulos absolutos (positivos no sentido anti-horário) e $\varphi = \theta_2 - \theta_1$.}
+  \caption{Cadeia aberta RR da órtese: bases $0$ (fixa), $1$ (coxa) e $2$ (perna + pé).
+  $\theta_1$ é medido de $X_0$ para $X_1$ e $\theta_2$, de $X_1$ para $X_2$ (na figura, ambos
+  negativos, isto é, no sentido horário).}
   \label{fig:modelo}
 \end{figure}
 
@@ -513,8 +720,8 @@ $\alpha_2 = \ddot\theta_1 + \ddot\varphi$.
 Os ângulos foram lidos da \cref{fig:enunciado}b. Na configuração final~I, a coxa está a
 \SI{280,13}{\degree} e o ângulo interno do joelho é \SI{60}{\degree}; na final~II, a coxa está
 a \SI{10,07}{\degree} e o ângulo interno é \SI{70,1}{\degree}. Como o ângulo interno entre
-$\overrightarrow{OD}$ e $\overrightarrow{OP}$ é $\SI{180}{\degree} - |\varphi|$, com a flexão
-do joelho no sentido horário ($\varphi<0$):
+$\overrightarrow{OD}$ e $\overrightarrow{OP}$ é $\SI{180}{\degree} - |\theta_2|$, com a flexão
+do joelho no sentido horário ($\theta_2<0$):
 
 \begin{table}[htbp]
   \centering
@@ -522,7 +729,7 @@ do joelho no sentido horário ($\varphi<0$):
   \label{tab:config}
   \begin{tabular}{lrrrl}
     \toprule
-    Configuração & $\theta_1$ (\si{\degree}) & $\varphi$ (\si{\degree}) & $\theta_2$ (\si{\degree}) & Movimento \\
+    Configuração & $\theta_1$ (\si{\degree}) & $\theta_2$ (\si{\degree}) & $\theta_1+\theta_2$ (\si{\degree}) & Movimento \\
     \midrule
     inicial  & $-90{,}00$ & $0{,}00$ & $-90{,}00$ & em pé, joelho estendido \\
     final I  & $-79{,}87$ & $-120{,}00$ & $-199{,}87$ & flexão do joelho (``chute para trás'') \\
@@ -531,13 +738,13 @@ do joelho no sentido horário ($\varphi<0$):
   \end{tabular}
 \end{table}
 
-A consistência foi conferida com a direção do pé: $\theta_2 + \SI{90}{\degree}$ vale
+A consistência foi conferida com a direção do pé ($Y_2$), $\theta_1+\theta_2 + \SI{90}{\degree}$, que vale
 \SI{0}{\degree}, \SI{-109,9}{\degree} e \SI{-9,8}{\degree} nas três configurações, de acordo com os
 segmentos $PR$ da figura.
 
 \section{Interpolação polinomial de 5º grau}
 
-Para cada coordenada $q\in\{\theta_1,\varphi\}$, adota-se
+Para cada coordenada generalizada $q\in\{\theta_1,\theta_2\}$, adota-se
 $q(t) = \sum_{k=0}^{5} a_k t^k$, cujos seis coeficientes são determinados pelas condições
 de contorno de posição, velocidade e aceleração no início e no fim do trecho:
 \begin{equation}
@@ -587,7 +794,7 @@ Utilizaram-se as tabelas de \textcite{winter2009}, baseadas em \textcite{drillis
 e amplamente usadas em análise de marcha. As massas são frações da massa corporal $M$;
 as posições do centro de massa (CM) e o raio de giração baricêntrico $\rho$ são frações
 do comprimento do segmento (\cref{tab:winter}). A estatura correspondente a
-$L_1 = \SI{0,40}{m}$ é $H = L_1/0{,}245 \approx \SI{1,63}{m}$ \cite{drillis1964}.
+$\ell_1 = \SI{0,40}{m}$ é $H = \ell_1/0{,}245 \approx \SI{1,63}{m}$ \cite{drillis1964}.
 
 \begin{table}[htbp]
   \centering
@@ -598,9 +805,9 @@ $L_1 = \SI{0,40}{m}$ é $H = L_1/0{,}245 \approx \SI{1,63}{m}$ \cite{drillis1964
     \toprule
     Segmento & $m/M$ & $x_{\mathrm{CM}}/L$ (a partir de) & $\rho_{\mathrm{CM}}/L$ & Comprimento $L$ \\
     \midrule
-    Coxa  & 0,100  & 0,433 (quadril)   & 0,323 & $L_1 = \SI{0,40}{m}$ \\
-    Perna & 0,0465 & 0,433 (joelho)    & 0,302 & $L_2 = \SI{0,45}{m}$ \\
-    Pé    & 0,0145 & 0,50 (ao longo de $PR$) & 0,475 & $L_3 = \SI{0,25}{m}$ \\
+    Coxa  & 0,100  & 0,433 (quadril)   & 0,323 & $\ell_1 = \SI{0,40}{m}$ \\
+    Perna & 0,0465 & 0,433 (joelho)    & 0,302 & $\ell_2 = \SI{0,45}{m}$ \\
+    Pé    & 0,0145 & 0,50 (ao longo de $PR$) & 0,475 & $\ell_3 = \SI{0,25}{m}$ \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -663,16 +870,15 @@ móvel; o do joelho tem o estator fixo na coxa.
 
 \section{Parâmetros equivalentes dos elos}
 
-Cada elo é um corpo rígido composto. Para $n$ componentes de massa $m_k$, CM $\ve r_k$ e
-inércia própria $I_k$:
+Cada elo $i$ é um corpo rígido composto. Para componentes de massa $m_k$, centro de massa
+$\rv{i}{k}$ (escrito na base do próprio elo, onde é constante) e inércia própria $I_k$:
 \begin{equation}
   m_i = \sum_k m_k,\qquad
-  \ve r_i = \frac{1}{m_i}\sum_k m_k\,\ve r_k,\qquad
-  I_i = \sum_k \Big[I_k + m_k \lVert\ve r_k - \ve r_i\rVert^2\Big] \quad\text{(Steiner)}.
+  \rv{i}{G_i} = \frac{1}{m_i}\sum_k m_k\,\rv{i}{k},\qquad
+  I_i = \sum_k \Big[I_k + m_k \big(\rv{i}{k} - \rv{i}{G_i}\big)^{\mathsf T}\big(\rv{i}{k} - \rv{i}{G_i}\big)\Big] \quad\text{(Steiner)}.
 \end{equation}
-O elo~2 (perna + pé + órtese) tem o CM fora do eixo $OP$, na posição
-$\ve r_2 = (b_x, b_y)$, que se escreve na forma polar $c_2 = \lVert\ve r_2\rVert$,
-$\gamma = \operatorname{atan2}(b_y, b_x)$.
+Os centros de massa resultantes são $\rv{1}{G_1} = [a_1\ \ 0]^{\mathsf T}$ (sobre o eixo $X_1$) e
+$\rv{2}{G_2} = [b_x\ \ b_y]^{\mathsf T}$: o elo~2 tem o CM fora do eixo $X_2$, deslocado no sentido do pé.
 
 \begin{table}[htbp]
   \centering
@@ -683,10 +889,10 @@ $\gamma = \operatorname{atan2}(b_y, b_x)$.
     Parâmetro & $M = \SI{80}{kg}$ & $M = \SI{60}{kg}$ \\
     \midrule
     $m_1$ (kg) & \mUmA & \mUmB \\
-    $a_1$ -- CM da coxa a partir de $D$ (m) & \aUmA & \aUmB \\
+    $a_1$ -- componente de $\rv{1}{G_1}$ (m) & \aUmA & \aUmB \\
     $I_1$ -- baricêntrico (\si{kg.m^2}) & \IUmA & \IUmB \\
     $m_2$ (kg) & \mDoisA & \mDoisB \\
-    $(b_x;\,b_y)$ -- CM do elo 2 a partir de $O$ (m) & $(\bxDoisA;\ \byDoisA)$ & $(\bxDoisB;\ \byDoisB)$ \\
+    $\rv{2}{G_2} = [b_x\ \ b_y]^{\mathsf T}$ (m) & $[\bxDoisA\ \ \byDoisA]^{\mathsf T}$ & $[\bxDoisB\ \ \byDoisB]^{\mathsf T}$ \\
     $I_2$ -- baricêntrico (\si{kg.m^2}) & \IDoisA & \IDoisB \\
     \bottomrule
   \end{tabular}
@@ -694,73 +900,91 @@ $\gamma = \operatorname{atan2}(b_y, b_x)$.
 
 \chapter{Modelagem dinâmica}\label{cap:dinamica}
 
+\section{Posição e velocidade dos centros de massa}
+
+As posições dos centros de massa na base $0$ seguem da cadeia de transformações:
+\begin{align}
+  \hmg{\rv{0}{G_1}} &= \Tm{0}{1}\hmg{\rv{1}{G_1}} = \begin{bmatrix} a_1 c_1\\ a_1 s_1\\ 1\end{bmatrix},\\
+  \hmg{\rv{0}{G_2}} &= \Tm{0}{1}\,\Tm{1}{2}\hmg{\rv{2}{G_2}}
+   = \begin{bmatrix} \ell_1 c_1 + b_x c_{12} - b_y s_{12}\\ \ell_1 s_1 + b_x s_{12} + b_y c_{12}\\ 1\end{bmatrix}.
+\end{align}
+Derivando, as velocidades escrevem-se com as matrizes jacobianas de cada centro de massa,
+$\vv{0}{G_i} = \Jm{G_i}\,\dot{\mathbf q}$:
+\begin{equation}
+  \Jm{G_1} = \begin{bmatrix} -a_1 s_1 & 0\\ a_1 c_1 & 0\end{bmatrix},
+  \qquad
+  \Jm{G_2} = \begin{bmatrix} -\ell_1 s_1 - b_x s_{12} - b_y c_{12} & -b_x s_{12} - b_y c_{12}\\
+                              \ell_1 c_1 + b_x c_{12} - b_y s_{12} & b_x c_{12} - b_y s_{12}\end{bmatrix},
+\end{equation}
+e as velocidades angulares, com $\omega_i = \Jm{\omega_i}\dot{\mathbf q}$, têm
+$\Jm{\omega_1} = [1\ \ 0]$ e $\Jm{\omega_2} = [1\ \ 1]$.
+
 \section{Equações de Lagrange}
 
-As posições dos centros de massa são
+A energia cinética é uma forma quadrática nas velocidades generalizadas,
 \begin{equation}
-  \ve x_1 = a_1\,\ve e(\theta_1),\qquad
-  \ve x_2 = L_1\,\ve e(\theta_1) + c_2\,\ve e(\theta_1+\varphi+\gamma).
+  \mathcal T = \frac12\sum_{i=1}^{2}\Big( m_i\,\vv{0}{G_i}^{\mathsf T}\vv{0}{G_i} + I_i\,\omega_i^2 \Big)
+             = \frac12\,\dot{\mathbf q}^{\mathsf T}[M(\mathbf q)]\,\dot{\mathbf q},
+  \qquad
+  [M] = \sum_{i=1}^{2}\Big( m_i\,\Jm{G_i}^{\mathsf T}\Jm{G_i} + I_i\,\Jm{\omega_i}^{\mathsf T}\Jm{\omega_i}\Big),
 \end{equation}
-A energia cinética e a energia potencial valem
-\begin{align}
-  \mathcal T &= \tfrac12 m_1 \lVert\dot{\ve x}_1\rVert^2 + \tfrac12 I_1\dot\theta_1^2
-             + \tfrac12 m_2 \lVert\dot{\ve x}_2\rVert^2 + \tfrac12 I_2\big(\dot\theta_1+\dot\varphi\big)^2,\\
-  \mathcal V &= m_1 g\, a_1 \sin\theta_1 + m_2 g\big[L_1\sin\theta_1 + c_2\sin(\theta_1+\varphi+\gamma)\big],
-\end{align}
-com
-$\lVert\dot{\ve x}_2\rVert^2 = L_1^2\dot\theta_1^2 + c_2^2(\dot\theta_1+\dot\varphi)^2
- + 2L_1c_2\cos(\varphi+\gamma)\,\dot\theta_1(\dot\theta_1+\dot\varphi)$.
-As equações de Lagrange,
+e a energia potencial é $\mathcal V = g\,\big(m_1\,{}^0y_{G_1} + m_2\,{}^0y_{G_2}\big)$. As equações
+de Lagrange,
 $\frac{\mathrm d}{\mathrm dt}\frac{\partial\mathcal L}{\partial\dot q_i} - \frac{\partial\mathcal L}{\partial q_i} = \tau_i$
 com $\mathcal L = \mathcal T - \mathcal V$, resultam em
 \begin{equation}
-  \underbrace{\begin{bmatrix} M_{11} & M_{12}\\ M_{12} & M_{22}\end{bmatrix}}_{\ve M(\varphi)}
-  \begin{bmatrix}\ddot\theta_1\\ \ddot\varphi\end{bmatrix}
-  + \begin{bmatrix} -h\,(2\dot\theta_1\dot\varphi + \dot\varphi^2)\\ h\,\dot\theta_1^2\end{bmatrix}
+  \underbrace{\begin{bmatrix} M_{11} & M_{12}\\ M_{12} & M_{22}\end{bmatrix}}_{[M(\theta_2)]}
+  \begin{bmatrix}\ddot\theta_1\\ \ddot\theta_2\end{bmatrix}
+  + \begin{bmatrix} -h\,(2\dot\theta_1\dot\theta_2 + \dot\theta_2^2)\\ h\,\dot\theta_1^2\end{bmatrix}
   + \begin{bmatrix} g_1\\ g_2\end{bmatrix}
   = \begin{bmatrix}\tau_{\mathrm{Q}}\\ \tau_{\mathrm{J}}\end{bmatrix},
   \label{eq:dinamica}
 \end{equation}
 em que $\tau_{\mathrm Q}$ é o torque do atuador do quadril (aplicado pelo tronco na coxa) e
 $\tau_{\mathrm J}$ o do joelho (aplicado pela coxa na perna), ambos positivos no sentido
-anti-horário, e
+anti-horário ($+\mathbf k_0$). Efetuando os produtos matriciais, com as identidades
+$s_1 s_{12} + c_1 c_{12} = c_2$ e $s_1 c_{12} - c_1 s_{12} = -s_2$:
 \begin{align}
-  M_{11} &= I_1 + m_1 a_1^2 + I_2 + m_2\big(L_1^2 + c_2^2 + 2L_1c_2\cos(\varphi+\gamma)\big),\\
-  M_{12} &= I_2 + m_2\big(c_2^2 + L_1c_2\cos(\varphi+\gamma)\big),\qquad
-  M_{22} = I_2 + m_2 c_2^2,\\
-  h &= m_2 L_1 c_2 \sin(\varphi+\gamma),\\
-  g_1 &= (m_1a_1 + m_2L_1)\,g\cos\theta_1 + m_2c_2\,g\cos(\theta_1+\varphi+\gamma),\qquad
-  g_2 = m_2c_2\,g\cos(\theta_1+\varphi+\gamma).
+  M_{11} &= I_1 + m_1 a_1^2 + I_2 + m_2\big[\ell_1^2 + b_x^2 + b_y^2 + 2\ell_1(b_x c_2 - b_y s_2)\big],\\
+  M_{12} &= I_2 + m_2\big[b_x^2 + b_y^2 + \ell_1(b_x c_2 - b_y s_2)\big],\qquad
+  M_{22} = I_2 + m_2\big(b_x^2 + b_y^2\big),\\
+  h &= -\frac{\partial M_{12}}{\partial\theta_2} = m_2\,\ell_1\,(b_x s_2 + b_y c_2),\\
+  g_1 &= (m_1a_1 + m_2\ell_1)\,g\,c_1 + m_2\,g\,(b_x c_{12} - b_y s_{12}),\qquad
+  g_2 = m_2\,g\,(b_x c_{12} - b_y s_{12}).
 \end{align}
-Os termos em $h$ são as parcelas centrípetas e de Coriolis, e $g_1$ e $g_2$ as gravitacionais.
-Como as trajetórias são impostas, este é um problema de \emph{dinâmica inversa}: basta
-avaliar \eqref{eq:dinamica} ao longo de $q(t)$, $\dot q(t)$ e $\ddot q(t)$.
+Os termos em $h$ são as parcelas centrípetas e de Coriolis, e $g_1$ e $g_2$ as gravitacionais
+($g_i = \partial\mathcal V/\partial q_i$). Como as trajetórias são impostas, este é um problema de
+\emph{dinâmica inversa}: basta avaliar \eqref{eq:dinamica} ao longo de $\mathbf q(t)$,
+$\dot{\mathbf q}(t)$ e $\ddot{\mathbf q}(t)$.
 
 \section{Verificação}
 
 A dedução de \eqref{eq:dinamica} foi conferida de duas formas independentes:
 \begin{enumerate}
-  \item \textbf{simbólica}: o programa deriva $\mathcal L$ com o SymPy e aplica as
-  equações de Lagrange, reproduzindo termo a termo as expressões acima;
-  \item \textbf{Newton--Euler}: equilíbrio dinâmico de forças e momentos de cada elo,
-  calculado em um estado aleatório $(q,\dot q,\ddot q)$. Resultados: $\tau_{\mathrm Q} = \neLq$
+  \item \textbf{simbólica}: o programa monta $\Tm{0}{1}\,\Tm{1}{2}$ com o SymPy, obtém
+  $\rv{0}{G_i}$, deriva $\mathcal L$ e aplica as equações de Lagrange, reproduzindo termo a termo
+  as expressões acima;
+  \item \textbf{Newton--Euler}: equilíbrio dinâmico de forças e momentos de cada elo, com
+  os momentos calculados pelo produto vetorial na forma matricial,
+  $\mathbf M = \tilde{\mathbf r}\,\mathbf F$, em um estado aleatório $(\mathbf q,\dot{\mathbf q},\ddot{\mathbf q})$. Resultados: $\tau_{\mathrm Q} = \neLq$
   (Lagrange) contra $\neNq$~N\,m (Newton--Euler), e $\tau_{\mathrm J} = \neLj$ contra
   $\neNj$~N\,m, com concordância na precisão da máquina.
 \end{enumerate}
-Além disso, em repouso ($\dot q = \ddot q = 0$) na configuração inicial, $\theta_1 = \theta_2 = -\pi/2$,
-os torques se anulam exceto pela pequena parcela devida a $b_y \neq 0$ (o pé à frente do
-tornozelo), como é fisicamente esperado.
+Além disso, em repouso ($\dot{\mathbf q} = \ddot{\mathbf q} = \mathbf 0$) na configuração inicial,
+$\theta_1 = -\pi/2$ e $\theta_2 = 0$, tem-se $c_1 = 0$, $c_{12} = 0$ e $s_{12} = -1$, logo
+$\tau_{\mathrm Q} = \tau_{\mathrm J} = m_2\,g\,b_y$: o único torque vem do pé à frente do
+tornozelo, como é fisicamente esperado.
 
 \chapter{Resultados da simulação}\label{cap:resultados2}
 
 \section{Cinemática}
 
 As \cref{fig:cinI,fig:cinII} mostram as orientações, as velocidades e as acelerações
-angulares da coxa ($\theta_1$), da perna ($\theta_2$) e relativas do joelho ($\varphi$)
+angulares da coxa ($\theta_1$), da perna ($\theta_1+\theta_2$) e relativas do joelho ($\theta_2$)
 durante o ciclo, e a \cref{fig:estrobo} mostra instantâneos do movimento de ida. Os
 valores extremos (\cref{tab:cinematica}) coincidem com as expressões analíticas
 \eqref{eq:picos}: por exemplo, no joelho em final~I,
-$\dot\varphi_{\max} = \frac{15}{8}\cdot\frac{120}{2} = \SI{112,5}{\degree\per\s}$.
+$|\dot\theta_2|_{\max} = \frac{15}{8}\cdot\frac{120}{2} = \SI{112,5}{\degree\per\s}$.
 
 \begin{table}[htbp]
   \centering
@@ -844,12 +1068,12 @@ $P = \tau\,\dot q$.
 \begin{itemize}
   \item Na \textbf{configuração final~I}, o esforço concentra-se no joelho
   (\tjImax~N\,m): a perna e o pé, com braço de alavanca crescente à medida que a perna se
-  aproxima da horizontal ($\theta_2 \approx \SI{-180}{\degree}$), exigem torque para vencer o
+  aproxima da horizontal ($\theta_1+\theta_2 \approx \SI{-180}{\degree}$), exigem torque para vencer o
   peso. O quadril move-se apenas \SI{10}{\degree} e seu torque é pequeno.
   \item Na \textbf{configuração final~II}, o quadril é crítico (\tqIImax~N\,m), pois precisa
   sustentar a coxa na horizontal com a perna pendente: toda a massa do membro e da
   órtese tem braço de alavanca máximo. O joelho quase não trabalha, pois a perna
-  permanece aproximadamente vertical ($\theta_2$ varia de \SI{-90}{\degree} a
+  permanece aproximadamente vertical ($\theta_1+\theta_2$ varia de \SI{-90}{\degree} a
   \SI{-99,8}{\degree}).
   \item Em ambos os casos a \textbf{parcela gravitacional domina}: no atuador mais
   solicitado de cada configuração (joelho em final~I, quadril em final~II), as parcelas
@@ -977,16 +1201,21 @@ Todos os programas estão na pasta \texttt{scripts/} e são executados pelo \tex
   \item[\texttt{gera\_valores\_tex.py}] exporta os resultados para \texttt{dados/valores.tex}.
 \end{description}
 
-Trecho central da Parte II (dinâmica inversa):
+Trecho central da Parte II -- cinemática pelo método matricial e dinâmica inversa:
 \begin{lstlisting}[language=Python]
-M11 = I1 + m1*a1**2 + I2 + m2*(L1**2 + c2**2 + 2*L1*c2*cos(ph + gam))
-M12 = I2 + m2*(c2**2 + L1*c2*cos(ph + gam))
-M22 = I2 + m2*c2**2
-h   = m2*L1*c2*sin(ph + gam)
-g1  = (m1*a1 + m2*L1)*G*cos(th1) + m2*c2*G*cos(th1 + ph + gam)
-g2  = m2*c2*G*cos(th1 + ph + gam)
-tau_quadril = M11*dd_th1 + M12*dd_ph - h*(2*d_th1*d_ph + d_ph**2) + g1
-tau_joelho  = M12*dd_th1 + M22*dd_ph + h*d_th1**2 + g2
+T01 = T_hom(th1, 0, 0)            # 0T1 = [Rot(theta1, z1) | 0]
+T12 = T_hom(th2, l1, 0)           # 1T2 = [Rot(theta2, z2) | (l1, 0)]
+rG2 = T01 @ T12 @ [bx, by, 1]     # [0rG2; 1] = 0T1 1T2 [2rG2; 1]
+
+k   = bx*c2 - by*s2
+M11 = I1 + m1*a1**2 + I2 + m2*(l1**2 + bx**2 + by**2 + 2*l1*k)
+M12 = I2 + m2*(bx**2 + by**2 + l1*k)
+M22 = I2 + m2*(bx**2 + by**2)
+h   = m2*l1*(bx*s2 + by*c2)
+g2  = m2*G*(bx*c12 - by*s12)
+g1  = (m1*a1 + m2*l1)*G*c1 + g2
+tau_quadril = M11*dd_th1 + M12*dd_th2 - h*(2*d_th1*d_th2 + d_th2**2) + g1
+tau_joelho  = M12*dd_th1 + M22*dd_th2 + h*d_th1**2 + g2
 \end{lstlisting}
 
 \end{document}
