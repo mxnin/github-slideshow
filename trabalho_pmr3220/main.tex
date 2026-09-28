@@ -188,6 +188,28 @@ convenções são:
   $\tilde{\mathbf a} = \begin{bmatrix} 0 & -a_z & a_y\\ a_z & 0 & -a_x\\ -a_y & a_x & 0\end{bmatrix}$.
 \end{itemize}
 
+\section{Objetivos e organização do relatório}
+
+O objetivo geral é aplicar as ferramentas de análise e síntese de mecanismos da
+disciplina a um problema de engenharia de reabilitação: substituir (prótese) ou
+auxiliar (órtese) o movimento do membro inferior. Os objetivos específicos são:
+\begin{enumerate}[label=(\alph*)]
+  \item descrever o movimento relativo perna--coxa e dimensionar um quadrilátero
+  articulado que o reproduza (Parte~I);
+  \item gerar, por interpolação polinomial, trajetórias suaves para um ciclo de
+  movimento do membro com órtese e obter as orientações, velocidades e acelerações
+  angulares dos elos (Parte~II);
+  \item calcular os torques que os atuadores do quadril e do joelho precisam fornecer,
+  com massas e inércias obtidas de dados antropométricos e dos materiais da órtese,
+  e verificar a estrutura da órtese (Parte~II).
+\end{enumerate}
+A Parte~I ocupa os \cref{cap:teoria1,cap:metodos1,cap:resultados1,cap:maquete}: a
+fundamentação e a formulação matemática da síntese, o protocolo de medição, os
+resultados e a maquete. A Parte~II ocupa os \cref{cap:cinematica,cap:parametros,cap:dinamica,cap:resultados2,cap:dimensionamento}:
+a cinemática, os parâmetros de massa, a dinâmica, os resultados e o dimensionamento.
+Em todas as deduções, cada passo intermediário é mostrado, de modo que o leitor possa
+reproduzir os resultados à mão.
+
 Todos os cálculos foram implementados em Python (NumPy, SciPy, SymPy e Matplotlib); os
 códigos estão na pasta \texttt{scripts/} e são descritos no \cref{ap:codigo}. Os
 valores numéricos citados no texto são lidos automaticamente dos resultados
@@ -284,8 +306,16 @@ As transformações homogêneas \eqref{eq:homogenea} de cada elo são
   \Tm{0}{3} = \left[\begin{array}{cc|c} c_3 & -s_3 & {}^0x_L\\ s_3 & c_3 & {}^0y_L\\ \hline 0 & 0 & 1\end{array}\right],
 \end{equation}
 com $\rv{2}{N} = [\ell_2\ \ 0]^{\mathsf T}$ e $\rv{3}{N} = [\ell_3\ \ 0]^{\mathsf T}$. O ponto $N$ pertence
-simultaneamente ao ramo $0\text{--}1\text{--}2$ e ao ramo $0\text{--}3$ da cadeia; a
-\emph{equação de fechamento} é
+simultaneamente ao ramo $0\text{--}1\text{--}2$ e ao ramo $0\text{--}3$ da cadeia. Pelo ramo
+$0\text{--}1\text{--}2$, multiplica-se primeiro o ponto pela matriz mais à direita:
+\begin{equation*}
+  \Tm{1}{2}\hmg{\rv{2}{N}} = \begin{bmatrix} \ell_2 c_2 + \ell_1 \\ \ell_2 s_2 \\ 1\end{bmatrix},
+  \qquad
+  \Tm{0}{1}\begin{bmatrix} \ell_2 c_2 + \ell_1 \\ \ell_2 s_2 \\ 1\end{bmatrix}
+  = \begin{bmatrix} {}^0x_C + \ell_1 c_1 + \ell_2(c_1c_2 - s_1s_2) \\ {}^0y_C + \ell_1 s_1 + \ell_2(s_1c_2 + c_1s_2) \\ 1\end{bmatrix},
+\end{equation*}
+e as identidades $c_1c_2 - s_1s_2 = c_{12}$ e $s_1c_2 + c_1s_2 = s_{12}$ simplificam o resultado.
+Igualando ao ramo $0\text{--}3$, obtém-se a \emph{equação de fechamento}
 \begin{equation}
   \hmg{\rv{0}{N}} = \Tm{0}{1}\,\Tm{1}{2}\hmg{\rv{2}{N}} = \Tm{0}{3}\hmg{\rv{3}{N}}
   \;\Longrightarrow\;
@@ -295,8 +325,15 @@ simultaneamente ao ramo $0\text{--}1\text{--}2$ e ao ramo $0\text{--}3$ da cadei
 \end{equation}
 Na prótese, a variável de entrada é a orientação da perna, $\psi = \theta_1 + \theta_2$
 (ângulo de $X_2$ em relação a $X_0$), e as incógnitas são $\mathbf q = [\theta_1\ \ \theta_3]^{\mathsf T}$.
-Escrevendo \eqref{eq:fechamento} como $\mathbf f(\mathbf q) = \mathbf 0$, a solução é obtida pelo
-método de Newton--Raphson,
+Passando todos os termos de \eqref{eq:fechamento} para um lado, com $c_{12} = \cos\psi$ e
+$s_{12} = \sen\psi$ conhecidos,
+\begin{equation*}
+  \mathbf f(\mathbf q) =
+  \begin{bmatrix} {}^0x_C + \ell_1 c_1 + \ell_2\cos\psi - {}^0x_L - \ell_3 c_3 \\
+                  {}^0y_C + \ell_1 s_1 + \ell_2\sen\psi - {}^0y_L - \ell_3 s_3 \end{bmatrix} = \mathbf 0 ,
+\end{equation*}
+cujas derivadas parciais em relação a $\theta_1$ e $\theta_3$ formam a matriz jacobiana. A
+solução é obtida pelo método de Newton--Raphson,
 \begin{equation}
   \mathbf q^{(i+1)} = \mathbf q^{(i)} - [J]^{-1}\,\mathbf f\big(\mathbf q^{(i)}\big),
   \qquad
@@ -346,9 +383,15 @@ $\rv{4}{Q}$ (constante). Os \emph{pontos homólogos} de $Q$ nas três posições
   \label{eq:homologos}
 \end{equation}
 Como $Q$ percorre uma circunferência de centro $C$, vale
-$\big\lVert \rv{0}{Q}^{(j)} - \rv{0}{C}\big\rVert = \ell_1$ para $j=1,2,3$. Subtraindo a equação $j=1$
-das demais, eliminam-se $\ell_1$ e os termos quadráticos em $\rv{0}{C}$, restando o sistema
-linear das mediatrizes:
+$\big\lVert \rv{0}{Q}^{(j)} - \rv{0}{C}\big\rVert = \ell_1$ para $j=1,2,3$. Elevando ao quadrado e
+expandindo o produto escalar,
+\begin{equation*}
+  \rv{0}{Q}^{(j)\mathsf T}\rv{0}{Q}^{(j)} - 2\,\rv{0}{Q}^{(j)\mathsf T}\rv{0}{C} + \rv{0}{C}^{\mathsf T}\rv{0}{C} = \ell_1^2,
+  \qquad j = 1,2,3 .
+\end{equation*}
+As incógnitas são $\rv{0}{C}$ (duas componentes) e $\ell_1$. Subtraindo a equação $j=1$ das
+equações $j=2$ e $j=3$, os termos $\ell_1^2$ e $\rv{0}{C}^{\mathsf T}\rv{0}{C}$ desaparecem, e resta
+um sistema \emph{linear} $2\times2$ (as mediatrizes dos segmentos $Q^{(1)}Q^{(2)}$ e $Q^{(1)}Q^{(3)}$):
 \begin{equation}
   2\begin{bmatrix} \big(\rv{0}{Q}^{(2)} - \rv{0}{Q}^{(1)}\big)^{\mathsf T} \\[2pt] \big(\rv{0}{Q}^{(3)} - \rv{0}{Q}^{(1)}\big)^{\mathsf T} \end{bmatrix}\rv{0}{C}
   = \begin{bmatrix} \rv{0}{Q}^{(2)\mathsf T}\rv{0}{Q}^{(2)} - \rv{0}{Q}^{(1)\mathsf T}\rv{0}{Q}^{(1)} \\[2pt]
@@ -427,10 +470,20 @@ qualquer marcador $X$ na base da coxa são
 \paragraph{Pose da perna (problema de Procrustes plano).} Sejam $\rv{4}{k}$ as coordenadas
 dos marcadores da perna ($k \in \{$CF, TT, ML$\}$) na base $4$, obtidas na foto com o joelho
 estendido (quando as bases $0$ e $4$ coincidem), e $\rv{0}{k}$ suas coordenadas na foto $j$.
-A pose $\Tm{0}{4}^{(j)}$ é a que minimiza
-$\sum_k \big\lVert \Rot{\alpha_j}{z_4}\,\rv{4}{k} + \rv{0}{O_4}^{(j)} - \rv{0}{k}\big\rVert^2$. Com as
-coordenadas centradas $\mathbf u_k = \rv{4}{k} - \overline{\rv{4}{}}$ e $\mathbf x_k = \rv{0}{k} - \overline{\rv{0}{}}$
-(a barra indica média sobre os marcadores), a solução é
+A pose $\Tm{0}{4}^{(j)}$ é a que minimiza, por mínimos quadrados,
+\begin{equation*}
+  E(\alpha_j, \rv{0}{O_4}) = \sum_k \big\lVert \Rot{\alpha_j}{z_4}\,\rv{4}{k} + \rv{0}{O_4} - \rv{0}{k}\big\rVert^2 .
+\end{equation*}
+\emph{1º passo (translação).} Fazendo $\partial E/\partial\rv{0}{O_4} = \mathbf 0$, obtém-se
+$\rv{0}{O_4} = \overline{\rv{0}{}} - \Rot{\alpha_j}{z_4}\,\overline{\rv{4}{}}$, em que a barra indica média
+sobre os marcadores. \emph{2º passo (rotação).} Substituindo esse resultado e usando as
+coordenadas centradas $\mathbf u_k = \rv{4}{k} - \overline{\rv{4}{}}$ e $\mathbf x_k = \rv{0}{k} - \overline{\rv{0}{}}$,
+minimizar $E$ equivale a maximizar
+\begin{equation*}
+  \sum_k \mathbf x_k^{\mathsf T}\Rot{\alpha_j}{z_4}\,\mathbf u_k
+  = \cos\alpha_j \sum_k \big(u_x x_x + u_y x_y\big) + \sen\alpha_j \sum_k \big(u_x x_y - u_y x_x\big),
+\end{equation*}
+e anulando a derivada em relação a $\alpha_j$ chega-se a
 \begin{equation}
   \alpha_j = \operatorname{atan2}\Big(\textstyle\sum_k \mathbf k\cdot(\tilde{\mathbf u}_k\,\mathbf x_k),\;
                                \sum_k \mathbf u_k^{\mathsf T}\mathbf x_k\Big),
@@ -764,12 +817,20 @@ com $\Delta q = q_f - q_0$. Com o tempo normalizado $\tau = t/T\in[0,1]$:
   \dot q(t) &= \frac{\Delta q}{T}\,30\tau^2\big(1-\tau\big)^2, \\
   \ddot q(t) &= \frac{\Delta q}{T^2}\,60\tau\big(1-\tau\big)\big(1-2\tau\big).
 \end{align}
-Os valores extremos são
+Os valores extremos são obtidos anulando as derivadas. A velocidade é máxima onde
+$\ddot q = 0$ no interior do intervalo, isto é, em $\tau = \tfrac12$, e vale
+$30\cdot\tfrac14\cdot\tfrac14 = \tfrac{15}{8}$ vezes $\Delta q/T$. A aceleração é extrema onde
+$\mathrm d\ddot q/\mathrm d\tau \propto 1 - 6\tau + 6\tau^2 = 0$, ou seja,
+$\tau = \tfrac12 \mp \tfrac{\sqrt3}{6}$; nesses pontos $\tau(1-\tau) = \tfrac16$ e
+$1 - 2\tau = \pm\tfrac{\sqrt3}{3}$, de modo que
 \begin{equation}
   \dot q_{\max} = \frac{15}{8}\frac{\Delta q}{T}\ \ (\tau=\tfrac12),\qquad
-  |\ddot q|_{\max} = \frac{10\sqrt3}{3}\frac{|\Delta q|}{T^2}\ \ \Big(\tau = \tfrac12 \mp \tfrac{\sqrt3}{6}\Big).
+  |\ddot q|_{\max} = 60\cdot\frac16\cdot\frac{\sqrt3}{3}\,\frac{|\Delta q|}{T^2} = \frac{10\sqrt3}{3}\frac{|\Delta q|}{T^2}\ \ \Big(\tau = \tfrac12 \mp \tfrac{\sqrt3}{6}\Big).
   \label{eq:picos}
 \end{equation}
+\emph{Exemplo:} para o joelho na configuração final~I, $\Delta q = \SI{120}{\degree}$ e $T = \SI{2}{s}$
+fornecem $\dot q_{\max} = \tfrac{15}{8}\cdot\tfrac{120}{2} = \SI{112,5}{\degree\per\s}$ e
+$|\ddot q|_{\max} = 5{,}774\cdot\tfrac{120}{4} = \SI{173,2}{\degree\per\s\squared}$.
 A quíntica garante aceleração contínua e nula nas extremidades, portanto torque sem
 descontinuidades e sem excitação de modos flexíveis -- vantagem sobre o polinômio
 cúbico, cuja aceleração salta no início e no fim \cite{craig2005,siciliano2009}.
@@ -812,7 +873,10 @@ $\ell_1 = \SI{0,40}{m}$ é $H = \ell_1/0{,}245 \approx \SI{1,63}{m}$ \cite{drill
   \end{tabular}
 \end{table}
 
-Para cada segmento, o momento de inércia baricêntrico é $I = m(\rho\,L)^2$.
+Para cada segmento, o momento de inércia baricêntrico é $I = m(\rho\,L)^2$. Para
+$M = \SI{80}{kg}$, por exemplo, a coxa tem $m = 0{,}100\cdot 80 = \SI{8,0}{kg}$, CM a
+$0{,}433\cdot 0{,}40 = \SI{0,173}{m}$ do quadril e $I = 8{,}0\,(0{,}323\cdot 0{,}40)^2 = \SI{0,134}{kg.m^2}$;
+a perna tem \SI{3,72}{kg} e o pé, \SI{1,16}{kg}.
 
 \section{Seleção de materiais da órtese}
 
@@ -928,8 +992,12 @@ A energia cinética é uma forma quadrática nas velocidades generalizadas,
   \qquad
   [M] = \sum_{i=1}^{2}\Big( m_i\,\Jm{G_i}^{\mathsf T}\Jm{G_i} + I_i\,\Jm{\omega_i}^{\mathsf T}\Jm{\omega_i}\Big),
 \end{equation}
-e a energia potencial é $\mathcal V = g\,\big(m_1\,{}^0y_{G_1} + m_2\,{}^0y_{G_2}\big)$. As equações
-de Lagrange,
+e a energia potencial, com as componentes $y$ obtidas acima, é
+\begin{equation*}
+  \mathcal V = g\,\big(m_1\,{}^0y_{G_1} + m_2\,{}^0y_{G_2}\big)
+             = g\,\big[m_1 a_1 s_1 + m_2\,(\ell_1 s_1 + b_x s_{12} + b_y c_{12})\big].
+\end{equation*}
+As equações de Lagrange,
 $\frac{\mathrm d}{\mathrm dt}\frac{\partial\mathcal L}{\partial\dot q_i} - \frac{\partial\mathcal L}{\partial q_i} = \tau_i$
 com $\mathcal L = \mathcal T - \mathcal V$, resultam em
 \begin{equation}
@@ -952,8 +1020,21 @@ $s_1 s_{12} + c_1 c_{12} = c_2$ e $s_1 c_{12} - c_1 s_{12} = -s_2$:
   g_1 &= (m_1a_1 + m_2\ell_1)\,g\,c_1 + m_2\,g\,(b_x c_{12} - b_y s_{12}),\qquad
   g_2 = m_2\,g\,(b_x c_{12} - b_y s_{12}).
 \end{align}
-Os termos em $h$ são as parcelas centrípetas e de Coriolis, e $g_1$ e $g_2$ as gravitacionais
-($g_i = \partial\mathcal V/\partial q_i$). Como as trajetórias são impostas, este é um problema de
+\paragraph{Dedução dos termos de velocidade.} Como $[M]$ depende apenas de $\theta_2$,
+$\partial\mathcal T/\partial\theta_1 = 0$ e, de $M_{11}$ e $M_{12}$ acima,
+$\partial M_{11}/\partial\theta_2 = -2h$ e $\partial M_{12}/\partial\theta_2 = -h$. Assim:
+\begin{itemize}
+  \item para $q_1 = \theta_1$: $\frac{\mathrm d}{\mathrm dt}(M_{11}\dot\theta_1 + M_{12}\dot\theta_2)
+  = M_{11}\ddot\theta_1 + M_{12}\ddot\theta_2 + \dot M_{11}\dot\theta_1 + \dot M_{12}\dot\theta_2$, com
+  $\dot M_{11} = -2h\dot\theta_2$ e $\dot M_{12} = -h\dot\theta_2$, o que gera o termo
+  $-h(2\dot\theta_1\dot\theta_2 + \dot\theta_2^2)$;
+  \item para $q_2 = \theta_2$: $\frac{\mathrm d}{\mathrm dt}(M_{12}\dot\theta_1 + M_{22}\dot\theta_2)
+  - \frac12\,\dot{\mathbf q}^{\mathsf T}\frac{\partial[M]}{\partial\theta_2}\dot{\mathbf q}$ gera
+  $-h\dot\theta_1\dot\theta_2 - \frac12(-2h\dot\theta_1^2 - 2h\dot\theta_1\dot\theta_2) = h\dot\theta_1^2$.
+\end{itemize}
+Os termos em $h$ são as parcelas centrípetas e de Coriolis. Os termos gravitacionais são
+$g_i = \partial\mathcal V/\partial q_i$: derivando $\mathcal V$ em relação a $\theta_1$ e a $\theta_2$
+obtêm-se exatamente $g_1$ e $g_2$ acima. Como as trajetórias são impostas, este é um problema de
 \emph{dinâmica inversa}: basta avaliar \eqref{eq:dinamica} ao longo de $\mathbf q(t)$,
 $\dot{\mathbf q}(t)$ e $\ddot{\mathbf q}(t)$.
 
@@ -966,7 +1047,18 @@ A dedução de \eqref{eq:dinamica} foi conferida de duas formas independentes:
   as expressões acima;
   \item \textbf{Newton--Euler}: equilíbrio dinâmico de forças e momentos de cada elo, com
   os momentos calculados pelo produto vetorial na forma matricial,
-  $\mathbf M = \tilde{\mathbf r}\,\mathbf F$, em um estado aleatório $(\mathbf q,\dot{\mathbf q},\ddot{\mathbf q})$. Resultados: $\tau_{\mathrm Q} = \neLq$
+  $\mathbf M = \tilde{\mathbf r}\,\mathbf F$. Para o elo~2 (força $\mathbf F_O$ aplicada pela coxa em $O$) e
+  para o elo~1 (força $\mathbf F_D$ aplicada pelo tronco em $D$):
+  \begin{align*}
+    \mathbf F_O &= m_2(\mathbf a_{G_2} - \mathbf g), &
+    \tau_{\mathrm J} &= I_2\alpha_2 - \big[\widetilde{(\mathbf r_O - \mathbf r_{G_2})}\,\mathbf F_O\big]_z,\\
+    \mathbf F_D &= m_1(\mathbf a_{G_1} - \mathbf g) + \mathbf F_O, &
+    \tau_{\mathrm Q} &= I_1\alpha_1 + \tau_{\mathrm J} - \big[\widetilde{(\mathbf r_D - \mathbf r_{G_1})}\,\mathbf F_D\big]_z
+                        + \big[\widetilde{(\mathbf r_O - \mathbf r_{G_1})}\,\mathbf F_O\big]_z,
+  \end{align*}
+  com as acelerações dadas por $\mathbf a_B = \mathbf a_A + \tilde{\boldsymbol\alpha}\,\mathbf r_{AB}
+  + \tilde{\boldsymbol\omega}\tilde{\boldsymbol\omega}\,\mathbf r_{AB}$, avaliadas em um estado aleatório
+  $(\mathbf q,\dot{\mathbf q},\ddot{\mathbf q})$. Resultados: $\tau_{\mathrm Q} = \neLq$
   (Lagrange) contra $\neNq$~N\,m (Newton--Euler), e $\tau_{\mathrm J} = \neLj$ contra
   $\neNj$~N\,m, com concordância na precisão da máquina.
 \end{enumerate}
@@ -1124,8 +1216,13 @@ $\eta = 0{,}70$, o motor deve fornecer
 \begin{equation}
   \tau_m = \frac{\tau_{\mathrm{saída}}}{N\eta},\qquad \omega_m = N\,\omega_{\mathrm{saída}},
 \end{equation}
-ou seja, cerca de \SI{0,29}{N.m} a \SI{1900}{rpm} no joelho e \SI{0,86}{N.m} a
-\SI{1600}{rpm} no quadril. Essa faixa é atendida por motores CC sem escovas de 70 a
+ou seja:
+\begin{align*}
+  \text{joelho:}\quad & \tau_m = \frac{20}{100\cdot 0{,}70} = \SI{0,29}{N.m},\qquad
+     \omega_m = 100\cdot 2{,}0 = \SI{200}{rad/s} \approx \SI{1900}{rpm};\\
+  \text{quadril:}\quad & \tau_m = \frac{60}{100\cdot 0{,}70} = \SI{0,86}{N.m},\qquad
+     \omega_m = 100\cdot 1{,}6 = \SI{160}{rad/s} \approx \SI{1530}{rpm}.
+\end{align*} Essa faixa é atendida por motores CC sem escovas de 70 a
 \SI{150}{W}, compatíveis com a massa de \SI{1,2}{kg} adotada para o atuador do joelho. O
 torque RMS, bem menor que o de pico, deve ser comparado ao torque contínuo do motor.
 
@@ -1142,6 +1239,10 @@ critério de Goodman modificado \cite{shigley2015}:
 \begin{equation}
   \frac{\sigma_a}{S_e} + \frac{\sigma_m}{S_u} = \frac{1}{n_f}.
 \end{equation}
+Com $W = 5\cdot 20^2/6 = \SI{333}{mm^3}$, para a haste da perna,
+$\sigma = 13{,}5/(2\cdot 333\times10^{-9}) = \SI{20,3}{MPa}$, $n_y = 276/20{,}3 = 13{,}6$ e
+$1/n_f = 10{,}1/96{,}5 + 10{,}1/310 = 0{,}137$, isto é, $n_f = 7{,}3$. O mesmo cálculo para a
+haste da coxa ($M_f = \SI{40,0}{N.m}$) está na \cref{tab:estrutural}.
 
 \begin{table}[htbp]
   \centering
