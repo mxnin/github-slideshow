@@ -659,8 +659,8 @@ A busca combina amostragem aleatória (3000 candidatos) e refinamento por Nelder
 \subsection{Mecanismo sintetizado}
 
 A otimização convergiu para os pivôs da \cref{tab:pivos}. Os pivôs fixos $C$ e $L$ ficam
-logo abaixo dos marcadores 3 e 4, na região da articulação do joelho, e os pivôs
-móveis $Q$ e $N$ ficam sobre a perna.
+cerca de \SI{25}{mm} abaixo dos marcadores 3 e 4, na região da articulação do joelho, e
+os pivôs móveis $Q$ e $N$ ficam na extremidade superior da perna.
 
 \begin{table}[htbp]
   \centering
@@ -712,9 +712,10 @@ trajetória do tornozelo.
 
 \subsection{Discussão}
 
-O ângulo de transmissão mínimo ocorre na flexão máxima e fica no limite de
-\SI{30}{\degree} imposto na otimização, o que indica que a restrição está ativa: exigir
-um $\mu$ maior aumentaria o erro na posição de verificação. O polo parte de
+O ângulo de transmissão permanece acima de \mumin\si{\degree} em toda a faixa, com
+folga em relação ao limite de \SI{30}{\degree} imposto na otimização, de modo que a
+transmissão de forças é boa em todas as posições. Os elos resultaram compactos (entre
+\rCL{} e \rLN~mm), compatíveis com o volume disponível na região do joelho. O polo parte de
 $(\ciOx;\ \ciOy)$~mm na extensão e migra posteriormente até $(\ciFx;\ \ciFy)$~mm na
 flexão máxima, comportamento qualitativamente semelhante à centroide em ``J'' descrita
 por \textcite{oconnor1989}. Como as medições têm resíduo de até \resmax~mm, o
@@ -1388,8 +1389,8 @@ ou a substituição pelo compósito de carbono da \cref{tab:materiais}.
   base da coxa e ajustadas como movimento de corpo rígido, fornecendo quatro poses da
   perna entre \SI{0}{\degree} e \phiD\si{\degree} de flexão. A síntese por três posições
   de precisão, formulada como cálculo de circuncentros dos pontos homólogos e com a
-  escolha dos pivôs móveis por otimização, produziu um quadrilátero (elos de \rCL{} a
-  \rQN~mm) que passa pelas três posições de precisão e erra a posição de verificação em
+  escolha dos pivôs móveis por otimização, produziu um quadrilátero compacto (elos de \rCL{} a
+  \rLN~mm) que passa pelas três posições de precisão e erra a posição de verificação em
   apenas \errcheque~mm no tornozelo, menos que a incerteza das próprias medições. O
   mecanismo percorre toda a faixa medida sem pontos mortos, com $\mu \ge \mumin\si{\degree}$.
   \item \textbf{Parte II}: a interpolação quíntica fornece trajetórias suaves, com
