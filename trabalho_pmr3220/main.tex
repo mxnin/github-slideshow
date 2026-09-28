@@ -92,7 +92,7 @@
   \vspace{0.3cm}
   {\bfseries Prótese e órtese de membro inferior\par}
   \vspace{0.8cm}
-  \includegraphics[width=4.2cm]{figuras/rasc_p1_0.png}\par
+  \includegraphics[width=4.2cm]{figuras/logo_poli_usp.png}\par
   \vfill
   {\large\bfseries São Paulo, 7 de outubro de 2026\par}
 \end{titlepage}
@@ -218,28 +218,6 @@ convenções são:
   \item produto vetorial na forma matricial: $\mathbf a \times \mathbf b = \tilde{\mathbf a}\,\mathbf b$, com
   $\tilde{\mathbf a} = \begin{bmatrix} 0 & -a_z & a_y\\ a_z & 0 & -a_x\\ -a_y & a_x & 0\end{bmatrix}$.
 \end{itemize}
-
-\section{Objetivos e organização do relatório}
-
-O objetivo geral é aplicar as ferramentas de análise e síntese de mecanismos da
-disciplina a um problema de engenharia de reabilitação: substituir (prótese) ou
-auxiliar (órtese) o movimento do membro inferior. Os objetivos específicos são:
-\begin{enumerate}[label=(\alph*)]
-  \item descrever o movimento relativo perna--coxa e dimensionar um quadrilátero
-  articulado que o reproduza (Parte~I);
-  \item gerar, por interpolação polinomial, trajetórias suaves para um ciclo de
-  movimento do membro com órtese e obter as orientações, velocidades e acelerações
-  angulares dos elos (Parte~II);
-  \item calcular os torques que os atuadores do quadril e do joelho precisam fornecer,
-  com massas e inércias obtidas de dados antropométricos e dos materiais da órtese,
-  e verificar a estrutura da órtese (Parte~II).
-\end{enumerate}
-A Parte~I ocupa os \cref{cap:teoria1,cap:metodos1,cap:resultados1,cap:maquete}: a
-fundamentação e a formulação matemática da síntese, o protocolo de medição, os
-resultados e a maquete. A Parte~II ocupa os \cref{cap:cinematica,cap:parametros,cap:dinamica,cap:resultados2,cap:dimensionamento}:
-a cinemática, os parâmetros de massa, a dinâmica, os resultados e o dimensionamento.
-Em todas as deduções, cada passo intermediário é mostrado, de modo que o leitor possa
-reproduzir os resultados à mão.
 
 \subsection{Quadrilátero articulado e o joelho policêntrico}
 
@@ -915,6 +893,7 @@ do joelho no sentido horário ($\theta_2<0$):
   \centering
   \caption{Configurações extremas do ciclo.}
   \label{tab:config}
+  \small
   \begin{tabular}{lrrrl}
     \toprule
     Configuração & $\theta_1$ (\si{\degree}) & $\theta_2$ (\si{\degree}) & $\theta_1+\theta_2$ (\si{\degree}) & Movimento \\
@@ -1071,11 +1050,11 @@ móvel; o do joelho tem o estator fixo na coxa.
 
 Cada elo $i$ é um corpo rígido composto. Para componentes de massa $m_k$, centro de massa
 $\rv{i}{k}$ (escrito na base do próprio elo, onde é constante) e inércia própria $I_k$:
-\begin{equation}
+\begin{gather}
   m_i = \sum_k m_k,\qquad
-  \rv{i}{G_i} = \frac{1}{m_i}\sum_k m_k\,\rv{i}{k},\qquad
+  \rv{i}{G_i} = \frac{1}{m_i}\sum_k m_k\,\rv{i}{k},\\
   I_i = \sum_k \Big[I_k + m_k \big(\rv{i}{k} - \rv{i}{G_i}\big)^{\mathsf T}\big(\rv{i}{k} - \rv{i}{G_i}\big)\Big] \quad\text{(Steiner)}.
-\end{equation}
+\end{gather}
 Os centros de massa resultantes são $\rv{1}{G_1} = [a_1\ \ 0]^{\mathsf T}$ (sobre o eixo $X_1$) e
 $\rv{2}{G_2} = [b_x\ \ b_y]^{\mathsf T}$: o elo~2 tem o CM fora do eixo $X_2$, deslocado no sentido do pé.
 
@@ -1121,12 +1100,12 @@ $\Jm{\omega_1} = [1\ \ 0]$ e $\Jm{\omega_2} = [1\ \ 1]$.
 \subsection{Equações de Lagrange}
 
 A energia cinética é uma forma quadrática nas velocidades generalizadas,
-\begin{equation}
+\begin{gather}
   \mathcal T = \frac12\sum_{i=1}^{2}\Big( m_i\,\vv{0}{G_i}^{\mathsf T}\vv{0}{G_i} + I_i\,\omega_i^2 \Big)
              = \frac12\,\dot{\mathbf q}^{\mathsf T}[M(\mathbf q)]\,\dot{\mathbf q},
-  \qquad
+  \\
   [M] = \sum_{i=1}^{2}\Big( m_i\,\Jm{G_i}^{\mathsf T}\Jm{G_i} + I_i\,\Jm{\omega_i}^{\mathsf T}\Jm{\omega_i}\Big),
-\end{equation}
+\end{gather}
 e a energia potencial, com as componentes $y$ obtidas acima, é
 \begin{equation*}
   \mathcal V = g\,\big(m_1\,{}^0y_{G_1} + m_2\,{}^0y_{G_2}\big)
