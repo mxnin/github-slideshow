@@ -200,8 +200,11 @@ def otimiza(poses, prec, cheque, P4, semente=3220):
         return None
     r = minimize(lambda x: avalia(x, poses, prec, cheque, P4), melhor[1], method="Nelder-Mead",
                  options=dict(xatol=1e-3, fatol=1e-5, maxiter=4000))
-    x = np.round(r.x, 1)
-    return avalia(x, poses, prec, cheque, P4, retorna=True)
+    for x in (np.round(r.x, 1), r.x, melhor[1]):      # cotas de fabricacao em decimos de mm, se montaveis
+        res = avalia(x, poses, prec, cheque, P4, retorna=True)
+        if isinstance(res, dict):
+            return res
+    return None
 
 
 # ---------------------------------------------------------------------------
