@@ -127,28 +127,16 @@ após um acidente grave, um acidente vascular cerebral (AVC) ou uma lesão por e
 intenso. Este trabalho aborda a aplicação de mecanismos articulados a esses problemas
 em duas partes, propostas no enunciado da disciplina (\cref{fig:enunciado}):
 
-\begin{enumerate}[label=\textbf{Parte \Roman*.},leftmargin=*]
-  \item \textbf{Prótese de joelho e perna}: síntese dimensional de um quadrilátero
-  articulado plano cujo acoplador (conjunto perna--pé artificial) reproduza o movimento
-  relativo entre a perna e a coxa, medido experimentalmente em um integrante do grupo,
-  e construção de uma maquete para avaliar qualitativamente o funcionamento.
-  \item \textbf{Órtese de membro inferior}: análise cinemática, por interpolação
-  polinomial de 5º grau, e análise dinâmica de uma órtese para um indivíduo de
-  \SIrange{60}{80}{kg} com a musculatura inativa, determinando os torques dos atuadores
-  do joelho e do quadril.
-\end{enumerate}
+Este documento trata da primeira parte do trabalho: a síntese dimensional de um
+quadrilátero articulado plano cujo acoplador (conjunto perna--pé artificial) reproduza o
+movimento relativo entre a perna e a coxa, medido experimentalmente em um integrante do
+grupo, e a construção de uma maquete para avaliar qualitativamente o funcionamento
+(\cref{fig:enunciado}).
 
 \begin{figure}[htbp]
   \centering
-  \begin{subfigure}[b]{0.40\textwidth}
-    \centering\includegraphics[width=\textwidth]{figuras/enunciado_fig1.png}
-    \caption{Diagrama cinemático: pivôs $C$, $L$ na coxa e $Q$, $N$ na perna.}
-  \end{subfigure}\hfill
-  \begin{subfigure}[b]{0.56\textwidth}
-    \centering\includegraphics[width=\textwidth]{figuras/enunciado_fig2.png}
-    \caption{Configurações final I, inicial e final II da órtese.}
-  \end{subfigure}
-  \caption{Figuras do enunciado (reproduzidas).}
+  \includegraphics[width=0.42\textwidth]{figuras/enunciado_fig1.png}
+  \caption{Diagrama cinemático do enunciado: pivôs $C$ e $L$ na coxa e $Q$ e $N$ na perna.}
   \label{fig:enunciado}
 \end{figure}
 
@@ -162,20 +150,12 @@ em duas partes, propostas no enunciado da disciplina (\cref{fig:enunciado}):
   como referência as posições do membro inferior obtidas experimentalmente.
   \item Construir uma maquete que permita avaliar qualitativamente o funcionamento do
   mecanismo sintetizado.
-  \item Realizar a análise cinemática de uma órtese para membro inferior, determinando
-  as orientações, velocidades e acelerações angulares dos segmentos ao longo de um
-  ciclo de movimento.
-  \item Realizar a análise dinâmica do sistema, determinando os torques necessários nos
-  atuadores do joelho e da articulação entre a coxa e o tronco para a execução do
-  movimento considerado, com massas e momentos de inércia obtidos de dados
-  antropométricos e dos materiais selecionados para a órtese.
 \end{itemize}
 
 Em todas as deduções, os passos intermediários são mostrados, de modo que os
 resultados possam ser reproduzidos à mão. Os cálculos foram implementados em Python
 (NumPy e Matplotlib), e os valores numéricos citados no texto são lidos
-automaticamente dos resultados, o que garante consistência entre cálculo e relatório
-(\cref{sec:anexos}).
+automaticamente dos resultados (\cref{sec:anexos}).
 
 \section{Fundamentação teórica}\label{cap:teoria1}
 
@@ -240,7 +220,7 @@ revolução) também tem $M = 1$, mas impõe à perna um centro de rotação fix
 reproduz o movimento do joelho (\cref{sec:processamento}). A solução seguinte,
 $n = 6$ e $j_1 = 7$, levaria a mecanismos de seis barras, mais complexos que o necessário.
 
-No joelho protético (\cref{fig:enunciado}a) o elo fixo é a coxa (pivôs $C$ e $L$),
+No joelho protético (\cref{fig:enunciado}) o elo fixo é a coxa (pivôs $C$ e $L$),
 as manivelas/balancins são $CQ$ e $LN$, e o \emph{acoplador} é a perna (pivôs $Q$ e $N$),
 ao qual se fixa rigidamente o pé. Como o acoplador executa um movimento plano geral,
 seu CIR relativo à coxa -- o polo $I_{13}$ -- é, pelo teorema de Aronhold--Kennedy, a
@@ -791,557 +771,6 @@ estendido e observar a tendência de flexão.
   \label{fig:gabarito}
 \end{figure}
 
-\section{Parte II -- Modelagem cinemática}\label{cap:cinematica}
-
-Nesta parte, analisa-se uma órtese para um indivíduo de \SIrange{60}{80}{kg} cuja
-capacidade motora do membro inferior foi comprometida (por exemplo, por um AVC ou por
-lesão causada por esforço físico intenso). A análise cinemática é feita a partir das
-configurações dadas no enunciado (\cref{fig:enunciado}b), usando as mesmas ferramentas
-do método matricial empregadas na Parte~I.
-
-\subsection{Hipóteses}
-
-\begin{hipotese}
-O movimento ocorre no plano sagital, e o tronco está imóvel; o quadril $D$ é, portanto,
-um ponto fixo (base do manipulador).
-\end{hipotese}
-\begin{hipotese}
-O joelho da órtese é modelado como junta de revolução em $O$ (o joelho policêntrico da
-Parte~I pode ser incorporado depois, com efeito pequeno nos torques).
-\end{hipotese}
-\begin{hipotese}
-O pé e a perna formam um único corpo rígido, com o pé $PR$ perpendicular à perna $OP$.
-O enunciado diz ``pé e coxa'', mas a \cref{fig:enunciado}b mostra que $PR \perp OP$ nas
-três configurações; conclui-se tratar-se de um erro de digitação.
-\end{hipotese}
-\begin{hipotese}
-A musculatura está inativa: os torques são fornecidos inteiramente pelos atuadores do
-quadril (fixo no tronco) e do joelho (estator fixo na coxa). Não há contato do pé com o
-solo durante o ciclo, e o atrito nas juntas é desprezado.
-\end{hipotese}
-\begin{hipotese}
-$\overline{DO} = \ell_1 = \SI{0,40}{m}$, $\overline{OP} = \ell_2 = \SI{0,45}{m}$,
-$\overline{PR} = \ell_3 = \SI{0,25}{m}$ (enunciado).
-\end{hipotese}
-
-\subsection{Síntese do tipo e mobilidade}
-
-Com o tronco imóvel e o pé solidário à perna, o membro com órtese tem três elos (tronco,
-coxa e perna + pé) ligados por duas juntas de revolução (quadril e joelho), formando uma
-cadeia aberta RR. Pelo critério de Grübler,
-\begin{equation}
-  M = 3(n-1) - 2j_1 - j_2 = 3(3-1) - 2\cdot 2 - 0 = 2,
-\end{equation}
-isto é, dois graus de liberdade, que são exatamente os dois atuadores do enunciado
-(quadril e joelho). As coordenadas generalizadas são os ângulos dessas duas juntas.
-
-\subsection{Bases e cinemática direta (cadeia aberta RR)}
-
-O membro com a órtese é uma cadeia aberta de duas juntas de revolução, análoga ao
-mecanismo RR do método matricial. As bases são (\cref{fig:modelo}):
-\begin{itemize}
-  \item base $0$ (fixa, tronco): origem em $D$, $X_0$ horizontal para a frente, $Y_0$
-  vertical para cima;
-  \item base $1$ (coxa): origem em $D$, $X_1$ ao longo de $DO$; $\theta_1$ é o ângulo de $X_0$
-  para $X_1$ (junta do quadril);
-  \item base $2$ (perna + pé): origem em $O$, $X_2$ ao longo de $OP$ e $Y_2$ no sentido $PR$;
-  $\theta_2$ é o ângulo \emph{relativo} de $X_1$ para $X_2$ (junta do joelho).
-\end{itemize}
-A orientação absoluta da perna é, portanto, $\theta_1 + \theta_2$, e as coordenadas
-generalizadas são $\mathbf q = [\theta_1\ \ \theta_2]^{\mathsf T}$. As transformações homogêneas são
-\begin{equation}
-  \Tm{0}{1} = \left[\begin{array}{c|c} \Rm{0}{1} & \rv{0}{O_1} \\ \hline \mathbf 0 & 1 \end{array}\right]
-            = \left[\begin{array}{cc|c} c_1 & -s_1 & 0\\ s_1 & c_1 & 0\\ \hline 0 & 0 & 1\end{array}\right],
-  \qquad
-  \Tm{1}{2} = \left[\begin{array}{c|c} \Rm{1}{2} & \rv{1}{O_2} \\ \hline \mathbf 0 & 1 \end{array}\right]
-            = \left[\begin{array}{cc|c} c_2 & -s_2 & \ell_1\\ s_2 & c_2 & 0\\ \hline 0 & 0 & 1\end{array}\right],
-\end{equation}
-com $\Rm{0}{1} = \Rot{\theta_1}{z_1}$ e $\Rm{1}{2} = \Rot{\theta_2}{z_2}$. Os pontos de interesse têm
-coordenadas constantes nas bases dos seus elos: $\rv{1}{O} = [\ell_1\ \ 0]^{\mathsf T}$,
-$\rv{2}{P} = [\ell_2\ \ 0]^{\mathsf T}$ e $\rv{2}{R} = [\ell_2\ \ \ell_3]^{\mathsf T}$. Assim,
-\begin{align}
-  \hmg{\rv{0}{P}} &= \Tm{0}{1}\,\Tm{1}{2}\hmg{\rv{2}{P}}
-   = \begin{bmatrix} c_1 & -s_1 & 0\\ s_1 & c_1 & 0\\ 0 & 0 & 1\end{bmatrix}
-     \begin{bmatrix} \ell_2 c_2 + \ell_1\\ \ell_2 s_2 \\ 1\end{bmatrix}
-   = \begin{bmatrix} \ell_1 c_1 + \ell_2 c_{12}\\ \ell_1 s_1 + \ell_2 s_{12} \\ 1\end{bmatrix},
-  \label{eq:posP}\\
-  \hmg{\rv{0}{R}} &= \Tm{0}{1}\,\Tm{1}{2}\hmg{\rv{2}{R}}
-   = \begin{bmatrix} \ell_1 c_1 + \ell_2 c_{12} - \ell_3 s_{12}\\ \ell_1 s_1 + \ell_2 s_{12} + \ell_3 c_{12} \\ 1\end{bmatrix},
-\end{align}
-e $\hmg{\rv{0}{O}} = \Tm{0}{1}\hmg{\rv{1}{O}} = [\ell_1 c_1\ \ \ell_1 s_1\ \ 1]^{\mathsf T}$.
-
-\paragraph{Velocidades e acelerações.} Derivando \eqref{eq:posP} no tempo, com $\rv{2}{P}$
-constante,
-\begin{align}
-  \hoz{\rvd{0}{P}} &= \big(\Tmd{0}{1}\,\Tm{1}{2} + \Tm{0}{1}\,\Tmd{1}{2}\big)\hmg{\rv{2}{P}},\\
-  \hoz{\rvdd{0}{P}} &= \big(\Tmdd{0}{1}\,\Tm{1}{2} + 2\,\Tmd{0}{1}\,\Tmd{1}{2} + \Tm{0}{1}\,\Tmdd{1}{2}\big)\hmg{\rv{2}{P}},
-\end{align}
-em que
-\begin{equation}
-  \Tmd{0}{1} = \begin{bmatrix} -s_1 & -c_1 & 0\\ c_1 & -s_1 & 0\\ 0 & 0 & 0\end{bmatrix}\dot\theta_1,
-  \qquad
-  \Tmdd{0}{1} = \begin{bmatrix} -c_1 & s_1 & 0\\ -s_1 & -c_1 & 0\\ 0 & 0 & 0\end{bmatrix}\dot\theta_1^2
-              + \begin{bmatrix} -s_1 & -c_1 & 0\\ c_1 & -s_1 & 0\\ 0 & 0 & 0\end{bmatrix}\ddot\theta_1,
-\end{equation}
-e analogamente para $\Tmd{1}{2}$ e $\Tmdd{1}{2}$ com $\theta_2$ (a translação $\ell_1$ é constante e
-some na derivada). Efetuando os produtos,
-\begin{equation}
-  \rvd{0}{P} = \begin{bmatrix} -\ell_1 s_1 - \ell_2 s_{12} & -\ell_2 s_{12}\\ \ell_1 c_1 + \ell_2 c_{12} & \ell_2 c_{12}\end{bmatrix}
-               \begin{bmatrix}\dot\theta_1\\ \dot\theta_2\end{bmatrix} = \Jm{P}\,\dot{\mathbf q},
-\end{equation}
-em que $\Jm{P}$ é a matriz jacobiana do ponto $P$. As velocidades e acelerações angulares
-dos elos são
-\begin{equation}
-  {}^0\boldsymbol\omega_1 = \dot\theta_1\,\mathbf k_0,\quad
-  {}^0\boldsymbol\omega_2 = (\dot\theta_1+\dot\theta_2)\,\mathbf k_0,\quad
-  {}^0\dot{\boldsymbol\omega}_1 = \ddot\theta_1\,\mathbf k_0,\quad
-  {}^0\dot{\boldsymbol\omega}_2 = (\ddot\theta_1+\ddot\theta_2)\,\mathbf k_0 .
-\end{equation}
-
-\begin{figure}[htbp]
-  \centering
-  \begin{tikzpicture}[scale=7.5, >=Stealth]
-    \coordinate (D) at (0,0);
-    \coordinate (O) at ({0.40*cos(-35)},{0.40*sin(-35)});
-    \coordinate (P) at ($(O)+({0.45*cos(-120)},{0.45*sin(-120)})$);
-    \coordinate (R) at ($(P)+({0.25*cos(-30)},{0.25*sin(-30)})$);
-    \fill[pattern=north east lines] (-0.1,0.0) rectangle (-0.04,0.06);
-    \draw[very thick] (D) -- node[below left, pos=0.7] {$\ell_1$} (O) -- node[left] {$\ell_2$} (P) -- node[below left] {$\ell_3$} (R);
-    \foreach \p in {D,O} \draw[fill=white] (\p) circle (0.018);
-    \foreach \p in {P,R} \fill (\p) circle (0.012);
-    \node[left] at ($(D)+(-0.1,0)$) {$D$};
-    \node[above right] at ($(O)+(0.01,0.01)$) {$O$};
-    \node[left] at (P) {$P$};
-    \node[right] at (R) {$R$};
-    % base 0
-    \draw[->,thick] (D) -- (0.25,0) coordinate (Z0) node[right] {$X_0$};
-    \draw[->,thick] (D) -- (0,0.15) node[above] {$Y_0$};
-    % base 1
-    \draw[->,teal,thick] (D) -- ($(D)!0.35!(O)$) node[below left] {$X_1$};
-    \pic[draw,<-,blue,"$\theta_1$",angle radius=1.6cm,angle eccentricity=1.2] {angle=O--D--Z0};
-    % base 2
-    \draw[dashed,blue] (O) -- ($(O)+({0.25*cos(-35)},{0.25*sin(-35)})$) coordinate (Oe);
-    \draw[->,teal,thick] (O) -- ($(O)!0.3!(P)$) node[left] {$X_2$};
-    \draw[->,teal,thick] (O) -- ($(O)+({0.15*cos(-30)},{0.15*sin(-30)})$) node[right] {$Y_2$};
-    \pic[draw,<-,blue,"$\theta_2$",angle radius=1.3cm,angle eccentricity=1.2] {angle=P--O--Oe};
-    \draw[->] (-0.25,-0.6) -- (-0.25,-0.7) node[right] {$\mathbf g$};
-  \end{tikzpicture}
-  \caption{Cadeia aberta RR da órtese: bases $0$ (fixa), $1$ (coxa) e $2$ (perna + pé).
-  $\theta_1$ é medido de $X_0$ para $X_1$ e $\theta_2$, de $X_1$ para $X_2$ (na figura, ambos
-  negativos, isto é, no sentido horário).}
-  \label{fig:modelo}
-\end{figure}
-
-\subsection{Configurações extremas}
-
-Os ângulos foram lidos da \cref{fig:enunciado}b. Na configuração final~I, a coxa está a
-\SI{280,13}{\degree} e o ângulo interno do joelho é \SI{60}{\degree}; na final~II, a coxa está
-a \SI{10,07}{\degree} e o ângulo interno é \SI{70,1}{\degree}. Como o ângulo interno entre
-$\overrightarrow{OD}$ e $\overrightarrow{OP}$ é $\SI{180}{\degree} - |\theta_2|$, com a flexão
-do joelho no sentido horário ($\theta_2<0$):
-
-\begin{table}[htbp]
-  \centering
-  \caption{Configurações extremas do ciclo.}
-  \label{tab:config}
-  \small
-  \begin{tabular}{lrrrl}
-    \toprule
-    Configuração & $\theta_1$ (\si{\degree}) & $\theta_2$ (\si{\degree}) & $\theta_1+\theta_2$ (\si{\degree}) & Movimento \\
-    \midrule
-    inicial  & $-90{,}00$ & $0{,}00$ & $-90{,}00$ & em pé, joelho estendido \\
-    final I  & $-79{,}87$ & $-120{,}00$ & $-199{,}87$ & flexão do joelho (``chute para trás'') \\
-    final II & $10{,}07$ & $-109{,}90$ & $-99{,}83$ & flexão de quadril e joelho (``marcha alta'') \\
-    \bottomrule
-  \end{tabular}
-\end{table}
-
-A consistência foi conferida com a direção do pé ($Y_2$), $\theta_1+\theta_2 + \SI{90}{\degree}$, que vale
-\SI{0}{\degree}, \SI{-109,9}{\degree} e \SI{-9,8}{\degree} nas três configurações, de acordo com os
-segmentos $PR$ da figura.
-
-\subsection{Interpolação polinomial de 5º grau}
-
-Para cada coordenada generalizada $q\in\{\theta_1,\theta_2\}$, adota-se
-$q(t) = \sum_{k=0}^{5} a_k t^k$, cujos seis coeficientes são determinados pelas condições
-de contorno de posição, velocidade e aceleração no início e no fim do trecho:
-\begin{equation}
-  q(0)=q_0,\ \dot q(0)=0,\ \ddot q(0)=0,\qquad q(T)=q_f,\ \dot q(T)=0,\ \ddot q(T)=0 .
-\end{equation}
-As três primeiras fornecem $a_0 = q_0$, $a_1 = a_2 = 0$; as restantes formam o sistema
-\begin{equation}
-  \begin{bmatrix} T^3 & T^4 & T^5\\ 3T^2 & 4T^3 & 5T^4 \\ 6T & 12T^2 & 20T^3 \end{bmatrix}
-  \begin{bmatrix} a_3\\ a_4\\ a_5\end{bmatrix}
-  = \begin{bmatrix} \Delta q\\ 0\\ 0\end{bmatrix}
-  \;\Rightarrow\;
-  a_3 = \frac{10\,\Delta q}{T^3},\ a_4 = -\frac{15\,\Delta q}{T^4},\ a_5 = \frac{6\,\Delta q}{T^5},
-\end{equation}
-com $\Delta q = q_f - q_0$. Com o tempo normalizado $\tau = t/T\in[0,1]$:
-\begin{align}
-  q(t) &= q_0 + \Delta q\,\big(10\tau^3 - 15\tau^4 + 6\tau^5\big), \label{eq:quint}\\
-  \dot q(t) &= \frac{\Delta q}{T}\,30\tau^2\big(1-\tau\big)^2, \\
-  \ddot q(t) &= \frac{\Delta q}{T^2}\,60\tau\big(1-\tau\big)\big(1-2\tau\big).
-\end{align}
-Os valores extremos são obtidos anulando as derivadas. A velocidade é máxima onde
-$\ddot q = 0$ no interior do intervalo, isto é, em $\tau = \tfrac12$, e vale
-$30\cdot\tfrac14\cdot\tfrac14 = \tfrac{15}{8}$ vezes $\Delta q/T$. A aceleração é extrema onde
-$\mathrm d\ddot q/\mathrm d\tau \propto 1 - 6\tau + 6\tau^2 = 0$, ou seja,
-$\tau = \tfrac12 \mp \tfrac{\sqrt3}{6}$; nesses pontos $\tau(1-\tau) = \tfrac16$ e
-$1 - 2\tau = \pm\tfrac{\sqrt3}{3}$, de modo que
-\begin{equation}
-  \dot q_{\max} = \frac{15}{8}\frac{\Delta q}{T}\ \ (\tau=\tfrac12),\qquad
-  |\ddot q|_{\max} = 60\cdot\frac16\cdot\frac{\sqrt3}{3}\,\frac{|\Delta q|}{T^2} = \frac{10\sqrt3}{3}\frac{|\Delta q|}{T^2}\ \ \Big(\tau = \tfrac12 \mp \tfrac{\sqrt3}{6}\Big).
-  \label{eq:picos}
-\end{equation}
-\emph{Exemplo:} para o joelho na configuração final~I, $\Delta q = \SI{120}{\degree}$ e $T = \SI{2}{s}$
-fornecem $\dot q_{\max} = \tfrac{15}{8}\cdot\tfrac{120}{2} = \SI{112,5}{\degree\per\s}$ e
-$|\ddot q|_{\max} = 5{,}774\cdot\tfrac{120}{4} = \SI{173,2}{\degree\per\s\squared}$.
-A quíntica garante aceleração contínua e nula nas extremidades, portanto torque sem
-descontinuidades e sem excitação de modos flexíveis -- vantagem sobre o polinômio
-cúbico, cuja aceleração salta no início e no fim \cite{craig2005,siciliano2009}.
-
-\paragraph{Ciclo completo e escolha de $T$.} O ciclo é composto pela ida (inicial
-$\to$ final) em $[0,T]$ e pelo retorno em $[T, 2T]$, também por quíntica. Como o
-polinômio normalizado $s(\tau)$ satisfaz $s(1-\tau) = 1 - s(\tau)$, o retorno é o espelho
-temporal da ida, $q(t) = q(2T-t)$: as velocidades trocam de sinal, e as acelerações se
-repetem. Como os termos de velocidade da dinâmica são quadráticos, os torques também
-são simétricos em relação a $t=T$. Adotou-se $T = \SI{2}{s}$ por trecho (ciclo de
-\SI{4}{s}), o que, por \eqref{eq:picos}, resulta em velocidades máximas de
-\SIrange{94}{113}{\degree\per\s}: valores inferiores aos da marcha normal (até cerca de
-\SI{350}{\degree\per\s} no joelho, \cite{winter2009}) e adequados à reabilitação de um
-indivíduo com musculatura inativa, sem gerar acelerações que exijam torques inerciais
-elevados.
-
-\section{Parte II -- Parâmetros de massa e inércia}\label{cap:parametros}
-
-\subsection{Dados antropométricos}
-
-Utilizaram-se as tabelas de \textcite{winter2009}, baseadas em \textcite{drillis1964}
-e amplamente usadas em análise de marcha. As massas são frações da massa corporal $M$;
-as posições do centro de massa (CM) e o raio de giração baricêntrico $\rho$ são frações
-do comprimento do segmento (\cref{tab:winter}). A estatura correspondente a
-$\ell_1 = \SI{0,40}{m}$ é $H = \ell_1/0{,}245 \approx \SI{1,63}{m}$ \cite{drillis1964}.
-
-\begin{table}[htbp]
-  \centering
-  \caption{Parâmetros segmentares \cite{winter2009}.}
-  \label{tab:winter}
-  \small
-  \begin{tabular}{lcccc}
-    \toprule
-    Segmento & $m/M$ & $x_{\mathrm{CM}}/L$ (a partir de) & $\rho_{\mathrm{CM}}/L$ & Comprimento $L$ \\
-    \midrule
-    Coxa  & 0,100  & 0,433 (quadril)   & 0,323 & $\ell_1 = \SI{0,40}{m}$ \\
-    Perna & 0,0465 & 0,433 (joelho)    & 0,302 & $\ell_2 = \SI{0,45}{m}$ \\
-    Pé    & 0,0145 & 0,50 (ao longo de $PR$) & 0,475 & $\ell_3 = \SI{0,25}{m}$ \\
-    \bottomrule
-  \end{tabular}
-\end{table}
-
-Para cada segmento, o momento de inércia baricêntrico é $I = m(\rho\,L)^2$. Para
-$M = \SI{80}{kg}$, por exemplo, a coxa tem $m = 0{,}100\cdot 80 = \SI{8,0}{kg}$, CM a
-$0{,}433\cdot 0{,}40 = \SI{0,173}{m}$ do quadril e $I = 8{,}0\,(0{,}323\cdot 0{,}40)^2 = \SI{0,134}{kg.m^2}$;
-a perna tem \SI{3,72}{kg} e o pé, \SI{1,16}{kg}.
-
-\subsection{Seleção de materiais da órtese}
-
-A órtese é do tipo joelho--tornozelo--pé (KAFO) ativa, com hastes laterais e mediais,
-braçadeiras e palmilha. Os materiais foram selecionados em referências de elementos de
-máquinas e de materiais \cite{shigley2015,asm1990,callister2018} e de órteses
-\cite{edelstein2011} (\cref{tab:materiais}).
-
-\begin{table}[htbp]
-  \centering
-  \caption{Propriedades dos materiais selecionados.}
-  \label{tab:materiais}
-  \small
-  \setlength{\tabcolsep}{4pt}
-  \begin{tabular}{p{3.4cm}ccccp{3.0cm}}
-    \toprule
-    Material & $\rho$ (\si{kg/m^3}) & $E$ (GPa) & $S_y$ (MPa) & $S_u$ (MPa) & Uso \\
-    \midrule
-    Al 6061-T6 & 2700 & 68,9 & 276 & 310 & hastes, estribo \\
-    Aço inox AISI 304 (recozido) & 8000 & 193 & 215 & 505 & eixo e mancais do joelho \\
-    Polipropileno copolímero & 905 & 1,3 & 28 & 32 & braçadeiras e palmilha \\
-    \bottomrule
-  \end{tabular}
-\end{table}
-
-O alumínio 6061-T6 alia boa relação resistência/massa (cerca de 1/3 da densidade do aço),
-usinabilidade e soldabilidade, e é o padrão em hastes de órteses; o polipropileno é
-termoformável sobre o molde do membro; o aço inox é usado nas partes sujeitas a
-desgaste e contato. As hastes têm seção retangular de \qtyproduct{20 x 5}{mm} (\SI{20}{mm} no plano
-sagital). A \cref{tab:ortese} lista as massas dos componentes, calculadas a partir da
-geometria e da densidade ($m = \rho\,V$); a massa total da órtese é de \massaOrtese~kg. Essas
-massas são somadas às dos segmentos do membro na \cref{tab:parametros}.
-
-\begin{table}[htbp]
-  \centering
-  \caption{Componentes da órtese: massa e posição do CM no referencial do elo (m). Elo~1:
-  origem em $D$, $x$ ao longo de $DO$. Elo~2: origem em $O$, $x$ ao longo de $OP$, $y$ no
-  sentido $PR$.}
-  \label{tab:ortese}
-  \small
-  \begin{tabular}{llrl}
-    \toprule
-    Elo & Componente & $m$ (kg) & CM $(x;\,y)$ \\
-    \midrule
-    \tabelaortese
-    \bottomrule
-  \end{tabular}
-\end{table}
-
-O atuador do quadril está fixo ao tronco (cinto pélvico) e não pertence a nenhum elo
-móvel; o do joelho tem o estator fixo na coxa.
-
-\subsection{Parâmetros equivalentes dos elos}
-
-Cada elo $i$ é um corpo rígido composto. Para componentes de massa $m_k$, centro de massa
-$\rv{i}{k}$ (escrito na base do próprio elo, onde é constante) e inércia própria $I_k$:
-\begin{gather}
-  m_i = \sum_k m_k,\qquad
-  \rv{i}{G_i} = \frac{1}{m_i}\sum_k m_k\,\rv{i}{k},\\
-  I_i = \sum_k \Big[I_k + m_k \big(\rv{i}{k} - \rv{i}{G_i}\big)^{\mathsf T}\big(\rv{i}{k} - \rv{i}{G_i}\big)\Big] \quad\text{(Steiner)}.
-\end{gather}
-Os centros de massa resultantes são $\rv{1}{G_1} = [a_1\ \ 0]^{\mathsf T}$ (sobre o eixo $X_1$) e
-$\rv{2}{G_2} = [b_x\ \ b_y]^{\mathsf T}$: o elo~2 tem o CM fora do eixo $X_2$, deslocado no sentido do pé.
-
-\begin{table}[htbp]
-  \centering
-  \caption{Parâmetros equivalentes dos elos (membro + órtese).}
-  \label{tab:parametros}
-  \begin{tabular}{lcc}
-    \toprule
-    Parâmetro & $M = \SI{80}{kg}$ & $M = \SI{60}{kg}$ \\
-    \midrule
-    $m_1$ (kg) & \mUmA & \mUmB \\
-    $a_1$ -- componente de $\rv{1}{G_1}$ (m) & \aUmA & \aUmB \\
-    $I_1$ -- baricêntrico (\si{kg.m^2}) & \IUmA & \IUmB \\
-    $m_2$ (kg) & \mDoisA & \mDoisB \\
-    $\rv{2}{G_2} = [b_x\ \ b_y]^{\mathsf T}$ (m) & $[\bxDoisA\ \ \byDoisA]^{\mathsf T}$ & $[\bxDoisB\ \ \byDoisB]^{\mathsf T}$ \\
-    $I_2$ -- baricêntrico (\si{kg.m^2}) & \IDoisA & \IDoisB \\
-    \bottomrule
-  \end{tabular}
-\end{table}
-
-\section{Parte II -- Modelagem dinâmica (Newton--Euler)}\label{cap:dinamica}
-
-Os torques dos atuadores são obtidos pelo método de Newton--Euler: as acelerações dos
-centros de massa vêm da análise cinemática (método matricial) e, com elas, escrevem-se as
-equações de equilíbrio dinâmico de cada elo. O procedimento é dividido em quatro passos.
-
-\subsection{1º passo -- posição dos centros de massa}
-
-Os centros de massa têm coordenadas constantes nas bases dos seus elos,
-$\rv{1}{G_1} = [a_1\ \ 0]^{\mathsf T}$ e $\rv{2}{G_2} = [b_x\ \ b_y]^{\mathsf T}$ (\cref{tab:parametros}). Na base $0$:
-\begin{align}
-  \hmg{\rv{0}{G_1}} &= \Tm{0}{1}\hmg{\rv{1}{G_1}} = \begin{bmatrix} a_1 c_1\\ a_1 s_1\\ 1\end{bmatrix},
-  \qquad
-  \hmg{\rv{0}{O}} = \Tm{0}{1}\hmg{\rv{1}{O}} = \begin{bmatrix} \ell_1 c_1\\ \ell_1 s_1\\ 1\end{bmatrix},\\
-  \hmg{\rv{0}{G_2}} &= \Tm{0}{1}\,\Tm{1}{2}\hmg{\rv{2}{G_2}}
-   = \begin{bmatrix} \ell_1 c_1 + b_x c_{12} - b_y s_{12}\\ \ell_1 s_1 + b_x s_{12} + b_y c_{12}\\ 1\end{bmatrix}.
-\end{align}
-Para uso adiante, define-se o vetor de $O$ a $G_2$:
-$\mathbf r_{OG_2} = \rv{0}{G_2} - \rv{0}{O} = [\,b_x c_{12} - b_y s_{12}\ \ \ b_x s_{12} + b_y c_{12}\,]^{\mathsf T}$.
-
-\subsection{2º passo -- acelerações dos centros de massa}
-
-Como no \cref{eq:posP}, as acelerações são obtidas derivando duas vezes as transformações
-homogêneas:
-\begin{align}
-  \hoz{\rvdd{0}{G_1}} &= \Tmdd{0}{1}\hmg{\rv{1}{G_1}}
-     = a_1\begin{bmatrix} -s_1\ddot\theta_1 - c_1\dot\theta_1^2 \\ c_1\ddot\theta_1 - s_1\dot\theta_1^2 \\ 0\end{bmatrix},\\
-  \hoz{\rvdd{0}{G_2}} &= \big(\Tmdd{0}{1}\,\Tm{1}{2} + 2\,\Tmd{0}{1}\,\Tmd{1}{2} + \Tm{0}{1}\,\Tmdd{1}{2}\big)\hmg{\rv{2}{G_2}} .
-\end{align}
-Efetuando o produto da segunda expressão e agrupando os termos, obtém-se a forma
-vetorial equivalente, conhecida da Mecânica,
-\begin{equation}
-  \mathbf a_{G_2} = \mathbf a_O + \dot{\boldsymbol\omega}_2\times\mathbf r_{OG_2}
-                   + \boldsymbol\omega_2\times(\boldsymbol\omega_2\times\mathbf r_{OG_2}),
-  \qquad
-  \mathbf a_O = \ell_1\begin{bmatrix} -s_1\ddot\theta_1 - c_1\dot\theta_1^2 \\ c_1\ddot\theta_1 - s_1\dot\theta_1^2\end{bmatrix},
-\end{equation}
-com $\omega_2 = \dot\theta_1 + \dot\theta_2$ e $\dot\omega_2 = \ddot\theta_1 + \ddot\theta_2$. No plano, os
-produtos vetoriais são calculados pela forma matricial $\mathbf a\times\mathbf b = \tilde{\mathbf a}\,\mathbf b$,
-cuja componente $z$ é $a_x b_y - a_y b_x$.
-
-\subsection{3º passo -- equações de Newton--Euler}
-
-Para cada elo $i$, valem a equação de Newton e a equação de Euler (esta, escrita em
-relação ao centro de massa):
-\begin{equation}
-  \sum \mathbf F = m_i\,\mathbf a_{G_i},
-  \qquad
-  \sum M_{G_i} = I_i\,\dot\omega_i .
-\end{equation}
-As forças externas são: o peso $m_i\mathbf g$, com $\mathbf g = [0\ \ {-g}]^{\mathsf T}$; a força
-$\mathbf F_O$ que a coxa aplica na perna no joelho (e $-\mathbf F_O$ da perna na coxa); a força
-$\mathbf F_D$ que o tronco aplica na coxa no quadril; e os torques dos atuadores,
-$\tau_{\mathrm J}$ (da coxa na perna, com reação $-\tau_{\mathrm J}$ na coxa) e $\tau_{\mathrm Q}$ (do
-tronco na coxa), positivos no sentido anti-horário.
-
-\paragraph{Elo 2 (perna + pé).} Da equação de Newton,
-\begin{equation}
-  \mathbf F_O + m_2\mathbf g = m_2\,\mathbf a_{G_2}
-  \quad\Longrightarrow\quad
-  \mathbf F_O = m_2\,(\mathbf a_{G_2} - \mathbf g).
-\end{equation}
-Da equação de Euler em relação a $G_2$, em que $\mathbf F_O$ atua no ponto $O$ (braço
-$\mathbf r_O - \mathbf r_{G_2} = -\mathbf r_{OG_2}$),
-\begin{equation}
-  \tau_{\mathrm J} + \big[(-\mathbf r_{OG_2})\times\mathbf F_O\big]_z = I_2\,\dot\omega_2
-  \quad\Longrightarrow\quad
-  \boxed{\tau_{\mathrm J} = I_2\,(\ddot\theta_1+\ddot\theta_2) + \big[\mathbf r_{OG_2}\times m_2(\mathbf a_{G_2} - \mathbf g)\big]_z .}
-  \label{eq:tauJ}
-\end{equation}
-
-\paragraph{Elo 1 (coxa).} Da equação de Newton,
-$\mathbf F_D - \mathbf F_O + m_1\mathbf g = m_1\mathbf a_{G_1}$, logo
-$\mathbf F_D = m_1(\mathbf a_{G_1} - \mathbf g) + \mathbf F_O$. Da equação de Euler em relação a $G_1$,
-\begin{equation}
-  \tau_{\mathrm Q} - \tau_{\mathrm J} + \big[(\mathbf r_D - \mathbf r_{G_1})\times\mathbf F_D\big]_z
-  + \big[(\mathbf r_O - \mathbf r_{G_1})\times(-\mathbf F_O)\big]_z = I_1\,\ddot\theta_1 .
-\end{equation}
-Substituindo $\mathbf F_D$ e $\tau_{\mathrm J}$ da \cref{eq:tauJ}, com $\mathbf r_D = \mathbf 0$ (origem da
-base $0$), os termos em $\mathbf F_O$ se agrupam em $[\mathbf r_{G_2}\times\mathbf F_O]_z$ e resulta
-\begin{equation}
-  \boxed{\tau_{\mathrm Q} = I_1\,\ddot\theta_1 + I_2\,(\ddot\theta_1+\ddot\theta_2)
-     + \big[\mathbf r_{G_1}\times m_1(\mathbf a_{G_1} - \mathbf g)\big]_z
-     + \big[\mathbf r_{G_2}\times m_2(\mathbf a_{G_2} - \mathbf g)\big]_z ,}
-  \label{eq:tauQ}
-\end{equation}
-que é a equação de Euler do conjunto coxa + perna escrita em relação ao ponto fixo $D$
-(o torque do joelho é interno ao conjunto e se cancela).
-
-\subsection{4º passo -- parcelas do torque e verificação}
-
-As \cref{eq:tauJ,eq:tauQ} são avaliadas ao longo das trajetórias
-$\mathbf q(t)$, $\dot{\mathbf q}(t)$, $\ddot{\mathbf q}(t)$ do \cref{cap:cinematica} (dinâmica inversa). Para
-interpretar os resultados, cada torque é separado em três parcelas, calculadas pelas mesmas
-equações:
-\begin{itemize}
-  \item \emph{gravitacional}: com $\dot{\mathbf q} = \ddot{\mathbf q} = \mathbf 0$ (só o termo em $\mathbf g$);
-  \item \emph{inercial}: com $\dot{\mathbf q} = \mathbf 0$ (termos em $\ddot\theta_1$ e $\ddot\theta_2$);
-  \item \emph{centrípeta/Coriolis}: com $\ddot{\mathbf q} = \mathbf 0$ (termos em $\dot\theta_1^2$, $\omega_2^2$).
-\end{itemize}
-
-\paragraph{Verificação.} Em repouso na configuração inicial ($\theta_1 = -\pi/2$,
-$\theta_2 = 0$, $\dot{\mathbf q} = \ddot{\mathbf q} = \mathbf 0$), tem-se $\mathbf a_{G_i} = \mathbf 0$,
-$\mathbf r_{G_1} = [0\ \ {-a_1}]^{\mathsf T}$ e $\mathbf r_{OG_2} = [b_y\ \ {-b_x}]^{\mathsf T}$. Então
-$[\mathbf r_{G_1}\times(-m_1\mathbf g)]_z = 0$ e
-$[\mathbf r_{OG_2}\times(-m_2\mathbf g)]_z = [\mathbf r_{G_2}\times(-m_2\mathbf g)]_z = m_2\,g\,b_y$, de modo que
-$\tau_{\mathrm Q} = \tau_{\mathrm J} = m_2\,g\,b_y = \repmgb$~N\,m. O programa fornece
-$\tau_{\mathrm Q} = \repQ$ e $\tau_{\mathrm J} = \repJ$~N\,m, como esperado: em pé, o único torque
-necessário é o do peso do pé, que fica à frente do tornozelo.
-
-\section{Parte II -- Resultados da simulação}\label{cap:resultados2}
-
-\subsection{Cinemática}
-
-As \cref{fig:cinI,fig:cinII} mostram as orientações, as velocidades e as acelerações
-angulares da coxa ($\theta_1$), da perna ($\theta_1+\theta_2$) e relativas do joelho ($\theta_2$)
-durante o ciclo, e a \cref{fig:estrobo} mostra instantâneos do movimento de ida. Os
-valores extremos (\cref{tab:cinematica}) coincidem com as expressões analíticas
-\eqref{eq:picos}: por exemplo, no joelho em final~I,
-$|\dot\theta_2|_{\max} = \frac{15}{8}\cdot\frac{120}{2} = \SI{112,5}{\degree\per\s}$.
-
-\begin{table}[htbp]
-  \centering
-  \caption{Valores absolutos máximos de velocidade (\si{\degree\per\s}) e aceleração
-  angular (\si{\degree\per\s\squared}), $T=\SI{2}{s}$.}
-  \label{tab:cinematica}
-  \begin{tabular}{lrrrrrr}
-    \toprule
-    & \multicolumn{3}{c}{Velocidade} & \multicolumn{3}{c}{Aceleração} \\
-    \cmidrule(lr){2-4}\cmidrule(lr){5-7}
-    Configuração & coxa & perna & joelho & coxa & perna & joelho \\
-    \midrule
-    \tabelacinematica
-    \bottomrule
-  \end{tabular}
-\end{table}
-
-\begin{figure}[htbp]
-  \centering
-  \includegraphics[width=0.85\textwidth]{figuras/p2_cinematica_I.pdf}
-  \caption{Orientação, velocidade e aceleração angulares -- configuração final~I.}
-  \label{fig:cinI}
-\end{figure}
-
-\begin{figure}[htbp]
-  \centering
-  \includegraphics[width=0.85\textwidth]{figuras/p2_cinematica_II.pdf}
-  \caption{Orientação, velocidade e aceleração angulares -- configuração final~II.}
-  \label{fig:cinII}
-\end{figure}
-
-\begin{figure}[htbp]
-  \centering
-  \begin{subfigure}[b]{0.45\textwidth}
-    \includegraphics[width=\textwidth]{figuras/p2_estrobo_I.pdf}
-  \end{subfigure}\hfill
-  \begin{subfigure}[b]{0.45\textwidth}
-    \includegraphics[width=\textwidth]{figuras/p2_estrobo_II.pdf}
-  \end{subfigure}
-  \caption{Instantâneos do movimento de ida (intervalos de $T/8$).}
-  \label{fig:estrobo}
-\end{figure}
-
-\subsection{Torques dos atuadores}
-
-As \cref{fig:torI,fig:torII} mostram os torques calculados pelas \cref{eq:tauJ,eq:tauQ},
-decompostos nas parcelas gravitacional, inercial e centrípeta/Coriolis, e a
-\cref{tab:torques} resume os valores máximos para os dois extremos da faixa de massa
-corporal do enunciado.
-
-\begin{table}[htbp]
-  \centering
-  \caption{Torques máximos dos atuadores (N\,m), $T=\SI{2}{s}$.}
-  \label{tab:torques}
-  \begin{tabular}{lccc}
-    \toprule
-    Configuração & $M$ (kg) & $|\tau_{\mathrm Q}|_{\max}$ (quadril) & $|\tau_{\mathrm J}|_{\max}$ (joelho) \\
-    \midrule
-    \tabelatorques
-    \bottomrule
-  \end{tabular}
-\end{table}
-
-\begin{figure}[htbp]
-  \centering
-  \includegraphics[width=0.9\textwidth]{figuras/p2_torques_I.pdf}
-  \caption{Torques no quadril e no joelho -- configuração final~I.}
-  \label{fig:torI}
-\end{figure}
-
-\begin{figure}[htbp]
-  \centering
-  \includegraphics[width=0.9\textwidth]{figuras/p2_torques_II.pdf}
-  \caption{Torques no quadril e no joelho -- configuração final~II.}
-  \label{fig:torII}
-\end{figure}
-
-\paragraph{Análise.}
-\begin{itemize}
-  \item Na \textbf{configuração final~I}, o esforço concentra-se no joelho
-  (\tjImax~N\,m): a perna e o pé, com braço de alavanca crescente à medida que a perna se
-  aproxima da horizontal ($\theta_1+\theta_2 \approx \SI{-180}{\degree}$), exigem torque para vencer o
-  peso. O quadril move-se apenas \SI{10}{\degree} e seu torque é pequeno.
-  \item Na \textbf{configuração final~II}, o quadril é crítico (\tqIImax~N\,m), pois precisa
-  sustentar a coxa na horizontal com a perna pendente: toda a massa do membro e da
-  órtese tem braço de alavanca máximo. O joelho quase não trabalha, pois a perna
-  permanece aproximadamente vertical ($\theta_1+\theta_2$ varia de \SI{-90}{\degree} a
-  \SI{-99,8}{\degree}).
-  \item Em ambos os casos a \textbf{parcela gravitacional domina}: no atuador mais
-  solicitado de cada configuração (joelho em final~I, quadril em final~II), as parcelas
-  inercial e de Coriolis somadas não passam de \SI{12}{\percent} do torque máximo para
-  $T = \SI{2}{s}$. Nos atuadores pouco solicitados, elas representam de \SIrange{40}{50}{\percent}
-  do máximo, mas não passam de \SI{2,6}{N.m} em valor absoluto.
-  \item A passagem de \SI{80}{kg} para \SI{60}{kg} reduz os torques em cerca de
-  \SIrange{20}{25}{\percent}, um pouco menos que a redução de \SI{25}{\percent} da massa
-  corporal, pois a massa da órtese não varia com o indivíduo.
-\end{itemize}
-
 \section{Conclusões}
 
 \begin{itemize}
@@ -1354,14 +783,8 @@ corporal do enunciado.
   \rmaxelo~mm) que passa pelas três posições de precisão e erra a posição de verificação em
   \errcheque~mm no tornozelo. A análise de posição por Newton--Raphson mostra que o
   mecanismo percorre toda a faixa medida sem pontos mortos, com $\mu \ge \mumin\si{\degree}$.
-  \item \textbf{Parte II}: a interpolação polinomial de 5º grau fornece trajetórias suaves,
-  com velocidade e aceleração nulas nos extremos, das quais se obtêm as orientações,
-  velocidades e acelerações angulares da coxa e da perna. As equações de Newton--Euler,
-  com massas e inércias obtidas dos dados antropométricos e dos materiais selecionados,
-  fornecem torques de até \tqIImax~N\,m no quadril e \tjImax~N\,m no joelho para
-  \SI{80}{kg}, dominados pela parcela gravitacional.
-  \item \textbf{Próximos passos}: construir e ensaiar a maquete e refinar a síntese com mais
-  quadros do vídeo.
+  \item \textbf{Próximos passos}: construir e ensaiar a maquete, refinar a síntese com mais
+  quadros do vídeo e realizar a Parte~II (órtese).
 \end{itemize}
 
 \section{Materiais e anexos}\label{sec:anexos}
@@ -1369,7 +792,7 @@ corporal do enunciado.
 Os arquivos utilizados na aquisição e no tratamento dos dados experimentais são
 disponibilizados juntamente com o relatório, incluindo o arquivo do projeto utilizado
 no software \emph{Tracker}, a planilha com as coordenadas obtidas durante o rastreamento
-e os programas em Python usados nas análises.
+e os programas em Python usados na análise.
 
 \subsection{Dados experimentais obtidos pelo \emph{Tracker}}
 
@@ -1476,20 +899,10 @@ Os programas estão na pasta \texttt{scripts/} e são executados pelo \texttt{Ma
   escolhas livres; análise de posição por Newton--Raphson;
   erro na verificação, ângulo de transmissão e centroide; gabarito da
   maquete.
-  \item[\texttt{parte2\_ortese.py}] parâmetros antropométricos e da órtese; trajetórias
-  quínticas; torques por Newton--Euler e suas parcelas.
   \item[\texttt{gera\_valores\_tex.py}] exporta os resultados para \texttt{dados/valores.tex}.
 \end{description}
 
-Trecho central da Parte II -- dinâmica inversa por Newton--Euler:
-\begin{lstlisting}[language=Python]
-rOG2 = [bx*c12 - by*s12, bx*s12 + by*c12]        # 0T1 1T2 aplicado a 2rG2
-aO   = l1*[-s1*dd1 - c1*d1**2, c1*dd1 - s1*d1**2]
-aG2  = aO + [-rOG2[1]*al2 - rOG2[0]*w2**2, rOG2[0]*al2 - rOG2[1]*w2**2]
-FG1  = m1*(aG1 - g);  FG2 = m2*(aG2 - g)
-tauJ = I2*al2 + cruz(rOG2, FG2)                          # elo 2, momentos em O
-tauQ = I1*dd1 + I2*al2 + cruz(rG1, FG1) + cruz(rG2, FG2) # elos 1+2, momentos em D
-\end{lstlisting}
+
 
 
 \clearpage

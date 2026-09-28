@@ -47,7 +47,7 @@ def main():
     import numpy as _np
     desl = max(_np.hypot(po[str(k)]["x"], po[str(k)]["y"]) for k in r1["frames"])
     m("deslO", f(desl, 0))
-    m("rmaxelo", f(max(c.values())))
+    m("rmaxelo", f(max(c.values()))); m("rminelo", f(min(c.values())))
     dd = r1["diade"]
     m("dalphaA", f(dd["alpha2"])); m("dalphaB", f(dd["alpha3"]))
     m("ddeltaAx", f(dd["delta2"][0])); m("ddeltaAy", f(dd["delta2"][1]))
