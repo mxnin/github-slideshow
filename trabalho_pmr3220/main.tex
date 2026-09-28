@@ -173,7 +173,7 @@ em duas partes, propostas no enunciado da disciplina (\cref{fig:enunciado}):
 
 Em todas as deduções, os passos intermediários são mostrados, de modo que os
 resultados possam ser reproduzidos à mão. Os cálculos foram implementados em Python
-(NumPy, SciPy, SymPy e Matplotlib), e os valores numéricos citados no texto são lidos
+(NumPy e Matplotlib), e os valores numéricos citados no texto são lidos
 automaticamente dos resultados, o que garante consistência entre cálculo e relatório
 (\cref{sec:anexos}).
 
@@ -219,13 +219,27 @@ convenções são:
   $\tilde{\mathbf a} = \begin{bmatrix} 0 & -a_z & a_y\\ a_z & 0 & -a_x\\ -a_y & a_x & 0\end{bmatrix}$.
 \end{itemize}
 
-\subsection{Quadrilátero articulado e o joelho policêntrico}
+\subsection{Síntese do tipo e mobilidade: o quadrilátero articulado}
 
-Um quadrilátero articulado plano possui quatro elos ligados por quatro juntas de
-revolução e, pelo critério de Grübler, um grau de liberdade:
+A escolha do tipo de mecanismo parte da mobilidade desejada. O movimento relativo
+perna--coxa no plano sagital é comandado por uma única variável (a flexão do joelho), de
+modo que o mecanismo deve ter um grau de liberdade, $M = 1$. Pelo critério de Grübler para
+mecanismos planos,
 \begin{equation}
-  M = 3(n-1) - 2j_1 - j_2 = 3(4-1) - 2\cdot 4 - 0 = 1 .
+  M = 3(n-1) - 2j_1 - j_2 ,
 \end{equation}
+em que $n$ é o número de elos (incluindo o fixo), $j_1$ o de juntas de um grau de liberdade
+(revolução ou prismática) e $j_2$ o de juntas de dois graus de liberdade. Usando apenas
+juntas de revolução ($j_2 = 0$), $M = 1$ exige $3n - 2j_1 = 4$. A menor solução com $n > 2$ é
+$n = 4$, $j_1 = 4$:
+\begin{equation}
+  M = 3(4-1) - 2\cdot 4 - 0 = 1 ,
+\end{equation}
+ou seja, o \emph{quadrilátero articulado}. A alternativa $n = 2$, $j_1 = 1$ (uma única junta de
+revolução) também tem $M = 1$, mas impõe à perna um centro de rotação fixo, o que não
+reproduz o movimento do joelho (\cref{sec:processamento}). A solução seguinte,
+$n = 6$ e $j_1 = 7$, levaria a mecanismos de seis barras, mais complexos que o necessário.
+
 No joelho protético (\cref{fig:enunciado}a) o elo fixo é a coxa (pivôs $C$ e $L$),
 as manivelas/balancins são $CQ$ e $LN$, e o \emph{acoplador} é a perna (pivôs $Q$ e $N$),
 ao qual se fixa rigidamente o pé. Como o acoplador executa um movimento plano geral,
@@ -348,94 +362,89 @@ $I_{13}$ (CIR da perna em relação à coxa) é a intersecção dos eixos $X_1$ 
 e o ângulo de transmissão é o ângulo agudo entre $X_2$ e $X_3$, $\mu = |\psi - \theta_3|$
 (reduzido a $[0, \SI{90}{\degree}]$).
 
-\subsection{Síntese de geração de movimento por três posições de precisão}
+\subsection{Síntese dimensional analítica: três posições de precisão}\label{sec:diade}
 
-A pose da perna na posição de precisão $j$ ($j = 1,2,3$) é a transformação homogênea da
-base $4$ para a base $0$,
+O problema é de \emph{geração de movimento}: o acoplador (perna) deve ocupar três poses
+prescritas, as \emph{posições de precisão} $j = 1, 2, 3$. Cada pose é dada, em relação à posição
+1, pela rotação $\alpha_j$ da perna e pelo deslocamento $\boldsymbol\delta_j$ de um ponto de
+referência dela (a origem $O_4$ da base da perna):
 \begin{equation}
   \Tm{0}{4}^{(j)} = \left[\begin{array}{c|c} \Rot{\alpha_j}{z_4} & \rv{0}{O_4}^{(j)} \\ \hline \mathbf 0 & 1 \end{array}\right],
+  \qquad
+  \boldsymbol\delta_j = \rv{0}{O_4}^{(j)} - \rv{0}{O_4}^{(1)} .
 \end{equation}
-em que $\alpha_j$ é a rotação da perna e $\rv{0}{O_4}^{(j)}$ a posição do ponto de referência
-do joelho, ambos obtidos das medições (\cref{sec:processamento}).
 
-\paragraph{Equação da díade padrão.} Na formulação clássica de
-\textcite{erdman2001} e \textcite{norton2010}, cada díade é formada pela manivela
-$\mathbf W = \rv{0}{Q}^{(1)} - \rv{0}{C}$ e pelo lado do acoplador $\mathbf Z = \rv{0}{O_4}^{(1)} - \rv{0}{Q}^{(1)}$.
-Entre a posição $1$ e a posição $j$, $\mathbf W$ gira de $\beta_j$ e $\mathbf Z$ gira de $\alpha_j$, de
-modo que o fechamento da díade, em forma matricial, é
+\paragraph{1º passo -- equação da díade padrão.} O quadrilátero é sintetizado como duas
+díades, $CQ$--$QO_4$ e $LN$--$NO_4$ (\cref{fig:quadrilatero}). Na díade da esquerda, seja
+$\mathbf W = \rv{0}{Q}^{(1)} - \rv{0}{C}$ o vetor da manivela e $\mathbf Z = \rv{0}{O_4}^{(1)} - \rv{0}{Q}^{(1)}$ o
+vetor do lado do acoplador, ambos na posição 1. Representando vetores planos por números
+complexos ($\mathbf v = v_x + \mathrm i\,v_y$), uma rotação de ângulo $\gamma$ é a multiplicação por
+$\e^{\mathrm i\gamma} = \cos\gamma + \mathrm i\,\sen\gamma$ -- o equivalente complexo de $\Rot{\gamma}{z}$. Da posição 1
+para a posição $j$, a manivela gira de $\beta_j$ e o acoplador gira de $\alpha_j$; como o pivô $C$
+é fixo, o fechamento do circuito $C \to Q \to O_4$ nas duas posições fornece
 \begin{equation}
-  \big[\Rot{\beta_j}{z} - I\big]\,\mathbf W + \big[\Rot{\alpha_j}{z} - I\big]\,\mathbf Z = \boldsymbol\delta_j,
-  \qquad \boldsymbol\delta_j = \rv{0}{O_4}^{(j)} - \rv{0}{O_4}^{(1)},\quad j = 2,3,
+  \mathbf W\big(\e^{\mathrm i\beta_j} - 1\big) + \mathbf Z\big(\e^{\mathrm i\alpha_j} - 1\big) = \boldsymbol\delta_j ,
+  \qquad j = 2, 3 .
   \label{eq:diade}
 \end{equation}
-com $\Rot{\cdot}{z}$ restrita ao bloco $2\times2$. São quatro equações escalares para seis
-incógnitas ($\mathbf W$, $\mathbf Z$, $\beta_2$, $\beta_3$), ou seja, há duas escolhas livres por
-díade. Escolhidos $\beta_2$ e $\beta_3$, o sistema \eqref{eq:diade} é linear em $\mathbf W$ e $\mathbf Z$.
+São duas equações complexas (quatro escalares) com seis incógnitas escalares: as duas
+componentes de $\mathbf W$, as duas de $\mathbf Z$, $\beta_2$ e $\beta_3$. Há, portanto, \emph{duas escolhas
+livres} por díade; adotam-se $\beta_2$ e $\beta_3$.
 
-\paragraph{Formulação ponto-centro (adotada).} É equivalente, e mais natural para o
-projetista, escolher como variáveis livres as coordenadas do pivô móvel na base da perna,
-$\rv{4}{Q}$ (constante). Os \emph{pontos homólogos} de $Q$ nas três posições são
+\paragraph{2º passo -- solução pela regra de Cramer.} Escolhidos $\beta_2$ e $\beta_3$, o sistema
+\eqref{eq:diade} é linear em $\mathbf W$ e $\mathbf Z$:
 \begin{equation}
-  \hmg{\rv{0}{Q}^{(j)}} = \Tm{0}{4}^{(j)}\hmg{\rv{4}{Q}},\qquad j = 1,2,3.
-  \label{eq:homologos}
+  \begin{bmatrix} \e^{\mathrm i\beta_2} - 1 & \e^{\mathrm i\alpha_2} - 1 \\ \e^{\mathrm i\beta_3} - 1 & \e^{\mathrm i\alpha_3} - 1 \end{bmatrix}
+  \begin{bmatrix} \mathbf W \\ \mathbf Z \end{bmatrix}
+  = \begin{bmatrix} \boldsymbol\delta_2 \\ \boldsymbol\delta_3 \end{bmatrix} ,
 \end{equation}
-Como $Q$ percorre uma circunferência de centro $C$, vale
-$\big\lVert \rv{0}{Q}^{(j)} - \rv{0}{C}\big\rVert = \ell_1$ para $j=1,2,3$. Elevando ao quadrado e
-expandindo o produto escalar,
-\begin{equation*}
-  \rv{0}{Q}^{(j)\mathsf T}\rv{0}{Q}^{(j)} - 2\,\rv{0}{Q}^{(j)\mathsf T}\rv{0}{C} + \rv{0}{C}^{\mathsf T}\rv{0}{C} = \ell_1^2,
-  \qquad j = 1,2,3 .
-\end{equation*}
-As incógnitas são $\rv{0}{C}$ (duas componentes) e $\ell_1$. Subtraindo a equação $j=1$ das
-equações $j=2$ e $j=3$, os termos $\ell_1^2$ e $\rv{0}{C}^{\mathsf T}\rv{0}{C}$ desaparecem, e resta
-um sistema \emph{linear} $2\times2$ (as mediatrizes dos segmentos $Q^{(1)}Q^{(2)}$ e $Q^{(1)}Q^{(3)}$):
+e, com $\Delta = (\e^{\mathrm i\beta_2} - 1)(\e^{\mathrm i\alpha_3} - 1) - (\e^{\mathrm i\alpha_2} - 1)(\e^{\mathrm i\beta_3} - 1)$,
 \begin{equation}
-  2\begin{bmatrix} \big(\rv{0}{Q}^{(2)} - \rv{0}{Q}^{(1)}\big)^{\mathsf T} \\[2pt] \big(\rv{0}{Q}^{(3)} - \rv{0}{Q}^{(1)}\big)^{\mathsf T} \end{bmatrix}\rv{0}{C}
-  = \begin{bmatrix} \rv{0}{Q}^{(2)\mathsf T}\rv{0}{Q}^{(2)} - \rv{0}{Q}^{(1)\mathsf T}\rv{0}{Q}^{(1)} \\[2pt]
-                    \rv{0}{Q}^{(3)\mathsf T}\rv{0}{Q}^{(3)} - \rv{0}{Q}^{(1)\mathsf T}\rv{0}{Q}^{(1)} \end{bmatrix},
-  \label{eq:circuncentro}
-\end{equation}
-cuja solução é o circuncentro dos três pontos homólogos. O mesmo procedimento aplicado a
-$\rv{4}{N}$ fornece $\rv{0}{L}$. O determinante de \eqref{eq:circuncentro} é nulo quando os três
-pontos homólogos são colineares, caso em que o pivô fixo vai ao infinito (junta prismática).
-Os comprimentos dos elos são, então,
-\begin{equation}
-  \ell_0 = \big\lVert \rv{0}{L} - \rv{0}{C}\big\rVert,\quad
-  \ell_1 = \big\lVert \rv{0}{Q}^{(1)} - \rv{0}{C}\big\rVert,\quad
-  \ell_2 = \big\lVert \rv{4}{N} - \rv{4}{Q}\big\rVert,\quad
-  \ell_3 = \big\lVert \rv{0}{N}^{(1)} - \rv{0}{L}\big\rVert .
-\end{equation}
-
-\subsection{Pose de um corpo rígido a partir de marcadores (problema de Procrustes)}\label{sec:procrustes}
-
-Quando a posição de um segmento é medida por vários marcadores, sua pose é obtida por
-mínimos quadrados. Sejam $\rv{4}{k}$ as coordenadas dos marcadores da perna na base $4$
-(obtidas no quadro de referência, quando as bases $0$ e $4$ coincidem) e $\rv{0}{k}$ as
-coordenadas dos mesmos marcadores no quadro $j$.
-A pose $\Tm{0}{4}^{(j)}$ é a que minimiza, por mínimos quadrados,
-\begin{equation*}
-  E(\alpha_j, \rv{0}{O_4}) = \sum_k \big\lVert \Rot{\alpha_j}{z_4}\,\rv{4}{k} + \rv{0}{O_4} - \rv{0}{k}\big\rVert^2 .
-\end{equation*}
-\emph{1º passo (translação).} Fazendo $\partial E/\partial\rv{0}{O_4} = \mathbf 0$, obtém-se
-$\rv{0}{O_4} = \overline{\rv{0}{}} - \Rot{\alpha_j}{z_4}\,\overline{\rv{4}{}}$, em que a barra indica média
-sobre os marcadores. \emph{2º passo (rotação).} Substituindo esse resultado e usando as
-coordenadas centradas $\mathbf u_k = \rv{4}{k} - \overline{\rv{4}{}}$ e $\mathbf x_k = \rv{0}{k} - \overline{\rv{0}{}}$,
-minimizar $E$ equivale a maximizar
-\begin{equation*}
-  \sum_k \mathbf x_k^{\mathsf T}\Rot{\alpha_j}{z_4}\,\mathbf u_k
-  = \cos\alpha_j \sum_k \big(u_x x_x + u_y x_y\big) + \sen\alpha_j \sum_k \big(u_x x_y - u_y x_x\big),
-\end{equation*}
-e anulando a derivada em relação a $\alpha_j$ chega-se a
-\begin{equation}
-  \alpha_j = \operatorname{atan2}\Big(\textstyle\sum_k \mathbf k\cdot(\tilde{\mathbf u}_k\,\mathbf x_k),\;
-                               \sum_k \mathbf u_k^{\mathsf T}\mathbf x_k\Big),
+  \mathbf W = \frac{\boldsymbol\delta_2\,(\e^{\mathrm i\alpha_3} - 1) - \boldsymbol\delta_3\,(\e^{\mathrm i\alpha_2} - 1)}{\Delta},
   \qquad
-  \rv{0}{O_4}^{(j)} = \overline{\rv{0}{}} - \Rot{\alpha_j}{z_4}\,\overline{\rv{4}{}},
+  \mathbf Z = \frac{(\e^{\mathrm i\beta_2} - 1)\,\boldsymbol\delta_3 - (\e^{\mathrm i\beta_3} - 1)\,\boldsymbol\delta_2}{\Delta}.
+  \label{eq:cramer}
 \end{equation}
-em que $\mathbf k\cdot(\tilde{\mathbf u}\,\mathbf x) = u_x x_y - u_y x_x$ é a componente $z$ do produto
-vetorial. O uso de três ou mais marcadores reduz o efeito dos artefatos de pele, e o
-resíduo quadrático médio do ajuste, $\sqrt{E/n}$, mede a incerteza da pose.
 
+\paragraph{3º passo -- pivôs e comprimentos.} Os pivôs da díade na posição 1 são
+\begin{equation}
+  \rv{0}{Q}^{(1)} = \rv{0}{O_4}^{(1)} - \mathbf Z, \qquad \rv{0}{C} = \rv{0}{Q}^{(1)} - \mathbf W,
+  \qquad \ell_1 = |\mathbf W| ,
+\end{equation}
+e o pivô móvel na base da perna é $\rv{4}{Q} = \Rm{0}{4}^{(1)\mathsf T}\big(\rv{0}{Q}^{(1)} - \rv{0}{O_4}^{(1)}\big)$.
+A díade da direita é obtida da mesma forma, com escolhas livres $\gamma_2$ e $\gamma_3$
+(rotações do balancim $LN$), vetores $\mathbf U = \rv{0}{N}^{(1)} - \rv{0}{L}$ e
+$\mathbf S = \rv{0}{O_4}^{(1)} - \rv{0}{N}^{(1)}$, e $\ell_3 = |\mathbf U|$. Os demais comprimentos são
+$\ell_0 = |\rv{0}{L} - \rv{0}{C}|$ (elo fixo) e $\ell_2 = |\mathbf Z - \mathbf S|$ (acoplador).
+
+\paragraph{4º passo -- escolhas livres.} Cada par $(\beta_2, \beta_3)$ gera uma díade que passa
+exatamente pelas três posições de precisão. As escolhas livres são usadas para satisfazer os
+requisitos de projeto -- pivôs no volume do joelho, comprimentos razoáveis e bom ângulo de
+transmissão -- e para aproximar posições medidas adicionais (\cref{sec:escolha}).
+
+\subsection{Pose de um corpo rígido a partir de dois pontos}\label{sec:pose2pontos}
+
+No plano, a pose de um corpo rígido fica determinada por dois de seus pontos. Sejam $J$ e
+$P$ dois pontos da perna, com coordenadas $\rv{0}{J}^{(j)}$ e $\rv{0}{P}^{(j)}$ medidas na base da
+coxa no quadro $j$, e $\rv{4}{J}$ as coordenadas de $J$ na base $4$ da perna.
+
+\paragraph{1º passo -- orientação.} O ângulo do segmento $JP$ em relação a $X_0$ é
+\begin{equation}
+  \beta_{JP}^{(j)} = \operatorname{atan2}\big({}^0y_P^{(j)} - {}^0y_J^{(j)},\ {}^0x_P^{(j)} - {}^0x_J^{(j)}\big),
+\end{equation}
+e a rotação da perna entre o quadro de referência $r$ (em que a base $4$ coincide com a
+base $0$) e o quadro $j$ é $\alpha_j = \beta_{JP}^{(j)} - \beta_{JP}^{(r)}$, ou seja,
+$\Rm{0}{4}^{(j)} = \Rot{\alpha_j}{z_4}$.
+
+\paragraph{2º passo -- posição da origem.} Da mudança de base
+$\rv{0}{J}^{(j)} = \Rm{0}{4}^{(j)}\,\rv{4}{J} + \rv{0}{O_4}^{(j)}$ (\cref{eq:homogenea}),
+\begin{equation}
+  \rv{0}{O_4}^{(j)} = \rv{0}{J}^{(j)} - \Rot{\alpha_j}{z_4}\,\rv{4}{J} .
+\end{equation}
+Com $\Rm{0}{4}^{(j)}$ e $\rv{0}{O_4}^{(j)}$, a transformação $\Tm{0}{4}^{(j)}$ fica determinada, e a posição
+de qualquer ponto da perna segue de $[\rv{0}{X};1] = \Tm{0}{4}^{(j)}[\rv{4}{X};1]$. Como o corpo
+é tratado como rígido, a variação do comprimento medido $\overline{JP}$ entre os quadros indica a
+incerteza das medições.
 
 \section{Parte I -- Metodologia}\label{cap:metodos1}
 
@@ -572,23 +581,25 @@ flexões mudariam de cerca de \SI{5}{\degree}, porque a coxa girou apenas alguns
 o experimento.
 
 \paragraph{2º passo -- pose da perna.} A base $4$ é presa à perna e coincide com a base $0$
-no quadro \frA{} (membro estendido). As coordenadas $\rv{4}{k}$ dos marcadores 5 a 9 são
-as de $\rv{0}{k}$ nesse quadro, e a pose $\Tm{0}{4}^{(j)}$ de cada quadro $j$ é obtida pela
-solução de Procrustes da \cref{sec:procrustes}. A flexão do joelho é $\varphi_j = -\alpha_j$.
+no quadro \frA{} (membro estendido). A perna é tratada como corpo rígido definido por dois
+pontos (\cref{sec:pose2pontos}): $J$, ponto médio dos marcadores 5 e 6 (logo abaixo do
+joelho), e $P$, marcador 8 (conexão perna--pé, tornozelo). Assim,
+$\rv{4}{J} = \rv{0}{J}^{(307)} = [\Jx\ \ \Jy]^{\mathsf T}$~mm e $\rv{4}{P} = [\Px\ \ \Py]^{\mathsf T}$~mm, e em cada
+quadro obtêm-se $\alpha_j$ e $\rv{0}{O_4}^{(j)}$. A flexão do joelho é $\varphi_j = -\alpha_j$.
 
-\paragraph{3º passo -- tornozelo.} O ponto 8 (conexão perna--pé) tem, na base $4$,
-$\rv{4}{P} = [\Px\ \ \Py]^{\mathsf T}$~mm, e sua posição em cada quadro é
-$\big[\rv{0}{P};\,1\big] = \Tm{0}{4}^{(j)}\big[\rv{4}{P};\,1\big]$.
+\paragraph{3º passo -- tornozelo.} A posição do tornozelo segundo o modelo rígido é
+$\big[\rv{0}{P};\,1\big] = \Tm{0}{4}^{(j)}\big[\rv{4}{P};\,1\big]$; é essa posição que será comparada com a
+gerada pelo mecanismo.
 
 \begin{table}[htbp]
   \centering
   \caption{Poses da perna na base $0$ (coxa) obtidas das medições (mm). $\star$:
   posição de precisão; $\circ$: posição de verificação; $\dagger$: quadro não utilizado na
-  síntese. Resíduo: erro quadrático médio do ajuste rígido dos marcadores 5 a 9.}
+  síntese. $\overline{JP}$: comprimento medido entre os pontos $J$ e $P$.}
   \label{tab:poses}
   \begin{tabular}{lrrrrrr}
     \toprule
-    Quadro & $\varphi$ (\si{\degree}) & ${}^0x_{O_4}$ & ${}^0y_{O_4}$ & ${}^0x_{P}$ & ${}^0y_{P}$ & Resíduo \\
+    Quadro & $\varphi$ (\si{\degree}) & ${}^0x_{O_4}$ & ${}^0y_{O_4}$ & ${}^0x_{P}$ & ${}^0y_{P}$ & $\overline{JP}$ \\
     \midrule
     \tabelaposes
     \bottomrule
@@ -599,24 +610,23 @@ $\big[\rv{0}{P};\,1\big] = \Tm{0}{4}^{(j)}\big[\rv{4}{P};\,1\big]$.
   \centering
   \includegraphics[width=0.85\textwidth]{figuras/p1_medicoes.pdf}
   \caption{Marcadores dos quadros selecionados escritos na base da coxa, com origem entre os pontos 3 e 4 ($\square$: coxa,
-  $\circ$: perna, $\triangle$: pé). A perna gira em torno da região do joelho enquanto a
-  origem $O_4$ se desloca.}
+  $\circ$: perna, $\triangle$: pé; linha: segmento $JP$).}
   \label{fig:medicoes}
 \end{figure}
 
 Os quadros selecionados correspondem a flexões de \phiA, \phiB, \phiC{} e
 \phiD\si{\degree} (\cref{tab:poses,fig:medicoes}), próximas das configurações inicial
 (\SI{0}{\degree}), intermediárias (\SI{45}{\degree} e \SI{90}{\degree}) e de máxima
-flexão. O resíduo do ajuste rígido, entre \resmin{} e \resmax~mm, reflete os artefatos de
-pele e a imprecisão da marcação manual, e cresce com a flexão, quando os marcadores se
-deslocam mais sobre a pele. Nota-se também que a origem $O_4$ se desloca cerca de
-\SI{57}{mm} durante o movimento: esse é justamente o efeito que uma junta de revolução
-simples não reproduz e que motiva o uso do quadrilátero.
+flexão. O comprimento $\overline{JP}$ varia entre \JPmin{} e \JPmax~mm (cerca de
+\SI{\JPvar}{\percent}), o que mede a incerteza da marcação manual e dos artefatos de pele.
+Nota-se também que a origem $O_4$ se desloca cerca de \SI{\deslO}{mm} durante o movimento:
+esse é justamente o efeito que uma junta de revolução simples não reproduz e que motiva
+o uso do quadrilátero.
 
 \paragraph{Escolha das posições de precisão.} Dispondo de quatro posições medidas, três
 são usadas como posições de precisão na síntese e a quarta é usada para verificação.
 Foram testadas as três combinações que incluem a extensão completa (\cref{tab:combos});
-adotou-se a que resultou no menor custo \eqref{eq:custo}: quadros \precA, \precB{} e \precC{}
+adotou-se a de melhor desempenho segundo o critério da \cref{sec:escolha}: quadros \precA, \precB{} e \precC{}
 como posições de precisão e o quadro \cheque{} ($\varphi = \phicheque\si{\degree}$) como
 verificação.
 
@@ -633,38 +643,57 @@ verificação.
   \end{tabular}
 \end{table}
 
-\subsection{Escolha dos pivôs móveis}\label{sec:escolha}
+\subsection{Determinação das escolhas livres}\label{sec:escolha}
 
-Com três posições, qualquer escolha de $\big(\rv{4}{Q}, \rv{4}{N}\big)$ gera, por
-\eqref{eq:circuncentro}, um mecanismo que passa exatamente pelas posições de precisão.
-As duas escolhas livres por díade são usadas para aproximar também a posição de
-verificação e para impor requisitos de projeto. Para cada candidato, o mecanismo é
-montado pela equação de fechamento \eqref{eq:fechamento} e o erro no tornozelo é
-\begin{equation}
-  e_j = \Big\lVert \rv{0}{P}^{\,\mathrm{mec}}(\varphi_j) - \rv{0}{P}^{\,\mathrm{med}}(\varphi_j) \Big\rVert ,
-\end{equation}
-comparando mecanismo e medição para a mesma orientação da perna. Minimiza-se
-\begin{equation}
-  J\big(\rv{4}{Q},\rv{4}{N}\big) = e_{\mathrm{verificação}} + \text{penalidades},
-  \label{eq:custo}
-\end{equation}
-em que as penalidades impõem: $\mu \ge \SI{30}{\degree}$ em toda a faixa; pivôs fixos na
-região do joelho ($|{}^0x| \le \SI{60}{mm}$, $\SI{-40}{mm} \le {}^0y \le \SI{60}{mm}$);
-elos entre \SI{20}{mm} e \SI{120}{mm}; e montagem contínua (mesmo ramo) de
-\SI{0}{\degree} até a flexão máxima medida -- o que elimina os defeitos de ramo e de ordem.
-A busca combina amostragem aleatória (3000 candidatos) e refinamento por Nelder--Mead.
+Cada díade tem duas escolhas livres (\cref{sec:diade}), $(\beta_2, \beta_3)$ para $CQ$ e
+$(\gamma_2, \gamma_3)$ para $LN$. Elas foram determinadas por varredura, em quatro passos:
+\begin{enumerate}
+  \item para cada díade, $\beta_2$ e $\beta_3$ percorrem de \SI{-180}{\degree} a \SI{180}{\degree} em passos
+  de \SI{4}{\degree}; para cada par, $\mathbf W$ e $\mathbf Z$ são calculados pela \cref{eq:cramer};
+  \item descartam-se as díades cujo pivô fixo cai fora da região do joelho
+  ($|{}^0x| \le \SI{60}{mm}$, $\SI{-40}{mm} \le {}^0y \le \SI{60}{mm}$) ou cujo comprimento
+  $|\mathbf W|$ não está entre \SI{20}{mm} e \SI{120}{mm}; as restantes são ordenadas pelo erro da
+  díade na posição de verificação, $\big|\,|\rv{0}{Q}^{(v)} - \rv{0}{C}| - |\mathbf W|\,\big|$, que é nulo quando o pivô
+  móvel também está sobre a circunferência de centro $C$ nessa posição;
+  \item as 60 melhores díades são combinadas duas a duas; para cada par, o mecanismo é montado
+  por Newton--Raphson (\cref{eq:newton}) de \SI{0}{\degree} até a flexão máxima medida, e
+  descartam-se os que mudam de ramo, atingem ponto morto ou têm $\mu < \SI{30}{\degree}$;
+  \item entre os mecanismos restantes, cujo erro no tornozelo na posição de verificação,
+  \begin{equation}
+    e_v = \Big\lVert \rv{0}{P}^{\,\mathrm{mec}}(\varphi_v) - \rv{0}{P}^{\,\mathrm{med}}(\varphi_v) \Big\rVert ,
+  \end{equation}
+  seja menor que \SI{1}{mm} (bem abaixo da incerteza das medições), escolhe-se o de maior
+  ângulo de transmissão mínimo; a varredura é então refinada com passo de \SI{0,5}{\degree} em
+  torno das escolhas encontradas.
+\end{enumerate}
 
 \section{Parte I -- Resultados da síntese}\label{cap:resultados1}
 
 \subsection{Mecanismo sintetizado}
 
-A otimização convergiu para os pivôs da \cref{tab:pivos}. Os pivôs fixos $C$ e $L$ ficam
-cerca de \SI{25}{mm} abaixo dos marcadores 3 e 4, na região da articulação do joelho, e
-os pivôs móveis $Q$ e $N$ ficam na extremidade superior da perna.
+A \cref{tab:diade} apresenta os dados das posições de precisão, as escolhas livres adotadas e
+os vetores das díades obtidos pela \cref{eq:cramer}; a \cref{tab:pivos} apresenta os pivôs e
+os comprimentos resultantes.
 
 \begin{table}[htbp]
   \centering
-  \caption{Resultado da síntese dimensional com as medições do grupo (mm).}
+  \caption{Síntese pela díade padrão: dados, escolhas livres e solução (mm e graus).}
+  \label{tab:diade}
+  \begin{tabular}{ll}
+    \toprule
+    Dados (posições \precA, \precB, \precC) & $\alpha_2 = \dalphaA$, $\alpha_3 = \dalphaB$; \
+      $\boldsymbol\delta_2 = [\ddeltaAx\ \ \ddeltaAy]^{\mathsf T}$, $\boldsymbol\delta_3 = [\ddeltaBx\ \ \ddeltaBy]^{\mathsf T}$ \\
+    Díade $CQ$ & $\beta_2 = \dbetaA$, $\beta_3 = \dbetaB$; \
+      $\mathbf W = [\dWx\ \ \dWy]^{\mathsf T}$, $\mathbf Z = [\dZx\ \ \dZy]^{\mathsf T}$ \\
+    Díade $LN$ & $\gamma_2 = \dgamA$, $\gamma_3 = \dgamB$; \
+      $\mathbf U = [\dUx\ \ \dUy]^{\mathsf T}$, $\mathbf S = [\dSx\ \ \dSy]^{\mathsf T}$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+  \centering
+  \caption{Pivôs e comprimentos do quadrilátero sintetizado (mm).}
   \label{tab:pivos}
   \begin{tabular}{lll}
     \toprule
@@ -688,9 +717,10 @@ faixa de \SI{0}{\degree} a \phimax\si{\degree} sem atingir pontos mortos, com $\
 
 \paragraph{Precisão.} Nas três posições de precisão o erro é nulo (a menos da tolerância
 numérica), como esperado. Na posição de verificação (quadro \cheque,
-$\varphi = \phicheque\si{\degree}$), o erro no tornozelo é de \errcheque~mm, inferior ao
-resíduo das próprias medições (\resmin{} a \resmax~mm). O mecanismo reproduz, portanto,
-o movimento medido dentro da incerteza experimental. A \cref{fig:mecanismo} mostra o
+$\varphi = \phicheque\si{\degree}$), o erro no tornozelo é de \errcheque~mm, muito inferior à
+incerteza das próprias medições (a variação de $\overline{JP}$ entre os quadros é de
+\JPmin{} a \JPmax~mm). O mecanismo reproduz, portanto, o movimento medido dentro da
+incerteza experimental. A \cref{fig:mecanismo} mostra o
 mecanismo nas quatro posições medidas, a centroide (trajetória do polo $I_{13}$) e a
 trajetória do tornozelo.
 
@@ -713,14 +743,15 @@ trajetória do tornozelo.
 \subsection{Discussão}
 
 O ângulo de transmissão permanece acima de \mumin\si{\degree} em toda a faixa, com
-folga em relação ao limite de \SI{30}{\degree} imposto na otimização, de modo que a
-transmissão de forças é boa em todas as posições. Os elos resultaram compactos (entre
-\rCL{} e \rLN~mm), compatíveis com o volume disponível na região do joelho. O polo parte de
+folga em relação ao limite de \SI{30}{\degree} imposto na escolha das escolhas livres, de
+modo que a transmissão de forças é boa em todas as posições. Os pivôs fixos ficam na
+região da articulação do joelho e os móveis, na parte proximal da perna, com elos entre
+\rCL{} e \rmaxelo~mm. O polo parte de
 $(\ciOx;\ \ciOy)$~mm na extensão e migra posteriormente até $(\ciFx;\ \ciFy)$~mm na
 flexão máxima, comportamento qualitativamente semelhante à centroide em ``J'' descrita
-por \textcite{oconnor1989}. Como as medições têm resíduo de até \resmax~mm, o
-refinamento natural do projeto é usar mais quadros do vídeo em uma síntese por mínimos
-quadrados. Para uma prótese transfemoral real, recomenda-se ainda verificar a posição
+por \textcite{oconnor1989}. Como a incerteza das medições é de alguns milímetros, o
+refinamento natural do projeto é repetir a medição e usar outros quadros do vídeo como
+posições de verificação. Para uma prótese transfemoral real, recomenda-se ainda verificar a posição
 do polo em extensão em relação à linha trocânter--joelho--tornozelo, da qual depende a
 estabilidade voluntária na fase de apoio \cite{radcliffe1994}.
 
@@ -788,6 +819,17 @@ solo durante o ciclo, e o atrito nas juntas é desprezado.
 $\overline{DO} = \ell_1 = \SI{0,40}{m}$, $\overline{OP} = \ell_2 = \SI{0,45}{m}$,
 $\overline{PR} = \ell_3 = \SI{0,25}{m}$ (enunciado).
 \end{hipotese}
+
+\subsection{Síntese do tipo e mobilidade}
+
+Com o tronco imóvel e o pé solidário à perna, o membro com órtese tem três elos (tronco,
+coxa e perna + pé) ligados por duas juntas de revolução (quadril e joelho), formando uma
+cadeia aberta RR. Pelo critério de Grübler,
+\begin{equation}
+  M = 3(n-1) - 2j_1 - j_2 = 3(3-1) - 2\cdot 2 - 0 = 2,
+\end{equation}
+isto é, dois graus de liberdade, que são exatamente os dois atuadores do enunciado
+(quadril e joelho). As coordenadas generalizadas são os ângulos dessas duas juntas.
 
 \subsection{Bases e cinemática direta (cadeia aberta RR)}
 
@@ -963,8 +1005,8 @@ são simétricos em relação a $t=T$. Adotou-se $T = \SI{2}{s}$ por trecho (cic
 \SI{4}{s}), o que, por \eqref{eq:picos}, resulta em velocidades máximas de
 \SIrange{94}{113}{\degree\per\s}: valores inferiores aos da marcha normal (até cerca de
 \SI{350}{\degree\per\s} no joelho, \cite{winter2009}) e adequados à reabilitação de um
-indivíduo com musculatura inativa. A sensibilidade a $T$ é analisada no
-\cref{cap:resultados2}.
+indivíduo com musculatura inativa, sem gerar acelerações que exijam torques inerciais
+elevados.
 
 \section{Parte II -- Parâmetros de massa e inércia}\label{cap:parametros}
 
@@ -1010,18 +1052,15 @@ máquinas e de materiais \cite{shigley2015,asm1990,callister2018} e de órteses
   \label{tab:materiais}
   \small
   \setlength{\tabcolsep}{4pt}
-  \begin{tabular}{p{3.0cm}cccccp{2.6cm}}
+  \begin{tabular}{p{3.4cm}ccccp{3.0cm}}
     \toprule
-    Material & $\rho$ (\si{kg/m^3}) & $E$ (GPa) & $S_y$ (MPa) & $S_u$ (MPa) & $S_e$ (MPa) & Uso \\
+    Material & $\rho$ (\si{kg/m^3}) & $E$ (GPa) & $S_y$ (MPa) & $S_u$ (MPa) & Uso \\
     \midrule
-    Al 6061-T6 & 2700 & 68,9 & 276 & 310 & 96,5\textsuperscript{a} & hastes, estribo \\
-    Aço inox AISI 304 (recozido) & 8000 & 193 & 215 & 505 & -- & eixo e mancais do joelho \\
-    Polipropileno copolímero & 905 & 1,3 & 28 & 32 & -- & braçadeiras e palmilha \\
-    Compósito carbono/epóxi\textsuperscript{b} & 1550 & 70 & -- & 600 & -- & alternativa às hastes \\
+    Al 6061-T6 & 2700 & 68,9 & 276 & 310 & hastes, estribo \\
+    Aço inox AISI 304 (recozido) & 8000 & 193 & 215 & 505 & eixo e mancais do joelho \\
+    Polipropileno copolímero & 905 & 1,3 & 28 & 32 & braçadeiras e palmilha \\
     \bottomrule
-  \end{tabular}\\[2pt]
-  \footnotesize \textsuperscript{a}Resistência à fadiga para $5\times10^8$ ciclos \cite{asm1990}.
-  \textsuperscript{b}Tecido bidirecional, laminado quase-isotrópico (valores típicos).
+  \end{tabular}
 \end{table}
 
 O alumínio 6061-T6 alia boa relação resistência/massa (cerca de 1/3 da densidade do aço),
@@ -1029,8 +1068,8 @@ usinabilidade e soldabilidade, e é o padrão em hastes de órteses; o polipropi
 termoformável sobre o molde do membro; o aço inox é usado nas partes sujeitas a
 desgaste e contato. As hastes têm seção retangular de \qtyproduct{20 x 5}{mm} (\SI{20}{mm} no plano
 sagital). A \cref{tab:ortese} lista as massas dos componentes, calculadas a partir da
-geometria e da densidade; a massa total da órtese é de \massaOrtese~kg, dentro da faixa
-de KAFOs motorizadas.
+geometria e da densidade ($m = \rho\,V$); a massa total da órtese é de \massaOrtese~kg. Essas
+massas são somadas às dos segmentos do membro na \cref{tab:parametros}.
 
 \begin{table}[htbp]
   \centering
@@ -1081,110 +1120,115 @@ $\rv{2}{G_2} = [b_x\ \ b_y]^{\mathsf T}$: o elo~2 tem o CM fora do eixo $X_2$, d
   \end{tabular}
 \end{table}
 
-\section{Parte II -- Modelagem dinâmica}\label{cap:dinamica}
+\section{Parte II -- Modelagem dinâmica (Newton--Euler)}\label{cap:dinamica}
 
-\subsection{Posição e velocidade dos centros de massa}
+Os torques dos atuadores são obtidos pelo método de Newton--Euler: as acelerações dos
+centros de massa vêm da análise cinemática (método matricial) e, com elas, escrevem-se as
+equações de equilíbrio dinâmico de cada elo. O procedimento é dividido em quatro passos.
 
-As posições dos centros de massa na base $0$ seguem da cadeia de transformações:
+\subsection{1º passo -- posição dos centros de massa}
+
+Os centros de massa têm coordenadas constantes nas bases dos seus elos,
+$\rv{1}{G_1} = [a_1\ \ 0]^{\mathsf T}$ e $\rv{2}{G_2} = [b_x\ \ b_y]^{\mathsf T}$ (\cref{tab:parametros}). Na base $0$:
 \begin{align}
-  \hmg{\rv{0}{G_1}} &= \Tm{0}{1}\hmg{\rv{1}{G_1}} = \begin{bmatrix} a_1 c_1\\ a_1 s_1\\ 1\end{bmatrix},\\
+  \hmg{\rv{0}{G_1}} &= \Tm{0}{1}\hmg{\rv{1}{G_1}} = \begin{bmatrix} a_1 c_1\\ a_1 s_1\\ 1\end{bmatrix},
+  \qquad
+  \hmg{\rv{0}{O}} = \Tm{0}{1}\hmg{\rv{1}{O}} = \begin{bmatrix} \ell_1 c_1\\ \ell_1 s_1\\ 1\end{bmatrix},\\
   \hmg{\rv{0}{G_2}} &= \Tm{0}{1}\,\Tm{1}{2}\hmg{\rv{2}{G_2}}
    = \begin{bmatrix} \ell_1 c_1 + b_x c_{12} - b_y s_{12}\\ \ell_1 s_1 + b_x s_{12} + b_y c_{12}\\ 1\end{bmatrix}.
 \end{align}
-Derivando, as velocidades escrevem-se com as matrizes jacobianas de cada centro de massa,
-$\vv{0}{G_i} = \Jm{G_i}\,\dot{\mathbf q}$:
-\begin{equation}
-  \Jm{G_1} = \begin{bmatrix} -a_1 s_1 & 0\\ a_1 c_1 & 0\end{bmatrix},
-  \qquad
-  \Jm{G_2} = \begin{bmatrix} -\ell_1 s_1 - b_x s_{12} - b_y c_{12} & -b_x s_{12} - b_y c_{12}\\
-                              \ell_1 c_1 + b_x c_{12} - b_y s_{12} & b_x c_{12} - b_y s_{12}\end{bmatrix},
-\end{equation}
-e as velocidades angulares, com $\omega_i = \Jm{\omega_i}\dot{\mathbf q}$, têm
-$\Jm{\omega_1} = [1\ \ 0]$ e $\Jm{\omega_2} = [1\ \ 1]$.
+Para uso adiante, define-se o vetor de $O$ a $G_2$:
+$\mathbf r_{OG_2} = \rv{0}{G_2} - \rv{0}{O} = [\,b_x c_{12} - b_y s_{12}\ \ \ b_x s_{12} + b_y c_{12}\,]^{\mathsf T}$.
 
-\subsection{Equações de Lagrange}
+\subsection{2º passo -- acelerações dos centros de massa}
 
-A energia cinética é uma forma quadrática nas velocidades generalizadas,
-\begin{gather}
-  \mathcal T = \frac12\sum_{i=1}^{2}\Big( m_i\,\vv{0}{G_i}^{\mathsf T}\vv{0}{G_i} + I_i\,\omega_i^2 \Big)
-             = \frac12\,\dot{\mathbf q}^{\mathsf T}[M(\mathbf q)]\,\dot{\mathbf q},
-  \\
-  [M] = \sum_{i=1}^{2}\Big( m_i\,\Jm{G_i}^{\mathsf T}\Jm{G_i} + I_i\,\Jm{\omega_i}^{\mathsf T}\Jm{\omega_i}\Big),
-\end{gather}
-e a energia potencial, com as componentes $y$ obtidas acima, é
-\begin{equation*}
-  \mathcal V = g\,\big(m_1\,{}^0y_{G_1} + m_2\,{}^0y_{G_2}\big)
-             = g\,\big[m_1 a_1 s_1 + m_2\,(\ell_1 s_1 + b_x s_{12} + b_y c_{12})\big].
-\end{equation*}
-As equações de Lagrange,
-$\frac{\mathrm d}{\mathrm dt}\frac{\partial\mathcal L}{\partial\dot q_i} - \frac{\partial\mathcal L}{\partial q_i} = \tau_i$
-com $\mathcal L = \mathcal T - \mathcal V$, resultam em
-\begin{equation}
-  \underbrace{\begin{bmatrix} M_{11} & M_{12}\\ M_{12} & M_{22}\end{bmatrix}}_{[M(\theta_2)]}
-  \begin{bmatrix}\ddot\theta_1\\ \ddot\theta_2\end{bmatrix}
-  + \begin{bmatrix} -h\,(2\dot\theta_1\dot\theta_2 + \dot\theta_2^2)\\ h\,\dot\theta_1^2\end{bmatrix}
-  + \begin{bmatrix} g_1\\ g_2\end{bmatrix}
-  = \begin{bmatrix}\tau_{\mathrm{Q}}\\ \tau_{\mathrm{J}}\end{bmatrix},
-  \label{eq:dinamica}
-\end{equation}
-em que $\tau_{\mathrm Q}$ é o torque do atuador do quadril (aplicado pelo tronco na coxa) e
-$\tau_{\mathrm J}$ o do joelho (aplicado pela coxa na perna), ambos positivos no sentido
-anti-horário ($+\mathbf k_0$). Efetuando os produtos matriciais, com as identidades
-$s_1 s_{12} + c_1 c_{12} = c_2$ e $s_1 c_{12} - c_1 s_{12} = -s_2$:
+Como no \cref{eq:posP}, as acelerações são obtidas derivando duas vezes as transformações
+homogêneas:
 \begin{align}
-  M_{11} &= I_1 + m_1 a_1^2 + I_2 + m_2\big[\ell_1^2 + b_x^2 + b_y^2 + 2\ell_1(b_x c_2 - b_y s_2)\big],\\
-  M_{12} &= I_2 + m_2\big[b_x^2 + b_y^2 + \ell_1(b_x c_2 - b_y s_2)\big],\qquad
-  M_{22} = I_2 + m_2\big(b_x^2 + b_y^2\big),\\
-  h &= -\frac{\partial M_{12}}{\partial\theta_2} = m_2\,\ell_1\,(b_x s_2 + b_y c_2),\\
-  g_1 &= (m_1a_1 + m_2\ell_1)\,g\,c_1 + m_2\,g\,(b_x c_{12} - b_y s_{12}),\qquad
-  g_2 = m_2\,g\,(b_x c_{12} - b_y s_{12}).
+  \hoz{\rvdd{0}{G_1}} &= \Tmdd{0}{1}\hmg{\rv{1}{G_1}}
+     = a_1\begin{bmatrix} -s_1\ddot\theta_1 - c_1\dot\theta_1^2 \\ c_1\ddot\theta_1 - s_1\dot\theta_1^2 \\ 0\end{bmatrix},\\
+  \hoz{\rvdd{0}{G_2}} &= \big(\Tmdd{0}{1}\,\Tm{1}{2} + 2\,\Tmd{0}{1}\,\Tmd{1}{2} + \Tm{0}{1}\,\Tmdd{1}{2}\big)\hmg{\rv{2}{G_2}} .
 \end{align}
-\paragraph{Dedução dos termos de velocidade.} Como $[M]$ depende apenas de $\theta_2$,
-$\partial\mathcal T/\partial\theta_1 = 0$ e, de $M_{11}$ e $M_{12}$ acima,
-$\partial M_{11}/\partial\theta_2 = -2h$ e $\partial M_{12}/\partial\theta_2 = -h$. Assim:
+Efetuando o produto da segunda expressão e agrupando os termos, obtém-se a forma
+vetorial equivalente, conhecida da Mecânica,
+\begin{equation}
+  \mathbf a_{G_2} = \mathbf a_O + \dot{\boldsymbol\omega}_2\times\mathbf r_{OG_2}
+                   + \boldsymbol\omega_2\times(\boldsymbol\omega_2\times\mathbf r_{OG_2}),
+  \qquad
+  \mathbf a_O = \ell_1\begin{bmatrix} -s_1\ddot\theta_1 - c_1\dot\theta_1^2 \\ c_1\ddot\theta_1 - s_1\dot\theta_1^2\end{bmatrix},
+\end{equation}
+com $\omega_2 = \dot\theta_1 + \dot\theta_2$ e $\dot\omega_2 = \ddot\theta_1 + \ddot\theta_2$. No plano, os
+produtos vetoriais são calculados pela forma matricial $\mathbf a\times\mathbf b = \tilde{\mathbf a}\,\mathbf b$,
+cuja componente $z$ é $a_x b_y - a_y b_x$.
+
+\subsection{3º passo -- equações de Newton--Euler}
+
+Para cada elo $i$, valem a equação de Newton e a equação de Euler (esta, escrita em
+relação ao centro de massa):
+\begin{equation}
+  \sum \mathbf F = m_i\,\mathbf a_{G_i},
+  \qquad
+  \sum M_{G_i} = I_i\,\dot\omega_i .
+\end{equation}
+As forças externas são: o peso $m_i\mathbf g$, com $\mathbf g = [0\ \ {-g}]^{\mathsf T}$; a força
+$\mathbf F_O$ que a coxa aplica na perna no joelho (e $-\mathbf F_O$ da perna na coxa); a força
+$\mathbf F_D$ que o tronco aplica na coxa no quadril; e os torques dos atuadores,
+$\tau_{\mathrm J}$ (da coxa na perna, com reação $-\tau_{\mathrm J}$ na coxa) e $\tau_{\mathrm Q}$ (do
+tronco na coxa), positivos no sentido anti-horário.
+
+\paragraph{Elo 2 (perna + pé).} Da equação de Newton,
+\begin{equation}
+  \mathbf F_O + m_2\mathbf g = m_2\,\mathbf a_{G_2}
+  \quad\Longrightarrow\quad
+  \mathbf F_O = m_2\,(\mathbf a_{G_2} - \mathbf g).
+\end{equation}
+Da equação de Euler em relação a $G_2$, em que $\mathbf F_O$ atua no ponto $O$ (braço
+$\mathbf r_O - \mathbf r_{G_2} = -\mathbf r_{OG_2}$),
+\begin{equation}
+  \tau_{\mathrm J} + \big[(-\mathbf r_{OG_2})\times\mathbf F_O\big]_z = I_2\,\dot\omega_2
+  \quad\Longrightarrow\quad
+  \boxed{\tau_{\mathrm J} = I_2\,(\ddot\theta_1+\ddot\theta_2) + \big[\mathbf r_{OG_2}\times m_2(\mathbf a_{G_2} - \mathbf g)\big]_z .}
+  \label{eq:tauJ}
+\end{equation}
+
+\paragraph{Elo 1 (coxa).} Da equação de Newton,
+$\mathbf F_D - \mathbf F_O + m_1\mathbf g = m_1\mathbf a_{G_1}$, logo
+$\mathbf F_D = m_1(\mathbf a_{G_1} - \mathbf g) + \mathbf F_O$. Da equação de Euler em relação a $G_1$,
+\begin{equation}
+  \tau_{\mathrm Q} - \tau_{\mathrm J} + \big[(\mathbf r_D - \mathbf r_{G_1})\times\mathbf F_D\big]_z
+  + \big[(\mathbf r_O - \mathbf r_{G_1})\times(-\mathbf F_O)\big]_z = I_1\,\ddot\theta_1 .
+\end{equation}
+Substituindo $\mathbf F_D$ e $\tau_{\mathrm J}$ da \cref{eq:tauJ}, com $\mathbf r_D = \mathbf 0$ (origem da
+base $0$), os termos em $\mathbf F_O$ se agrupam em $[\mathbf r_{G_2}\times\mathbf F_O]_z$ e resulta
+\begin{equation}
+  \boxed{\tau_{\mathrm Q} = I_1\,\ddot\theta_1 + I_2\,(\ddot\theta_1+\ddot\theta_2)
+     + \big[\mathbf r_{G_1}\times m_1(\mathbf a_{G_1} - \mathbf g)\big]_z
+     + \big[\mathbf r_{G_2}\times m_2(\mathbf a_{G_2} - \mathbf g)\big]_z ,}
+  \label{eq:tauQ}
+\end{equation}
+que é a equação de Euler do conjunto coxa + perna escrita em relação ao ponto fixo $D$
+(o torque do joelho é interno ao conjunto e se cancela).
+
+\subsection{4º passo -- parcelas do torque e verificação}
+
+As \cref{eq:tauJ,eq:tauQ} são avaliadas ao longo das trajetórias
+$\mathbf q(t)$, $\dot{\mathbf q}(t)$, $\ddot{\mathbf q}(t)$ do \cref{cap:cinematica} (dinâmica inversa). Para
+interpretar os resultados, cada torque é separado em três parcelas, calculadas pelas mesmas
+equações:
 \begin{itemize}
-  \item para $q_1 = \theta_1$: $\frac{\mathrm d}{\mathrm dt}(M_{11}\dot\theta_1 + M_{12}\dot\theta_2)
-  = M_{11}\ddot\theta_1 + M_{12}\ddot\theta_2 + \dot M_{11}\dot\theta_1 + \dot M_{12}\dot\theta_2$, com
-  $\dot M_{11} = -2h\dot\theta_2$ e $\dot M_{12} = -h\dot\theta_2$, o que gera o termo
-  $-h(2\dot\theta_1\dot\theta_2 + \dot\theta_2^2)$;
-  \item para $q_2 = \theta_2$: $\frac{\mathrm d}{\mathrm dt}(M_{12}\dot\theta_1 + M_{22}\dot\theta_2)
-  - \frac12\,\dot{\mathbf q}^{\mathsf T}\frac{\partial[M]}{\partial\theta_2}\dot{\mathbf q}$ gera
-  $-h\dot\theta_1\dot\theta_2 - \frac12(-2h\dot\theta_1^2 - 2h\dot\theta_1\dot\theta_2) = h\dot\theta_1^2$.
+  \item \emph{gravitacional}: com $\dot{\mathbf q} = \ddot{\mathbf q} = \mathbf 0$ (só o termo em $\mathbf g$);
+  \item \emph{inercial}: com $\dot{\mathbf q} = \mathbf 0$ (termos em $\ddot\theta_1$ e $\ddot\theta_2$);
+  \item \emph{centrípeta/Coriolis}: com $\ddot{\mathbf q} = \mathbf 0$ (termos em $\dot\theta_1^2$, $\omega_2^2$).
 \end{itemize}
-Os termos em $h$ são as parcelas centrípetas e de Coriolis. Os termos gravitacionais são
-$g_i = \partial\mathcal V/\partial q_i$: derivando $\mathcal V$ em relação a $\theta_1$ e a $\theta_2$
-obtêm-se exatamente $g_1$ e $g_2$ acima. Como as trajetórias são impostas, este é um problema de
-\emph{dinâmica inversa}: basta avaliar \eqref{eq:dinamica} ao longo de $\mathbf q(t)$,
-$\dot{\mathbf q}(t)$ e $\ddot{\mathbf q}(t)$.
 
-\subsection{Verificação}
-
-A dedução de \eqref{eq:dinamica} foi conferida de duas formas independentes:
-\begin{enumerate}
-  \item \textbf{simbólica}: o programa monta $\Tm{0}{1}\,\Tm{1}{2}$ com o SymPy, obtém
-  $\rv{0}{G_i}$, deriva $\mathcal L$ e aplica as equações de Lagrange, reproduzindo termo a termo
-  as expressões acima;
-  \item \textbf{Newton--Euler}: equilíbrio dinâmico de forças e momentos de cada elo, com
-  os momentos calculados pelo produto vetorial na forma matricial,
-  $\mathbf M = \tilde{\mathbf r}\,\mathbf F$. Para o elo~2 (força $\mathbf F_O$ aplicada pela coxa em $O$) e
-  para o elo~1 (força $\mathbf F_D$ aplicada pelo tronco em $D$):
-  \begin{align*}
-    \mathbf F_O &= m_2(\mathbf a_{G_2} - \mathbf g), &
-    \tau_{\mathrm J} &= I_2\alpha_2 - \big[\widetilde{(\mathbf r_O - \mathbf r_{G_2})}\,\mathbf F_O\big]_z,\\
-    \mathbf F_D &= m_1(\mathbf a_{G_1} - \mathbf g) + \mathbf F_O, &
-    \tau_{\mathrm Q} &= I_1\alpha_1 + \tau_{\mathrm J} - \big[\widetilde{(\mathbf r_D - \mathbf r_{G_1})}\,\mathbf F_D\big]_z
-                        + \big[\widetilde{(\mathbf r_O - \mathbf r_{G_1})}\,\mathbf F_O\big]_z,
-  \end{align*}
-  com as acelerações dadas por $\mathbf a_B = \mathbf a_A + \tilde{\boldsymbol\alpha}\,\mathbf r_{AB}
-  + \tilde{\boldsymbol\omega}\tilde{\boldsymbol\omega}\,\mathbf r_{AB}$, avaliadas em um estado aleatório
-  $(\mathbf q,\dot{\mathbf q},\ddot{\mathbf q})$. Resultados: $\tau_{\mathrm Q} = \neLq$
-  (Lagrange) contra $\neNq$~N\,m (Newton--Euler), e $\tau_{\mathrm J} = \neLj$ contra
-  $\neNj$~N\,m, com concordância na precisão da máquina.
-\end{enumerate}
-Além disso, em repouso ($\dot{\mathbf q} = \ddot{\mathbf q} = \mathbf 0$) na configuração inicial,
-$\theta_1 = -\pi/2$ e $\theta_2 = 0$, tem-se $c_1 = 0$, $c_{12} = 0$ e $s_{12} = -1$, logo
-$\tau_{\mathrm Q} = \tau_{\mathrm J} = m_2\,g\,b_y$: o único torque vem do pé à frente do
-tornozelo, como é fisicamente esperado.
+\paragraph{Verificação.} Em repouso na configuração inicial ($\theta_1 = -\pi/2$,
+$\theta_2 = 0$, $\dot{\mathbf q} = \ddot{\mathbf q} = \mathbf 0$), tem-se $\mathbf a_{G_i} = \mathbf 0$,
+$\mathbf r_{G_1} = [0\ \ {-a_1}]^{\mathsf T}$ e $\mathbf r_{OG_2} = [b_y\ \ {-b_x}]^{\mathsf T}$. Então
+$[\mathbf r_{G_1}\times(-m_1\mathbf g)]_z = 0$ e
+$[\mathbf r_{OG_2}\times(-m_2\mathbf g)]_z = [\mathbf r_{G_2}\times(-m_2\mathbf g)]_z = m_2\,g\,b_y$, de modo que
+$\tau_{\mathrm Q} = \tau_{\mathrm J} = m_2\,g\,b_y = \repmgb$~N\,m. O programa fornece
+$\tau_{\mathrm Q} = \repQ$ e $\tau_{\mathrm J} = \repJ$~N\,m, como esperado: em pé, o único torque
+necessário é o do peso do pé, que fica à frente do tornozelo.
 
 \section{Parte II -- Resultados da simulação}\label{cap:resultados2}
 
@@ -1241,20 +1285,18 @@ $|\dot\theta_2|_{\max} = \frac{15}{8}\cdot\frac{120}{2} = \SI{112,5}{\degree\per
 
 \subsection{Torques dos atuadores}
 
-As \cref{fig:torI,fig:torII} decompõem os torques nas parcelas gravitacional, inercial e
-centrípeta/Coriolis, e a \cref{tab:torques} resume os valores máximos, os valores eficazes
-(RMS, relevantes para o aquecimento dos motores) e as potências mecânicas máximas
-$P = \tau\,\dot q$.
+As \cref{fig:torI,fig:torII} mostram os torques calculados pelas \cref{eq:tauJ,eq:tauQ},
+decompostos nas parcelas gravitacional, inercial e centrípeta/Coriolis, e a
+\cref{tab:torques} resume os valores máximos para os dois extremos da faixa de massa
+corporal do enunciado.
 
 \begin{table}[htbp]
   \centering
-  \caption{Torques (N\,m) e potências (W) dos atuadores, $T=\SI{2}{s}$.}
+  \caption{Torques máximos dos atuadores (N\,m), $T=\SI{2}{s}$.}
   \label{tab:torques}
-  \begin{tabular}{lcrrrrrr}
+  \begin{tabular}{lccc}
     \toprule
-    & & \multicolumn{3}{c}{Quadril} & \multicolumn{3}{c}{Joelho} \\
-    \cmidrule(lr){3-5}\cmidrule(lr){6-8}
-    Configuração & $M$ (kg) & $|\tau|_{\max}$ & $\tau_{\mathrm{RMS}}$ & $|P|_{\max}$ & $|\tau|_{\max}$ & $\tau_{\mathrm{RMS}}$ & $|P|_{\max}$ \\
+    Configuração & $M$ (kg) & $|\tau_{\mathrm Q}|_{\max}$ (quadril) & $|\tau_{\mathrm J}|_{\max}$ (joelho) \\
     \midrule
     \tabelatorques
     \bottomrule
@@ -1291,117 +1333,31 @@ $P = \tau\,\dot q$.
   inercial e de Coriolis somadas não passam de \SI{12}{\percent} do torque máximo para
   $T = \SI{2}{s}$. Nos atuadores pouco solicitados, elas representam de \SIrange{40}{50}{\percent}
   do máximo, mas não passam de \SI{2,6}{N.m} em valor absoluto.
-  Isso sugere o uso de molas de compensação gravitacional ou de redutores
-  irreversíveis/freios para manter posturas estáticas sem consumo de energia.
   \item A passagem de \SI{80}{kg} para \SI{60}{kg} reduz os torques em cerca de
   \SIrange{20}{25}{\percent}, um pouco menos que a redução de \SI{25}{\percent} da massa
   corporal, pois a massa da órtese não varia com o indivíduo.
 \end{itemize}
 
-\subsection{Sensibilidade ao tempo de movimento}
-
-A \cref{tab:sens} mostra que os torques dos atuadores críticos (joelho em final~I e
-quadril em final~II) independem de $T$: o máximo ocorre na configuração final, em
-repouso, e é puramente gravitacional. Nos demais, as acelerações (proporcionais a
-$1/T^2$) passam a contribuir significativamente para $T = \SI{1}{s}$. No quadril em
-final~I, $|\tau|_{\max}$ volta a crescer para $T$ longo: o máximo ocorre no meio do
-trajeto, onde a parcela inercial se opõe à gravitacional; com $T$ grande, a parcela
-inercial desaparece, e o torque tende ao máximo gravitacional ao longo do caminho
-(cerca de \SI{8}{N.m}).
-
-\begin{table}[htbp]
-  \centering
-  \caption{Torques máximos (N\,m) em função do tempo $T$ de cada trecho ($M=\SI{80}{kg}$).}
-  \label{tab:sens}
-  \begin{tabular}{crrrr}
-    \toprule
-    & \multicolumn{2}{c}{Final I} & \multicolumn{2}{c}{Final II} \\
-    \cmidrule(lr){2-3}\cmidrule(lr){4-5}
-    $T$ (s) & quadril & joelho & quadril & joelho \\
-    \midrule
-    \tabelasens
-    \bottomrule
-  \end{tabular}
-\end{table}
-
-\section{Parte II -- Dimensionamento dos atuadores e verificação estrutural}\label{cap:dimensionamento}
-
-\subsection{Especificação dos atuadores}
-
-Com o pior caso (\SI{80}{kg}) e um fator de serviço de 1,5, as especificações de saída são:
-joelho com \SI{20}{N.m} e \SI{2,0}{rad/s} (\SI{112,5}{\degree\per\s}), e quadril com
-\SI{60}{N.m} e \SI{1,6}{rad/s}. Com um redutor harmônico de razão $N=100$ e rendimento
-$\eta = 0{,}70$, o motor deve fornecer
-\begin{equation}
-  \tau_m = \frac{\tau_{\mathrm{saída}}}{N\eta},\qquad \omega_m = N\,\omega_{\mathrm{saída}},
-\end{equation}
-ou seja:
-\begin{align*}
-  \text{joelho:}\quad & \tau_m = \frac{20}{100\cdot 0{,}70} = \SI{0,29}{N.m},\qquad
-     \omega_m = 100\cdot 2{,}0 = \SI{200}{rad/s} \approx \SI{1900}{rpm};\\
-  \text{quadril:}\quad & \tau_m = \frac{60}{100\cdot 0{,}70} = \SI{0,86}{N.m},\qquad
-     \omega_m = 100\cdot 1{,}6 = \SI{160}{rad/s} \approx \SI{1530}{rpm}.
-\end{align*} Essa faixa é atendida por motores CC sem escovas de 70 a
-\SI{150}{W}, compatíveis com a massa de \SI{1,2}{kg} adotada para o atuador do joelho. O
-torque RMS, bem menor que o de pico, deve ser comparado ao torque contínuo do motor.
-
-\subsection{Verificação das hastes de alumínio}
-
-As hastes medial e lateral dividem igualmente o momento fletor transmitido pelos
-atuadores. Para a seção retangular $b\times h = \qtyproduct{20 x 5}{mm}$, com flexão no plano sagital,
-\begin{equation}
-  W = \frac{h\,b^2}{6} = \SI{\Wmod}{mm^3},\qquad \sigma = \frac{M_f}{2W}.
-\end{equation}
-O carregamento é repetido, de zero a máximo, a cada ciclo; assim,
-$\sigma_a = \sigma_m = \sigma/2$, e o coeficiente de segurança à fadiga é obtido pelo
-critério de Goodman modificado \cite{shigley2015}:
-\begin{equation}
-  \frac{\sigma_a}{S_e} + \frac{\sigma_m}{S_u} = \frac{1}{n_f}.
-\end{equation}
-Com $W = 5\cdot 20^2/6 = \SI{333}{mm^3}$, para a haste da perna,
-$\sigma = 13{,}5/(2\cdot 333\times10^{-9}) = \SI{20,3}{MPa}$, $n_y = 276/20{,}3 = 13{,}6$ e
-$1/n_f = 10{,}1/96{,}5 + 10{,}1/310 = 0{,}137$, isto é, $n_f = 7{,}3$. O mesmo cálculo para a
-haste da coxa ($M_f = \SI{40,0}{N.m}$) está na \cref{tab:estrutural}.
-
-\begin{table}[htbp]
-  \centering
-  \caption{Verificação estrutural das hastes em Al 6061-T6.}
-  \label{tab:estrutural}
-  \begin{tabular}{lrrr}
-    \toprule
-    Haste & $\sigma_{\max}$ (MPa) & $n_y = S_y/\sigma$ & $n_f$ (Goodman) \\
-    \midrule
-    Perna (torque do joelho) & \sigPerna & \nyPerna & \ngPerna \\
-    Coxa (torque do quadril) & \sigCoxa & \nyCoxa & \ngCoxa \\
-    \bottomrule
-  \end{tabular}
-\end{table}
-
-Todos os coeficientes são superiores a 2. Deve-se, contudo, verificar os furos das
-articulações (concentração de tensão, $K_t\approx 2{,}5$) e considerar a carga de apoio
-durante a marcha, não incluída no ciclo analisado, que pode exigir espessuras maiores
-ou a substituição pelo compósito de carbono da \cref{tab:materiais}.
-
 \section{Conclusões}
 
 \begin{itemize}
-  \item \textbf{Parte I}: as medições feitas com o \emph{Tracker} foram convertidas para a
-  base da coxa e ajustadas como movimento de corpo rígido, fornecendo quatro poses da
-  perna entre \SI{0}{\degree} e \phiD\si{\degree} de flexão. A síntese por três posições
-  de precisão, formulada como cálculo de circuncentros dos pontos homólogos e com a
-  escolha dos pivôs móveis por otimização, produziu um quadrilátero compacto (elos de \rCL{} a
-  \rLN~mm) que passa pelas três posições de precisão e erra a posição de verificação em
-  apenas \errcheque~mm no tornozelo, menos que a incerteza das próprias medições. O
+  \item \textbf{Parte I}: as medições feitas com o \emph{Tracker} foram escritas na base da
+  coxa, desconsiderando o movimento angular do quadril, e a perna foi tratada como corpo
+  rígido definido por dois pontos, fornecendo quatro poses entre \SI{0}{\degree} e
+  \phiD\si{\degree} de flexão. A síntese do tipo levou ao quadrilátero articulado, e a
+  síntese dimensional analítica pela equação da díade padrão, com as escolhas livres
+  determinadas por varredura, produziu um mecanismo compacto (elos de \rCL{} a
+  \rmaxelo~mm) que passa pelas três posições de precisão e erra a posição de verificação em
+  \errcheque~mm no tornozelo. A análise de posição por Newton--Raphson mostra que o
   mecanismo percorre toda a faixa medida sem pontos mortos, com $\mu \ge \mumin\si{\degree}$.
-  \item \textbf{Parte II}: a interpolação quíntica fornece trajetórias suaves, com
-  velocidade e aceleração nulas nos extremos. Os torques necessários (até
-  \tqIImax~N\,m no quadril e \tjImax~N\,m no joelho para \SI{80}{kg}) são dominados pela
-  gravidade, o que orienta o projeto para a compensação gravitacional. As hastes em
-  Al 6061-T6 de \qtyproduct{20 x 5}{mm} atendem com folga ao ciclo analisado.
-  \item \textbf{Próximos passos}: construir e ensaiar a maquete; refinar a síntese com mais
-  quadros do vídeo (síntese por mínimos quadrados); incorporar o joelho policêntrico na
-  órtese, evitando o desalinhamento entre as articulações humana e artificial; e incluir
-  o contato com o solo na análise dinâmica.
+  \item \textbf{Parte II}: a interpolação polinomial de 5º grau fornece trajetórias suaves,
+  com velocidade e aceleração nulas nos extremos, das quais se obtêm as orientações,
+  velocidades e acelerações angulares da coxa e da perna. As equações de Newton--Euler,
+  com massas e inércias obtidas dos dados antropométricos e dos materiais selecionados,
+  fornecem torques de até \tqIImax~N\,m no quadril e \tjImax~N\,m no joelho para
+  \SI{80}{kg}, dominados pela parcela gravitacional.
+  \item \textbf{Próximos passos}: construir e ensaiar a maquete e refinar a síntese com mais
+  quadros do vídeo.
 \end{itemize}
 
 \section{Materiais e anexos}\label{sec:anexos}
@@ -1512,30 +1468,23 @@ Os programas estão na pasta \texttt{scripts/} e são executados pelo \texttt{Ma
 
 \begin{description}
   \item[\texttt{parte1\_sintese.py}] leitura dos dados do \emph{Tracker}; base da coxa e poses
-  da perna (Procrustes); síntese por circuncentros; simulação de montagem; otimização
-  dos pivôs móveis; erro na verificação, ângulo de transmissão e centroide; gabarito da
+  da perna por dois pontos; síntese pela díade padrão (regra de Cramer) com varredura das
+  escolhas livres; análise de posição por Newton--Raphson;
+  erro na verificação, ângulo de transmissão e centroide; gabarito da
   maquete.
   \item[\texttt{parte2\_ortese.py}] parâmetros antropométricos e da órtese; trajetórias
-  quínticas; dedução simbólica (SymPy) e forma fechada da dinâmica; verificação por
-  Newton--Euler; análise de sensibilidade; verificação estrutural.
+  quínticas; torques por Newton--Euler e suas parcelas.
   \item[\texttt{gera\_valores\_tex.py}] exporta os resultados para \texttt{dados/valores.tex}.
 \end{description}
 
-Trecho central da Parte II -- cinemática pelo método matricial e dinâmica inversa:
+Trecho central da Parte II -- dinâmica inversa por Newton--Euler:
 \begin{lstlisting}[language=Python]
-T01 = T_hom(th1, 0, 0)            # 0T1 = [Rot(theta1, z1) | 0]
-T12 = T_hom(th2, l1, 0)           # 1T2 = [Rot(theta2, z2) | (l1, 0)]
-rG2 = T01 @ T12 @ [bx, by, 1]     # [0rG2; 1] = 0T1 1T2 [2rG2; 1]
-
-k   = bx*c2 - by*s2
-M11 = I1 + m1*a1**2 + I2 + m2*(l1**2 + bx**2 + by**2 + 2*l1*k)
-M12 = I2 + m2*(bx**2 + by**2 + l1*k)
-M22 = I2 + m2*(bx**2 + by**2)
-h   = m2*l1*(bx*s2 + by*c2)
-g2  = m2*G*(bx*c12 - by*s12)
-g1  = (m1*a1 + m2*l1)*G*c1 + g2
-tau_quadril = M11*dd_th1 + M12*dd_th2 - h*(2*d_th1*d_th2 + d_th2**2) + g1
-tau_joelho  = M12*dd_th1 + M22*dd_th2 + h*d_th1**2 + g2
+rOG2 = [bx*c12 - by*s12, bx*s12 + by*c12]        # 0T1 1T2 aplicado a 2rG2
+aO   = l1*[-s1*dd1 - c1*d1**2, c1*dd1 - s1*d1**2]
+aG2  = aO + [-rOG2[1]*al2 - rOG2[0]*w2**2, rOG2[0]*al2 - rOG2[1]*w2**2]
+FG1  = m1*(aG1 - g);  FG2 = m2*(aG2 - g)
+tauJ = I2*al2 + cruz(rOG2, FG2)                          # elo 2, momentos em O
+tauQ = I1*dd1 + I2*al2 + cruz(rG1, FG1) + cruz(rG2, FG2) # elos 1+2, momentos em D
 \end{lstlisting}
 
 

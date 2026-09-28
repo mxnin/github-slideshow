@@ -35,15 +35,27 @@ def main():
     m("phimax", f(r1["phi_max"]))
     po = r1["poses"]
     for k, nome in zip(r1["frames"], ["A", "B", "C", "D"]):
-        m(f"fr{nome}", str(k)); m(f"phi{nome}", f(po[str(k)]["flexao"])); m(f"res{nome}", f(po[str(k)]["resid"]))
+        m(f"fr{nome}", str(k)); m(f"phi{nome}", f(po[str(k)]["flexao"]))
     m("precA", str(r1["precisao"][0])); m("precB", str(r1["precisao"][1])); m("precC", str(r1["precisao"][2]))
     m("cheque", str(r1["cheque"][0]))
     m("phicheque", f(po[str(r1["cheque"][0])]["flexao"]))
     m("errcheque", f(r1["erros"][str(r1["cheque"][0])]))
-    resids = [po[str(k)]["resid"] for k in r1["frames"] if po[str(k)]["resid"] > 0]
-    m("resmin", f(min(resids))); m("resmax", f(max(resids)))
-    coxas = [po[str(k)]["coxa"] for k in r1["frames"]]
-    m("coxamin", f(min(coxas), 0)); m("coxamax", f(max(coxas), 0))
+    JPs = [po[str(k)]["JP"] for k in r1["frames"]]
+    m("JPmin", f(min(JPs), 0)); m("JPmax", f(max(JPs), 0))
+    m("JPvar", f(100 * (max(JPs) - min(JPs)) / min(JPs), 0))
+    m("Jx", f(r1["J4"][0])); m("Jy", f(r1["J4"][1]))
+    import numpy as _np
+    desl = max(_np.hypot(po[str(k)]["x"], po[str(k)]["y"]) for k in r1["frames"])
+    m("deslO", f(desl, 0))
+    m("rmaxelo", f(max(c.values())))
+    dd = r1["diade"]
+    m("dalphaA", f(dd["alpha2"])); m("dalphaB", f(dd["alpha3"]))
+    m("ddeltaAx", f(dd["delta2"][0])); m("ddeltaAy", f(dd["delta2"][1]))
+    m("ddeltaBx", f(dd["delta3"][0])); m("ddeltaBy", f(dd["delta3"][1]))
+    m("dbetaA", f(dd["beta2"])); m("dbetaB", f(dd["beta3"]))
+    m("dgamA", f(dd["gamma2"])); m("dgamB", f(dd["gamma3"]))
+    for nm in ("W", "Z", "U", "S"):
+        m(f"d{nm}x", f(dd[nm][0])); m(f"d{nm}y", f(dd[nm][1]))
     import csv
     linhas = []
     with open(os.path.join(D, "poses_medidas.csv")) as fh:
@@ -57,7 +69,7 @@ def main():
             elif fr not in r1["frames"]:
                 tag = r" $\dagger$"
             linhas.append(f"{fr}{tag} & {f(float(row['flexao_graus']))} & {f(float(row['x_O4_mm']))} & {f(float(row['y_O4_mm']))} & "
-                          f"{f(float(row['x_P_mm']))} & {f(float(row['y_P_mm']))} & {f(float(row['residuo_mm']))} \\\\")
+                          f"{f(float(row['x_P_mm']))} & {f(float(row['y_P_mm']))} & {f(float(row['JP_mm']), 0)} \\\\")
     L.append("\\newcommand{\\tabelaposes}{" + "\n".join(linhas) + "}")
     comb = []
     for cb in r1["combinacoes"]:
@@ -88,8 +100,7 @@ def main():
     for fin in ("final I", "final II"):
         for M in ("80", "60"):
             x = r2[f"{fin}|{M}kg"]
-            res_lin.append(f"{fin} & {M} & {f(x['tau_quadril_max'])} & {f(x['tau_quadril_rms'])} & {f(x['pot_quadril_max'])} & "
-                           f"{f(x['tau_joelho_max'])} & {f(x['tau_joelho_rms'])} & {f(x['pot_joelho_max'])} \\\\")
+            res_lin.append(f"{fin} & {M} & {f(x['tau_quadril_max'])} & {f(x['tau_joelho_max'])} \\\\")
     L.append("\\newcommand{\\tabelatorques}{" + "\n".join(res_lin) + "}")
 
     cin = []
@@ -99,25 +110,12 @@ def main():
                    f"{f(x['a_coxa_max'])} & {f(x['a_perna_max'])} & {f(x['a_joelho_max'])} \\\\")
     L.append("\\newcommand{\\tabelacinematica}{" + "\n".join(cin) + "}")
 
-    sens = []
-    s1, s2 = r2["sens_T|final I"], r2["sens_T|final II"]
-    for a, b in zip(s1, s2):
-        sens.append(f"{f(a[0],1)} & {f(a[1])} & {f(a[2])} & {f(b[1])} & {f(b[2])} \\\\")
-    L.append("\\newcommand{\\tabelasens}{" + "\n".join(sens) + "}")
-
     x1, x2 = r2["final I|80kg"], r2["final II|80kg"]
     m("tqImax", f(x1["tau_quadril_max"])); m("tjImax", f(x1["tau_joelho_max"]))
     m("tqIImax", f(x2["tau_quadril_max"])); m("tjIImax", f(x2["tau_joelho_max"]))
-    m("pqIImax", f(x2["pot_quadril_max"])); m("pjImax", f(x1["pot_joelho_max"]))
     m("wmaxII", f(x2["w_coxa_max"])); m("wmaxI", f(x1["w_joelho_max"]))
-    est = r2["estrutural"]
-    k = list(est)
-    m("sigPerna", f(est[k[0]]["sigma_MPa"])); m("nyPerna", f(est[k[0]]["n_escoamento"])); m("ngPerna", f(est[k[0]]["n_goodman"]))
-    m("sigCoxa", f(est[k[1]]["sigma_MPa"])); m("nyCoxa", f(est[k[1]]["n_escoamento"])); m("ngCoxa", f(est[k[1]]["n_goodman"]))
-    m("Wmod", f(r2["W_mm3"], 0))
-    ne = r2["verificacao_NE"]
-    m("neLq", f(ne["lagrange"][0], 6)); m("neNq", f(ne["newton_euler"][0], 6))
-    m("neLj", f(ne["lagrange"][1], 6)); m("neNj", f(ne["newton_euler"][1], 6))
+    rp = r2["repouso_inicial"]
+    m("repQ", f(rp["tau_Q"], 3)); m("repJ", f(rp["tau_J"], 3)); m("repmgb", f(rp["m2_g_by"], 3))
 
     with open(os.path.join(D, "valores.tex"), "w") as fh:
         fh.write("% Arquivo gerado automaticamente por scripts/gera_valores_tex.py -- nao editar\n")
