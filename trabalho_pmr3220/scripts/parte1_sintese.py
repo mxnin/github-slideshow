@@ -5,7 +5,7 @@ por posicoes de precisao do elo acoplador (perna), a partir das MEDICOES do Grup
 
 Notacao do metodo matricial (PMR3220):
   base 0 = coxa (fixa): origem no ponto medio dos marcadores 3 e 4 (extremidade distal da
-           coxa), Y0 no sentido do ponto medio de 1 e 2 (quadril), X0 para a frente;
+           coxa), eixos paralelos aos da imagem (movimento angular do quadril desconsiderado);
   base 4 = perna: coincide com a base 0 no frame de referencia (307, membro estendido);
   bases 1, 2, 3 = elos CQ, QN (acoplador) e LN do quadrilatero.
 Unidades: mm e graus. Flexao do joelho phi > 0  <=>  rotacao da perna alpha = -phi.
@@ -70,13 +70,14 @@ def le_tracker(caminho):
 
 
 def base_coxa(P):
-    """imT0 da base da coxa em um frame: origem no ponto medio de 3-4, Y0 para o quadril."""
+    """imT0 da base da coxa em um frame. O movimento angular do quadril (rotacao da coxa
+    em relacao ao tronco) e desconsiderado: a coxa mantem a orientacao da imagem
+    (X0 horizontal para a frente, Y0 vertical para cima) e acompanha apenas a translacao
+    da regiao do joelho, com origem no ponto medio dos marcadores 3 e 4. Os marcadores
+    1 e 2 (quadril) nao sao usados na Parte I; o comprimento 1-2 -> 3-4 e so informativo."""
     o = (P[3] + P[4]) / 2
-    y = (P[1] + P[2]) / 2 - o
-    comp = np.linalg.norm(y)
-    y = y / comp
-    psi = np.arctan2(y[1], y[0]) - np.pi / 2          # angulo de X0 na imagem
-    return T_hom(psi, o), comp
+    comp = np.linalg.norm((P[1] + P[2]) / 2 - o)
+    return T_hom(0.0, o), comp
 
 
 def na_coxa(P, k):

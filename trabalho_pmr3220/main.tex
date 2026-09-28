@@ -550,22 +550,26 @@ perna.
 
 \subsection{Processamento dos dados e posições de precisão}\label{sec:processamento}
 
-As coordenadas do \emph{Tracker} estão na base da imagem, e a coxa do voluntário também se
-move ligeiramente entre os quadros. Como a síntese exige o movimento da perna
-\emph{relativo} à coxa, os dados foram processados em três passos.
+As coordenadas do \emph{Tracker} estão na base da imagem. O que interessa ao
+quadrilátero do joelho é apenas o movimento \emph{relativo} entre a coxa e a perna; por
+isso, o movimento angular do quadril (a rotação da coxa em relação ao tronco, que
+também ocorre levemente durante o experimento) foi desconsiderado, e a coxa foi tratada
+como o elo fixo do mecanismo. Os dados foram processados em três passos.
 
 \paragraph{1º passo -- base da coxa em cada quadro.} A base $0$ tem origem no ponto médio
-dos marcadores 3 e 4 (extremidade distal da coxa) e eixo $Y_0$ apontando para o ponto
-médio dos marcadores 1 e 2 (quadril); $X_0$ aponta para a frente. Com
-$\psi = \operatorname{atan2}(\Delta y, \Delta x) - \pi/2$, em que $(\Delta x, \Delta y)$ é o vetor
-entre esses pontos médios na imagem,
+dos marcadores 3 e 4 (extremidade distal da coxa, junto ao joelho) e eixos paralelos aos
+da imagem: $X_0$ horizontal, para a frente, e $Y_0$ vertical, para cima. Como a rotação
+do quadril é desconsiderada, $\Rm{im}{0} = \Rot{0}{z_0} = I$, e a base da coxa apenas
+acompanha a translação da região do joelho entre os quadros:
 \begin{equation}
-  \Tm{im}{0} = \left[\begin{array}{c|c} \Rot{\psi}{z_0} & \tfrac12\big(\rv{im}{3} + \rv{im}{4}\big) \\ \hline \mathbf 0 & 1 \end{array}\right],
+  \Tm{im}{0} = \left[\begin{array}{c|c} I & \tfrac12\big(\rv{im}{3} + \rv{im}{4}\big) \\ \hline \mathbf 0 & 1 \end{array}\right],
   \qquad
-  \rv{0}{k} = \Rm{im}{0}^{\mathsf T}\Big(\rv{im}{k} - \tfrac12\big(\rv{im}{3} + \rv{im}{4}\big)\Big),
+  \rv{0}{k} = \rv{im}{k} - \tfrac12\big(\rv{im}{3} + \rv{im}{4}\big).
 \end{equation}
-em que se usou $\Rm{0}{im} = \Rm{im}{0}^{\mathsf T}$. O comprimento medido da coxa (entre os
-pontos médios) variou entre \coxamin{} e \coxamax~mm nos quadros selecionados.
+Os marcadores 1 e 2 (quadril) não entram na síntese da Parte~I. Para referência, se a
+rotação da coxa fosse descontada (eixo definido pelos pontos médios 1--2 e 3--4), as
+flexões mudariam de cerca de \SI{5}{\degree}, porque a coxa girou apenas alguns graus durante
+o experimento.
 
 \paragraph{2º passo -- pose da perna.} A base $4$ é presa à perna e coincide com a base $0$
 no quadro \frA{} (membro estendido). As coordenadas $\rv{4}{k}$ dos marcadores 5 a 9 são
@@ -594,7 +598,7 @@ $\big[\rv{0}{P};\,1\big] = \Tm{0}{4}^{(j)}\big[\rv{4}{P};\,1\big]$.
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.85\textwidth]{figuras/p1_medicoes.pdf}
-  \caption{Marcadores dos quadros selecionados escritos na base da coxa ($\square$: coxa,
+  \caption{Marcadores dos quadros selecionados escritos na base da coxa, com origem entre os pontos 3 e 4 ($\square$: coxa,
   $\circ$: perna, $\triangle$: pé). A perna gira em torno da região do joelho enquanto a
   origem $O_4$ se desloca.}
   \label{fig:medicoes}
