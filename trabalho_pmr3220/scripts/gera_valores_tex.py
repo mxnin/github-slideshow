@@ -17,37 +17,52 @@ def main():
     L = []
     m = lambda nome, val: L.append(f"\\newcommand{{\\{nome}}}{{{val}}}")
 
-    # ---------------- Parte I ----------------
-    ref = r1["dados_referencia"]
-    m("LACL", f(ref["L_ACL"])); m("LPCL", f(ref["L_PCL"]))
-    m("Lfem", f(ref["femoral"])); m("Ltib", f(ref["tibial"]))
-    Q, N, C, Lc = r1["Q_perna"], r1["N_perna"], r1["C_coxa"], r1["L_coxa"]
+    # ---------------- Parte I (medicoes do Grupo C) ----------------
+    Q, N, C, Lc, P4 = r1["Q4"], r1["N4"], r1["C"], r1["L"], r1["P4"]
     m("Qx", f(Q[0])); m("Qy", f(Q[1])); m("Nx", f(N[0])); m("Ny", f(N[1]))
     m("Cx", f(C[0])); m("Cy", f(C[1])); m("Lx", f(Lc[0])); m("Ly", f(Lc[1]))
+    m("Px", f(P4[0])); m("Py", f(P4[1]))
     c = r1["comprimentos"]
-    m("rCL", f(c["CL_quadro"])); m("rCQ", f(c["CQ"])); m("rLN", f(c["LN"])); m("rQN", f(c["QN_acoplador"]))
-    m("errmax", f(r1["erro_tornozelo_max"], 2)); m("mumin", f(r1["mu_min"])); m("mumax", f(r1["mu_max"]))
+    m("rCL", f(c["l0"])); m("rCQ", f(c["l1"])); m("rQN", f(c["l2"])); m("rLN", f(c["l3"]))
+    m("mumin", f(r1["mu_min"])); m("mumax", f(r1["mu_max"]))
     m("grashof", "satisfaz" if r1["grashof"] else "não satisfaz")
-    ls = sorted(c.values())
-    m("grashofs", f(ls[0])); m("grashofl", f(ls[3])); m("grashofp", f(ls[1])); m("grashofq", f(ls[2]))
-    m("grashofsl", f(ls[0] + ls[3])); m("grashofpq", f(ls[1] + ls[2]))
-    m("ciOx", f(r1["ci_mec_0"][0])); m("ciOy", f(r1["ci_mec_0"][1]))
-    m("ciFx", f(r1["ci_mec_120"][0])); m("ciFy", f(r1["ci_mec_120"][1]))
-    pp = r1["posicoes_precisao"]
-    for k, nome in (("0", "A"), ("45", "B"), ("90", "C")):
-        m(f"pp{nome}x", f(pp[k][0], 2)); m(f"pp{nome}y", f(pp[k][1], 2)); m(f"pp{nome}a", f(pp[k][2]))
-
-    # tabela de poses de referencia
+    ls = r1["grashof_ord"]
+    m("grashofs", f(ls[0])); m("grashofp", f(ls[1])); m("grashofq", f(ls[2])); m("grashofl", f(ls[3]))
+    m("grashofsl", f(r1["grashof_sl"])); m("grashofpq", f(r1["grashof_pq"]))
+    m("grashofsinal", r"\le" if r1["grashof"] else ">")
+    m("ciOx", f(r1["polo_0"][0])); m("ciOy", f(r1["polo_0"][1]))
+    m("ciFx", f(r1["polo_fim"][0])); m("ciFy", f(r1["polo_fim"][1]))
+    m("phimax", f(r1["phi_max"]))
+    po = r1["poses"]
+    for k, nome in zip(r1["frames"], ["A", "B", "C", "D"]):
+        m(f"fr{nome}", str(k)); m(f"phi{nome}", f(po[str(k)]["flexao"])); m(f"res{nome}", f(po[str(k)]["resid"]))
+    m("precA", str(r1["precisao"][0])); m("precB", str(r1["precisao"][1])); m("precC", str(r1["precisao"][2]))
+    m("cheque", str(r1["cheque"][0]))
+    m("phicheque", f(po[str(r1["cheque"][0])]["flexao"]))
+    m("errcheque", f(r1["erros"][str(r1["cheque"][0])]))
+    resids = [po[str(k)]["resid"] for k in r1["frames"] if po[str(k)]["resid"] > 0]
+    m("resmin", f(min(resids))); m("resmax", f(max(resids)))
+    coxas = [po[str(k)]["coxa"] for k in r1["frames"]]
+    m("coxamin", f(min(coxas), 0)); m("coxamax", f(max(coxas), 0))
     import csv
     linhas = []
     with open(os.path.join(D, "poses_medidas.csv")) as fh:
         for row in csv.DictReader(fh):
-            ph = float(row["flexao_graus"])
-            e = r1["erros_tornozelo"].get(f"{ph:.0f}", 0.0)
-            est = r"$\star$" if ph in (0, 45, 90) else ""
-            linhas.append(f"{f(ph,0)}{est} & {f(float(row['joelho_x_mm']),2)} & {f(float(row['joelho_y_mm']),2)} & "
-                          f"{f(float(row['tornozelo_x_mm']),1)} & {f(float(row['tornozelo_y_mm']),1)} & {f(e,2)} \\\\")
+            fr = int(row["frame"])
+            tag = ""
+            if fr in r1["precisao"]:
+                tag = r" $\star$"
+            elif fr in r1["cheque"]:
+                tag = r" $\circ$"
+            elif fr not in r1["frames"]:
+                tag = r" $\dagger$"
+            linhas.append(f"{fr}{tag} & {f(float(row['flexao_graus']))} & {f(float(row['x_O4_mm']))} & {f(float(row['y_O4_mm']))} & "
+                          f"{f(float(row['x_P_mm']))} & {f(float(row['y_P_mm']))} & {f(float(row['residuo_mm']))} \\\\")
     L.append("\\newcommand{\\tabelaposes}{" + "\n".join(linhas) + "}")
+    comb = []
+    for cb in r1["combinacoes"]:
+        comb.append(f"{', '.join(map(str, cb['precisao']))} & {cb['cheque'][0]} & {f(cb['erro_cheque'], 2)} & {f(cb['mu_min'])} \\\\")
+    L.append("\\newcommand{\\tabelacombos}{" + "\n".join(comb) + "}")
 
     # ---------------- Parte II ----------------
     for M in ("80", "60"):
