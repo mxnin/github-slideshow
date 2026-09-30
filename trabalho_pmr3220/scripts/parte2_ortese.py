@@ -4,14 +4,14 @@ PMR3220 - Parte II: simulacao cinematica e dinamica de uma ortese de membro infe
 Modelo plano de 2 graus de liberdade com base fixa no quadril D (tronco imovel):
   elo 1 = coxa (D -> O), elo 2 = perna + pe (O -> P -> R, com PR perpendicular a OP).
 Notacao do metodo matricial (PMR3220): bases 0 (fixa, em D), 1 (coxa) e 2 (perna+pe),
-  0T1 = [Rot(theta1, z1) | 0], 1T2 = [Rot(theta2, z2) | (l1, 0)].
+  [0R1] = Rot(theta1, z), 0rO1 = 0;  [1R2] = Rot(theta2, z), 1rO2 = (l1, 0);  0r = [0R1](1rO2 + [1R2] 2r).
 Coordenadas generalizadas q = [theta1, theta2]:
   theta1 = angulo de X0 para X1 (quadril),
   theta2 = angulo RELATIVO de X1 para X2 (joelho);
   theta1 + theta2 = orientacao absoluta da perna.
 Trajetorias: polinomio de 5o grau com velocidade e aceleracao nulas nos extremos.
 Torques: metodo de Newton-Euler (equilibrio dinamico de cada elo), com as aceleracoes
-obtidas pelas derivadas das transformacoes homogeneas.
+obtidas pelas derivadas das matrizes de rotacao (mudanca de base de ponto).
 """
 import json
 import os
@@ -141,7 +141,7 @@ def newton_euler(par, q, qd, qdd):
     c1, s1 = np.cos(th1), np.sin(th1)
     c12, s12 = np.cos(th1 + th2), np.sin(th1 + th2)
     w2, al2 = d1 + d2, dd1 + dd2
-    # posicoes (0T1 e 0T1 1T2 aplicados a 1rG1, 1rO e 2rG2)
+    # posicoes por mudanca de base: 0rG1 = [0R1] 1rG1, 0rO = [0R1] 1rO, 0rG2 = 0rO + [0R2] 2rG2
     rG1 = np.array([a1 * c1, a1 * s1])
     rO = np.array([L1 * c1, L1 * s1])
     rOG2 = np.array([bx * c12 - by * s12, bx * s12 + by * c12])

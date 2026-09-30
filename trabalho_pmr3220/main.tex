@@ -50,13 +50,11 @@
 \newcommand{\rvd}[2]{{}^{#1}\dot{\mathbf{r}}_{#2}}
 \newcommand{\rvdd}[2]{{}^{#1}\ddot{\mathbf{r}}_{#2}}
 \newcommand{\vv}[2]{{}^{#1}\mathbf{v}_{#2}}
-\newcommand{\Tm}[2]{{}^{#1}T_{#2}}                   % transformacao homogenea da base #2 para a base #1
-\newcommand{\Tmd}[2]{{}^{#1}\dot T_{#2}}
-\newcommand{\Tmdd}[2]{{}^{#1}\ddot T_{#2}}
+\newcommand{\Rmd}[2]{[{}^{#1}\dot R_{#2}]}             % derivadas da matriz de rotacao
+\newcommand{\Rmdd}[2]{[{}^{#1}\ddot R_{#2}]}
+\newcommand{\Et}{\tilde{\mathbf k}}                   % matriz antissimetrica de k no plano
 \newcommand{\Rm}[2]{[{}^{#1}R_{#2}]}                 % matriz de rotacao
 \newcommand{\Rot}[2]{\mathrm{Rot}(#1,\,#2)}
-\newcommand{\hmg}[1]{\begin{bmatrix} #1 \\ 1 \end{bmatrix}}
-\newcommand{\hoz}[1]{\begin{bmatrix} #1 \\ 0 \end{bmatrix}}
 \newcommand{\Jm}[1]{[J_{#1}]}
 \newcommand{\e}{\mathrm{e}}
 \newcommand{\dd}{\,\mathrm{d}}
@@ -182,7 +180,7 @@ automaticamente dos resultados, o que garante consistência entre cálculo e rel
 \subsection{Notação}\label{sec:notacao}
 
 A modelagem cinemática segue o \emph{método matricial} adotado na disciplina, baseado em
-transformações homogêneas. A cada elo $i$ associa-se uma base (sistema de referência)
+matrizes de rotação e na mudança de base de pontos. A cada elo $i$ associa-se uma base (sistema de referência)
 $O_iX_iY_iZ_i$, de versores $\mathbf i_i$, $\mathbf j_i$, $\mathbf k_i$; a base $0$ é fixa. As
 convenções são:
 \begin{itemize}
@@ -203,15 +201,28 @@ convenções são:
     \end{aligned}
   \end{equation}
   no plano, usa-se apenas o bloco $2\times2$ superior;
-  \item mudança de base de um ponto: $\rv{A}{P} = \Rm{A}{B}\,\rv{B}{P} + \rv{A}{O_B}$, ou, na forma
-  homogênea,
+  \item mudança de base de um ponto: se $\rv{B}{P}$ são as coordenadas de $P$ na base $B$ e
+  $\rv{A}{O_B}$ a posição da origem de $B$ na base $A$, então
   \begin{equation}
-    \hmg{\rv{A}{P}} = \Tm{A}{B}\hmg{\rv{B}{P}},
-    \qquad
-    \Tm{A}{B} = \left[\begin{array}{c|c} \Rm{A}{B} & \rv{A}{O_B} \\ \hline \mathbf 0 & 1 \end{array}\right],
-    \label{eq:homogenea}
+    \rv{A}{P} = \Rm{A}{B}\,\rv{B}{P} + \rv{A}{O_B} ;
+    \label{eq:mudancabase}
   \end{equation}
-  e, para uma cadeia de elos, $\Tm{0}{n} = \Tm{0}{1}\,\Tm{1}{2}\cdots\Tm{n-1}{n}$;
+  para uma cadeia de bases $0, 1, 2$, aplica-se \eqref{eq:mudancabase} duas vezes, de dentro para fora:
+  \begin{equation}
+    \rv{0}{P} = \rv{0}{O_1} + \Rm{0}{1}\Big(\rv{1}{O_2} + \Rm{1}{2}\,\rv{2}{P}\Big),
+    \qquad
+    \Rm{0}{2} = \Rm{0}{1}\,\Rm{1}{2} ;
+    \label{eq:cadeia}
+  \end{equation}
+  \item derivada no tempo de uma rotação plana: de $\Rm{A}{B} = \Rot{\gamma}{z}$,
+  \begin{gather}
+    \Rmd{A}{B} = \dot\gamma\begin{bmatrix} -\sen\gamma & -\cos\gamma \\ \cos\gamma & -\sen\gamma \end{bmatrix}
+             = \dot\gamma\,\Rm{A}{B}\,\Et ,
+    \qquad
+    \Et = \begin{bmatrix} 0 & -1 \\ 1 & 0 \end{bmatrix},
+    \label{eq:derivR}\\
+    \Rmdd{A}{B} = \ddot\gamma\,\Rm{A}{B}\,\Et - \dot\gamma^2\,\Rm{A}{B} ;
+  \end{gather}
   \item abreviações: $c_i = \cos\theta_i$, $s_i = \sen\theta_i$, $c_{ij} = \cos(\theta_i+\theta_j)$,
   $s_{ij} = \sen(\theta_i+\theta_j)$; o ângulo $\theta_i$ da junta $i$ é medido do eixo $X_{i-1}$ ao
   eixo $X_i$ (ângulo \emph{relativo}), positivo no sentido anti-horário;
@@ -310,28 +321,31 @@ $\ell_3 = \overline{LN}$.
   \label{fig:quadrilatero}
 \end{figure}
 
-As transformações homogêneas \eqref{eq:homogenea} de cada elo são
-\begin{equation}
-  \Tm{0}{1} = \left[\begin{array}{cc|c} c_1 & -s_1 & {}^0x_C\\ s_1 & c_1 & {}^0y_C\\ \hline 0 & 0 & 1\end{array}\right],\quad
-  \Tm{1}{2} = \left[\begin{array}{cc|c} c_2 & -s_2 & \ell_1\\ s_2 & c_2 & 0\\ \hline 0 & 0 & 1\end{array}\right],\quad
-  \Tm{0}{3} = \left[\begin{array}{cc|c} c_3 & -s_3 & {}^0x_L\\ s_3 & c_3 & {}^0y_L\\ \hline 0 & 0 & 1\end{array}\right],
-\end{equation}
+As matrizes de rotação e as origens das bases são
+\begin{gather}
+  \Rm{0}{1} = \begin{bmatrix} c_1 & -s_1 \\ s_1 & c_1 \end{bmatrix},\quad
+  \Rm{1}{2} = \begin{bmatrix} c_2 & -s_2 \\ s_2 & c_2 \end{bmatrix},\quad
+  \Rm{0}{3} = \begin{bmatrix} c_3 & -s_3 \\ s_3 & c_3 \end{bmatrix},\\
+  \rv{0}{O_1} = \rv{0}{C},\qquad \rv{1}{O_2} = \begin{bmatrix} \ell_1 \\ 0 \end{bmatrix},\qquad \rv{0}{O_3} = \rv{0}{L},
+\end{gather}
 com $\rv{2}{N} = [\ell_2\ \ 0]^{\mathsf T}$ e $\rv{3}{N} = [\ell_3\ \ 0]^{\mathsf T}$. O ponto $N$ pertence
 simultaneamente ao ramo $0\text{--}1\text{--}2$ e ao ramo $0\text{--}3$ da cadeia. Pelo ramo
-$0\text{--}1\text{--}2$, multiplica-se primeiro o ponto pela matriz mais à direita:
-\begin{equation*}
-  \Tm{1}{2}\hmg{\rv{2}{N}} = \begin{bmatrix} \ell_2 c_2 + \ell_1 \\ \ell_2 s_2 \\ 1\end{bmatrix},
-  \qquad
-  \Tm{0}{1}\begin{bmatrix} \ell_2 c_2 + \ell_1 \\ \ell_2 s_2 \\ 1\end{bmatrix}
-  = \begin{bmatrix} {}^0x_C + \ell_1 c_1 + \ell_2(c_1c_2 - s_1s_2) \\ {}^0y_C + \ell_1 s_1 + \ell_2(s_1c_2 + c_1s_2) \\ 1\end{bmatrix},
-\end{equation*}
-e as identidades $c_1c_2 - s_1s_2 = c_{12}$ e $s_1c_2 + c_1s_2 = s_{12}$ simplificam o resultado.
-Igualando ao ramo $0\text{--}3$, obtém-se a \emph{equação de fechamento}
+$0\text{--}1\text{--}2$, aplica-se \eqref{eq:cadeia} de dentro para fora:
+\begin{align*}
+  \rv{1}{N} &= \rv{1}{O_2} + \Rm{1}{2}\,\rv{2}{N}
+            = \begin{bmatrix} \ell_1 \\ 0 \end{bmatrix} + \begin{bmatrix} c_2 & -s_2 \\ s_2 & c_2 \end{bmatrix}\begin{bmatrix} \ell_2 \\ 0 \end{bmatrix}
+            = \begin{bmatrix} \ell_1 + \ell_2 c_2 \\ \ell_2 s_2 \end{bmatrix},\\
+  \rv{0}{N} &= \rv{0}{C} + \Rm{0}{1}\,\rv{1}{N}
+            = \begin{bmatrix} {}^0x_C + \ell_1 c_1 + \ell_2(c_1c_2 - s_1s_2) \\ {}^0y_C + \ell_1 s_1 + \ell_2(s_1c_2 + c_1s_2) \end{bmatrix},
+\end{align*}
+e as identidades $c_1c_2 - s_1s_2 = c_{12}$ e $s_1c_2 + c_1s_2 = s_{12}$ simplificam o resultado. Pelo
+ramo $0\text{--}3$, $\rv{0}{N} = \rv{0}{L} + \Rm{0}{3}\,\rv{3}{N}$. Igualando os dois ramos, obtém-se a
+\emph{equação de fechamento}
 \begin{equation}
-  \hmg{\rv{0}{N}} = \Tm{0}{1}\,\Tm{1}{2}\hmg{\rv{2}{N}} = \Tm{0}{3}\hmg{\rv{3}{N}}
+  \rv{0}{C} + \Rm{0}{1}\Big(\rv{1}{O_2} + \Rm{1}{2}\,\rv{2}{N}\Big) = \rv{0}{L} + \Rm{0}{3}\,\rv{3}{N}
   \;\Longrightarrow\;
-  \begin{bmatrix} {}^0x_C + \ell_1 c_1 + \ell_2 c_{12} \\ {}^0y_C + \ell_1 s_1 + \ell_2 s_{12} \\ 1 \end{bmatrix}
-  = \begin{bmatrix} {}^0x_L + \ell_3 c_3 \\ {}^0y_L + \ell_3 s_3 \\ 1 \end{bmatrix}.
+  \begin{bmatrix} {}^0x_C + \ell_1 c_1 + \ell_2 c_{12} \\ {}^0y_C + \ell_1 s_1 + \ell_2 s_{12} \end{bmatrix}
+  = \begin{bmatrix} {}^0x_L + \ell_3 c_3 \\ {}^0y_L + \ell_3 s_3 \end{bmatrix}.
   \label{eq:fechamento}
 \end{equation}
 Na prótese, a variável de entrada é a orientação da perna, $\psi = \theta_1 + \theta_2$
@@ -369,40 +383,50 @@ prescritas, as \emph{posições de precisão} $j = 1, 2, 3$. Cada pose é dada, 
 1, pela rotação $\alpha_j$ da perna e pelo deslocamento $\boldsymbol\delta_j$ de um ponto de
 referência dela (a origem $O_4$ da base da perna):
 \begin{equation}
-  \Tm{0}{4}^{(j)} = \left[\begin{array}{c|c} \Rot{\alpha_j}{z_4} & \rv{0}{O_4}^{(j)} \\ \hline \mathbf 0 & 1 \end{array}\right],
+  \Rm{0}{4}^{(j)} = \Rot{\alpha_j}{z_4},
   \qquad
-  \boldsymbol\delta_j = \rv{0}{O_4}^{(j)} - \rv{0}{O_4}^{(1)} .
+  \boldsymbol\delta_j = \rv{0}{O_4}^{(j)} - \rv{0}{O_4}^{(1)} ,
 \end{equation}
+e um ponto $X$ da perna ocupa, na posição $j$, a posição $\rv{0}{X}^{(j)} = \Rm{0}{4}^{(j)}\,\rv{4}{X} + \rv{0}{O_4}^{(j)}$
+(\cref{eq:mudancabase}).
 
 \paragraph{1º passo -- equação da díade padrão.} O quadrilátero é sintetizado como duas
 díades, $CQ$--$QO_4$ e $LN$--$NO_4$ (\cref{fig:quadrilatero}). Na díade da esquerda, seja
 $\mathbf W = \rv{0}{Q}^{(1)} - \rv{0}{C}$ o vetor da manivela e $\mathbf Z = \rv{0}{O_4}^{(1)} - \rv{0}{Q}^{(1)}$ o
-vetor do lado do acoplador, ambos na posição 1. Representando vetores planos por números
-complexos ($\mathbf v = v_x + \mathrm i\,v_y$), uma rotação de ângulo $\gamma$ é a multiplicação por
-$\e^{\mathrm i\gamma} = \cos\gamma + \mathrm i\,\sen\gamma$ -- o equivalente complexo de $\Rot{\gamma}{z}$. Da posição 1
-para a posição $j$, a manivela gira de $\beta_j$ e o acoplador gira de $\alpha_j$; como o pivô $C$
-é fixo, o fechamento do circuito $C \to Q \to O_4$ nas duas posições fornece
+vetor do lado do acoplador, ambos na posição 1 e escritos na base $0$. Da posição 1 para a
+posição $j$, a manivela gira de $\beta_j$ e o acoplador gira de $\alpha_j$; pela mudança de base,
+os vetores passam a $\Rot{\beta_j}{z}\,\mathbf W$ e $\Rot{\alpha_j}{z}\,\mathbf Z$. Como o pivô $C$ é fixo, o
+circuito $C \to Q \to O_4$ fornece $\rv{0}{O_4}^{(j)} = \rv{0}{C} + \Rot{\beta_j}{z}\,\mathbf W + \Rot{\alpha_j}{z}\,\mathbf Z$.
+Subtraindo a mesma relação na posição 1 ($\rv{0}{O_4}^{(1)} = \rv{0}{C} + \mathbf W + \mathbf Z$):
 \begin{equation}
-  \mathbf W\big(\e^{\mathrm i\beta_j} - 1\big) + \mathbf Z\big(\e^{\mathrm i\alpha_j} - 1\big) = \boldsymbol\delta_j ,
-  \qquad j = 2, 3 .
+  \underbrace{\big[\Rot{\beta_j}{z} - I\big]}_{A_j}\mathbf W + \underbrace{\big[\Rot{\alpha_j}{z} - I\big]}_{B_j}\mathbf Z = \boldsymbol\delta_j ,
+  \qquad j = 2, 3 ,
   \label{eq:diade}
 \end{equation}
-São duas equações complexas (quatro escalares) com seis incógnitas escalares: as duas
-componentes de $\mathbf W$, as duas de $\mathbf Z$, $\beta_2$ e $\beta_3$. Há, portanto, \emph{duas escolhas
-livres} por díade; adotam-se $\beta_2$ e $\beta_3$.
+com $\Rot{\cdot}{z}$ e $I$ de ordem $2\times2$. São quatro equações escalares com seis incógnitas:
+as duas componentes de $\mathbf W$, as duas de $\mathbf Z$, $\beta_2$ e $\beta_3$. Há, portanto, \emph{duas
+escolhas livres} por díade; adotam-se $\beta_2$ e $\beta_3$.
 
-\paragraph{2º passo -- solução pela regra de Cramer.} Escolhidos $\beta_2$ e $\beta_3$, o sistema
-\eqref{eq:diade} é linear em $\mathbf W$ e $\mathbf Z$:
+\paragraph{2º passo -- solução do sistema linear.} Escolhidos $\beta_2$ e $\beta_3$, o sistema
+\eqref{eq:diade} é linear em $\mathbf W$ e $\mathbf Z$ e pode ser escrito em blocos $2\times2$:
 \begin{equation}
-  \begin{bmatrix} \e^{\mathrm i\beta_2} - 1 & \e^{\mathrm i\alpha_2} - 1 \\ \e^{\mathrm i\beta_3} - 1 & \e^{\mathrm i\alpha_3} - 1 \end{bmatrix}
+  \begin{bmatrix} A_2 & B_2 \\ A_3 & B_3 \end{bmatrix}
   \begin{bmatrix} \mathbf W \\ \mathbf Z \end{bmatrix}
   = \begin{bmatrix} \boldsymbol\delta_2 \\ \boldsymbol\delta_3 \end{bmatrix} ,
-\end{equation}
-e, com $\Delta = (\e^{\mathrm i\beta_2} - 1)(\e^{\mathrm i\alpha_3} - 1) - (\e^{\mathrm i\alpha_2} - 1)(\e^{\mathrm i\beta_3} - 1)$,
-\begin{equation}
-  \mathbf W = \frac{\boldsymbol\delta_2\,(\e^{\mathrm i\alpha_3} - 1) - \boldsymbol\delta_3\,(\e^{\mathrm i\alpha_2} - 1)}{\Delta},
   \qquad
-  \mathbf Z = \frac{(\e^{\mathrm i\beta_2} - 1)\,\boldsymbol\delta_3 - (\e^{\mathrm i\beta_3} - 1)\,\boldsymbol\delta_2}{\Delta}.
+  A_j = \begin{bmatrix} \cos\beta_j - 1 & -\sen\beta_j \\ \sen\beta_j & \cos\beta_j - 1 \end{bmatrix},\quad
+  B_j = \begin{bmatrix} \cos\alpha_j - 1 & -\sen\alpha_j \\ \sen\alpha_j & \cos\alpha_j - 1 \end{bmatrix}.
+\end{equation}
+As matrizes $A_j$ e $B_j$ têm a forma $\left[\begin{smallmatrix} a & -b \\ b & a \end{smallmatrix}\right]$ e, por isso,
+comutam entre si. Isso permite eliminar $\mathbf Z$ (multiplicando a primeira linha por $B_3$ e a
+segunda por $B_2$ e subtraindo) e, de modo análogo, $\mathbf W$, o que equivale à regra de Cramer
+por blocos:
+\begin{equation}
+  \Delta = A_2 B_3 - B_2 A_3,
+  \qquad
+  \mathbf W = \Delta^{-1}\big(B_3\,\boldsymbol\delta_2 - B_2\,\boldsymbol\delta_3\big),
+  \qquad
+  \mathbf Z = \Delta^{-1}\big(A_2\,\boldsymbol\delta_3 - A_3\,\boldsymbol\delta_2\big).
   \label{eq:cramer}
 \end{equation}
 
@@ -411,7 +435,8 @@ e, com $\Delta = (\e^{\mathrm i\beta_2} - 1)(\e^{\mathrm i\alpha_3} - 1) - (\e^{
   \rv{0}{Q}^{(1)} = \rv{0}{O_4}^{(1)} - \mathbf Z, \qquad \rv{0}{C} = \rv{0}{Q}^{(1)} - \mathbf W,
   \qquad \ell_1 = |\mathbf W| ,
 \end{equation}
-e o pivô móvel na base da perna é $\rv{4}{Q} = \Rm{0}{4}^{(1)\mathsf T}\big(\rv{0}{Q}^{(1)} - \rv{0}{O_4}^{(1)}\big)$.
+e o pivô móvel na base da perna vem da mudança de base inversa,
+$\rv{4}{Q} = \Rm{0}{4}^{(1)\mathsf T}\big(\rv{0}{Q}^{(1)} - \rv{0}{O_4}^{(1)}\big)$.
 A díade da direita é obtida da mesma forma, com escolhas livres $\gamma_2$ e $\gamma_3$
 (rotações do balancim $LN$), vetores $\mathbf U = \rv{0}{N}^{(1)} - \rv{0}{L}$ e
 $\mathbf S = \rv{0}{O_4}^{(1)} - \rv{0}{N}^{(1)}$, e $\ell_3 = |\mathbf U|$. Os demais comprimentos são
@@ -437,12 +462,12 @@ base $0$) e o quadro $j$ é $\alpha_j = \beta_{JP}^{(j)} - \beta_{JP}^{(r)}$, ou
 $\Rm{0}{4}^{(j)} = \Rot{\alpha_j}{z_4}$.
 
 \paragraph{2º passo -- posição da origem.} Da mudança de base
-$\rv{0}{J}^{(j)} = \Rm{0}{4}^{(j)}\,\rv{4}{J} + \rv{0}{O_4}^{(j)}$ (\cref{eq:homogenea}),
+$\rv{0}{J}^{(j)} = \Rm{0}{4}^{(j)}\,\rv{4}{J} + \rv{0}{O_4}^{(j)}$ (\cref{eq:mudancabase}),
 \begin{equation}
   \rv{0}{O_4}^{(j)} = \rv{0}{J}^{(j)} - \Rot{\alpha_j}{z_4}\,\rv{4}{J} .
 \end{equation}
-Com $\Rm{0}{4}^{(j)}$ e $\rv{0}{O_4}^{(j)}$, a transformação $\Tm{0}{4}^{(j)}$ fica determinada, e a posição
-de qualquer ponto da perna segue de $[\rv{0}{X};1] = \Tm{0}{4}^{(j)}[\rv{4}{X};1]$. Como o corpo
+Com $\Rm{0}{4}^{(j)}$ e $\rv{0}{O_4}^{(j)}$ determinados, a posição de qualquer ponto da perna segue da
+mudança de base $\rv{0}{X}^{(j)} = \Rm{0}{4}^{(j)}\,\rv{4}{X} + \rv{0}{O_4}^{(j)}$. Como o corpo
 é tratado como rígido, a variação do comprimento medido $\overline{JP}$ entre os quadros indica a
 incerteza das medições.
 
@@ -569,11 +594,11 @@ como o elo fixo do mecanismo. Os dados foram processados em três passos.
 dos marcadores 3 e 4 (extremidade distal da coxa, junto ao joelho) e eixos paralelos aos
 da imagem: $X_0$ horizontal, para a frente, e $Y_0$ vertical, para cima. Como a rotação
 do quadril é desconsiderada, $\Rm{im}{0} = \Rot{0}{z_0} = I$, e a base da coxa apenas
-acompanha a translação da região do joelho entre os quadros:
+acompanha a translação da região do joelho entre os quadros. Com
+$\rv{im}{O_0} = \tfrac12\big(\rv{im}{3} + \rv{im}{4}\big)$, a mudança de base inversa de
+\eqref{eq:mudancabase} fornece as coordenadas de cada marcador $k$ na base da coxa:
 \begin{equation}
-  \Tm{im}{0} = \left[\begin{array}{c|c} I & \tfrac12\big(\rv{im}{3} + \rv{im}{4}\big) \\ \hline \mathbf 0 & 1 \end{array}\right],
-  \qquad
-  \rv{0}{k} = \rv{im}{k} - \tfrac12\big(\rv{im}{3} + \rv{im}{4}\big).
+  \rv{0}{k} = \Rm{im}{0}^{\mathsf T}\big(\rv{im}{k} - \rv{im}{O_0}\big) = \rv{im}{k} - \tfrac12\big(\rv{im}{3} + \rv{im}{4}\big).
 \end{equation}
 Os marcadores 1 e 2 (quadril) não entram na síntese da Parte~I. Para referência, se a
 rotação da coxa fosse descontada (eixo definido pelos pontos médios 1--2 e 3--4), as
@@ -588,7 +613,7 @@ $\rv{4}{J} = \rv{0}{J}^{(307)} = [\Jx\ \ \Jy]^{\mathsf T}$~mm e $\rv{4}{P} = [\P
 quadro obtêm-se $\alpha_j$ e $\rv{0}{O_4}^{(j)}$. A flexão do joelho é $\varphi_j = -\alpha_j$.
 
 \paragraph{3º passo -- tornozelo.} A posição do tornozelo segundo o modelo rígido é
-$\big[\rv{0}{P};\,1\big] = \Tm{0}{4}^{(j)}\big[\rv{4}{P};\,1\big]$; é essa posição que será comparada com a
+$\rv{0}{P}^{(j)} = \Rm{0}{4}^{(j)}\,\rv{4}{P} + \rv{0}{O_4}^{(j)}$; é essa posição que será comparada com a
 gerada pelo mecanismo.
 
 \begin{table}[htbp]
@@ -818,43 +843,43 @@ mecanismo RR do método matricial. As bases são (\cref{fig:modelo}):
   $\theta_2$ é o ângulo \emph{relativo} de $X_1$ para $X_2$ (junta do joelho).
 \end{itemize}
 A orientação absoluta da perna é, portanto, $\theta_1 + \theta_2$, e as coordenadas
-generalizadas são $\mathbf q = [\theta_1\ \ \theta_2]^{\mathsf T}$. As transformações homogêneas são
+generalizadas são $\mathbf q = [\theta_1\ \ \theta_2]^{\mathsf T}$. As matrizes de rotação e as origens
+das bases são
 \begin{equation}
-  \Tm{0}{1} = \left[\begin{array}{c|c} \Rm{0}{1} & \rv{0}{O_1} \\ \hline \mathbf 0 & 1 \end{array}\right]
-            = \left[\begin{array}{cc|c} c_1 & -s_1 & 0\\ s_1 & c_1 & 0\\ \hline 0 & 0 & 1\end{array}\right],
-  \qquad
-  \Tm{1}{2} = \left[\begin{array}{c|c} \Rm{1}{2} & \rv{1}{O_2} \\ \hline \mathbf 0 & 1 \end{array}\right]
-            = \left[\begin{array}{cc|c} c_2 & -s_2 & \ell_1\\ s_2 & c_2 & 0\\ \hline 0 & 0 & 1\end{array}\right],
+  \Rm{0}{1} = \Rot{\theta_1}{z} = \begin{bmatrix} c_1 & -s_1 \\ s_1 & c_1 \end{bmatrix},\quad
+  \Rm{1}{2} = \Rot{\theta_2}{z} = \begin{bmatrix} c_2 & -s_2 \\ s_2 & c_2 \end{bmatrix},\quad
+  \rv{0}{O_1} = \mathbf 0,\quad \rv{1}{O_2} = \begin{bmatrix} \ell_1 \\ 0 \end{bmatrix},
 \end{equation}
-com $\Rm{0}{1} = \Rot{\theta_1}{z_1}$ e $\Rm{1}{2} = \Rot{\theta_2}{z_2}$. Os pontos de interesse têm
-coordenadas constantes nas bases dos seus elos: $\rv{1}{O} = [\ell_1\ \ 0]^{\mathsf T}$,
-$\rv{2}{P} = [\ell_2\ \ 0]^{\mathsf T}$ e $\rv{2}{R} = [\ell_2\ \ \ell_3]^{\mathsf T}$. Assim,
+e $\Rm{0}{2} = \Rm{0}{1}\Rm{1}{2} = \Rot{\theta_1+\theta_2}{z}$. Os pontos de interesse têm coordenadas
+constantes nas bases dos seus elos: $\rv{1}{O} = [\ell_1\ \ 0]^{\mathsf T}$, $\rv{2}{P} = [\ell_2\ \ 0]^{\mathsf T}$ e
+$\rv{2}{R} = [\ell_2\ \ \ell_3]^{\mathsf T}$. Pela mudança de base em cadeia \eqref{eq:cadeia}:
 \begin{align}
-  \hmg{\rv{0}{P}} &= \Tm{0}{1}\,\Tm{1}{2}\hmg{\rv{2}{P}}
-   = \begin{bmatrix} c_1 & -s_1 & 0\\ s_1 & c_1 & 0\\ 0 & 0 & 1\end{bmatrix}
-     \begin{bmatrix} \ell_2 c_2 + \ell_1\\ \ell_2 s_2 \\ 1\end{bmatrix}
-   = \begin{bmatrix} \ell_1 c_1 + \ell_2 c_{12}\\ \ell_1 s_1 + \ell_2 s_{12} \\ 1\end{bmatrix},
+  \rv{0}{P} &= \Rm{0}{1}\Big(\rv{1}{O_2} + \Rm{1}{2}\,\rv{2}{P}\Big)
+   = \begin{bmatrix} c_1 & -s_1 \\ s_1 & c_1 \end{bmatrix}
+     \begin{bmatrix} \ell_1 + \ell_2 c_2 \\ \ell_2 s_2 \end{bmatrix}
+   = \begin{bmatrix} \ell_1 c_1 + \ell_2 c_{12}\\ \ell_1 s_1 + \ell_2 s_{12} \end{bmatrix},
   \label{eq:posP}\\
-  \hmg{\rv{0}{R}} &= \Tm{0}{1}\,\Tm{1}{2}\hmg{\rv{2}{R}}
-   = \begin{bmatrix} \ell_1 c_1 + \ell_2 c_{12} - \ell_3 s_{12}\\ \ell_1 s_1 + \ell_2 s_{12} + \ell_3 c_{12} \\ 1\end{bmatrix},
+  \rv{0}{R} &= \Rm{0}{1}\Big(\rv{1}{O_2} + \Rm{1}{2}\,\rv{2}{R}\Big)
+   = \begin{bmatrix} \ell_1 c_1 + \ell_2 c_{12} - \ell_3 s_{12}\\ \ell_1 s_1 + \ell_2 s_{12} + \ell_3 c_{12} \end{bmatrix},
 \end{align}
-e $\hmg{\rv{0}{O}} = \Tm{0}{1}\hmg{\rv{1}{O}} = [\ell_1 c_1\ \ \ell_1 s_1\ \ 1]^{\mathsf T}$.
+e $\rv{0}{O} = \Rm{0}{1}\,\rv{1}{O} = [\ell_1 c_1\ \ \ell_1 s_1]^{\mathsf T}$.
 
-\paragraph{Velocidades e acelerações.} Derivando \eqref{eq:posP} no tempo, com $\rv{2}{P}$
-constante,
+\paragraph{Velocidades e acelerações.} Escrevendo \eqref{eq:posP} como
+$\rv{0}{P} = \Rm{0}{1}\,\rv{1}{O_2} + \Rm{0}{2}\,\rv{2}{P}$ e derivando no tempo, com $\rv{1}{O_2}$ e $\rv{2}{P}$
+constantes e usando \eqref{eq:derivR}:
 \begin{align}
-  \hoz{\rvd{0}{P}} &= \big(\Tmd{0}{1}\,\Tm{1}{2} + \Tm{0}{1}\,\Tmd{1}{2}\big)\hmg{\rv{2}{P}},\\
-  \hoz{\rvdd{0}{P}} &= \big(\Tmdd{0}{1}\,\Tm{1}{2} + 2\,\Tmd{0}{1}\,\Tmd{1}{2} + \Tm{0}{1}\,\Tmdd{1}{2}\big)\hmg{\rv{2}{P}},
+  \rvd{0}{P} &= \Rmd{0}{1}\,\rv{1}{O_2} + \Rmd{0}{2}\,\rv{2}{P}
+             = \dot\theta_1\,\Rm{0}{1}\,\Et\,\rv{1}{O_2} + (\dot\theta_1+\dot\theta_2)\,\Rm{0}{2}\,\Et\,\rv{2}{P},\\
+  \rvdd{0}{P} &= \Rmdd{0}{1}\,\rv{1}{O_2} + \Rmdd{0}{2}\,\rv{2}{P},
 \end{align}
-em que
+com
 \begin{equation}
-  \Tmd{0}{1} = \begin{bmatrix} -s_1 & -c_1 & 0\\ c_1 & -s_1 & 0\\ 0 & 0 & 0\end{bmatrix}\dot\theta_1,
+  \Rmd{0}{1} = \dot\theta_1\begin{bmatrix} -s_1 & -c_1 \\ c_1 & -s_1 \end{bmatrix},
   \qquad
-  \Tmdd{0}{1} = \begin{bmatrix} -c_1 & s_1 & 0\\ -s_1 & -c_1 & 0\\ 0 & 0 & 0\end{bmatrix}\dot\theta_1^2
-              + \begin{bmatrix} -s_1 & -c_1 & 0\\ c_1 & -s_1 & 0\\ 0 & 0 & 0\end{bmatrix}\ddot\theta_1,
+  \Rmdd{0}{1} = \ddot\theta_1\begin{bmatrix} -s_1 & -c_1 \\ c_1 & -s_1 \end{bmatrix}
+               - \dot\theta_1^2\begin{bmatrix} c_1 & -s_1 \\ s_1 & c_1 \end{bmatrix},
 \end{equation}
-e analogamente para $\Tmd{1}{2}$ e $\Tmdd{1}{2}$ com $\theta_2$ (a translação $\ell_1$ é constante e
-some na derivada). Efetuando os produtos,
+e analogamente para $\Rm{0}{2}$ com $\theta_1+\theta_2$. Efetuando os produtos,
 \begin{equation}
   \rvd{0}{P} = \begin{bmatrix} -\ell_1 s_1 - \ell_2 s_{12} & -\ell_2 s_{12}\\ \ell_1 c_1 + \ell_2 c_{12} & \ell_2 c_{12}\end{bmatrix}
                \begin{bmatrix}\dot\theta_1\\ \dot\theta_2\end{bmatrix} = \Jm{P}\,\dot{\mathbf q},
@@ -1105,26 +1130,28 @@ equações de equilíbrio dinâmico de cada elo. O procedimento é dividido em q
 Os centros de massa têm coordenadas constantes nas bases dos seus elos,
 $\rv{1}{G_1} = [a_1\ \ 0]^{\mathsf T}$ e $\rv{2}{G_2} = [b_x\ \ b_y]^{\mathsf T}$ (\cref{tab:parametros}). Na base $0$:
 \begin{align}
-  \hmg{\rv{0}{G_1}} &= \Tm{0}{1}\hmg{\rv{1}{G_1}} = \begin{bmatrix} a_1 c_1\\ a_1 s_1\\ 1\end{bmatrix},
+  \rv{0}{G_1} &= \Rm{0}{1}\,\rv{1}{G_1} = \begin{bmatrix} a_1 c_1\\ a_1 s_1\end{bmatrix},
   \qquad
-  \hmg{\rv{0}{O}} = \Tm{0}{1}\hmg{\rv{1}{O}} = \begin{bmatrix} \ell_1 c_1\\ \ell_1 s_1\\ 1\end{bmatrix},\\
-  \hmg{\rv{0}{G_2}} &= \Tm{0}{1}\,\Tm{1}{2}\hmg{\rv{2}{G_2}}
-   = \begin{bmatrix} \ell_1 c_1 + b_x c_{12} - b_y s_{12}\\ \ell_1 s_1 + b_x s_{12} + b_y c_{12}\\ 1\end{bmatrix}.
+  \rv{0}{O} = \Rm{0}{1}\,\rv{1}{O} = \begin{bmatrix} \ell_1 c_1\\ \ell_1 s_1\end{bmatrix},\\
+  \rv{0}{G_2} &= \Rm{0}{1}\Big(\rv{1}{O_2} + \Rm{1}{2}\,\rv{2}{G_2}\Big)
+   = \begin{bmatrix} \ell_1 c_1 + b_x c_{12} - b_y s_{12}\\ \ell_1 s_1 + b_x s_{12} + b_y c_{12}\end{bmatrix}.
 \end{align}
 Para uso adiante, define-se o vetor de $O$ a $G_2$:
 $\mathbf r_{OG_2} = \rv{0}{G_2} - \rv{0}{O} = [\,b_x c_{12} - b_y s_{12}\ \ \ b_x s_{12} + b_y c_{12}\,]^{\mathsf T}$.
 
 \subsection{2º passo -- acelerações dos centros de massa}
 
-Como no \cref{eq:posP}, as acelerações são obtidas derivando duas vezes as transformações
-homogêneas:
+Como na \cref{eq:posP}, as acelerações são obtidas derivando duas vezes as matrizes de
+rotação \eqref{eq:derivR}, com as coordenadas nas bases dos elos constantes:
 \begin{align}
-  \hoz{\rvdd{0}{G_1}} &= \Tmdd{0}{1}\hmg{\rv{1}{G_1}}
-     = a_1\begin{bmatrix} -s_1\ddot\theta_1 - c_1\dot\theta_1^2 \\ c_1\ddot\theta_1 - s_1\dot\theta_1^2 \\ 0\end{bmatrix},\\
-  \hoz{\rvdd{0}{G_2}} &= \big(\Tmdd{0}{1}\,\Tm{1}{2} + 2\,\Tmd{0}{1}\,\Tmd{1}{2} + \Tm{0}{1}\,\Tmdd{1}{2}\big)\hmg{\rv{2}{G_2}} .
+  \rvdd{0}{G_1} &= \Rmdd{0}{1}\,\rv{1}{G_1}
+     = a_1\begin{bmatrix} -s_1\ddot\theta_1 - c_1\dot\theta_1^2 \\ c_1\ddot\theta_1 - s_1\dot\theta_1^2 \end{bmatrix},\\
+  \rvdd{0}{G_2} &= \Rmdd{0}{1}\,\rv{1}{O_2} + \Rmdd{0}{2}\,\rv{2}{G_2},
+  \qquad
+  \Rmdd{0}{2} = (\ddot\theta_1+\ddot\theta_2)\,\Rm{0}{2}\,\Et - (\dot\theta_1+\dot\theta_2)^2\,\Rm{0}{2} .
 \end{align}
-Efetuando o produto da segunda expressão e agrupando os termos, obtém-se a forma
-vetorial equivalente, conhecida da Mecânica,
+Como $\Rm{0}{2}\,\rv{2}{G_2} = \mathbf r_{OG_2}$ e $\Rmdd{0}{1}\,\rv{1}{O_2} = \mathbf a_O$, a segunda expressão
+fica na forma vetorial equivalente, conhecida da Mecânica,
 \begin{equation}
   \mathbf a_{G_2} = \mathbf a_O + \dot{\boldsymbol\omega}_2\times\mathbf r_{OG_2}
                    + \boldsymbol\omega_2\times(\boldsymbol\omega_2\times\mathbf r_{OG_2}),
@@ -1452,7 +1479,7 @@ Os programas estão na pasta \texttt{scripts/} e são executados pelo \texttt{Ma
 
 Trecho central da Parte II -- dinâmica inversa por Newton--Euler:
 \begin{lstlisting}[language=Python]
-rOG2 = [bx*c12 - by*s12, bx*s12 + by*c12]        # 0T1 1T2 aplicado a 2rG2
+rOG2 = [bx*c12 - by*s12, bx*s12 + by*c12]        # [0R2] 2rG2 (mudanca de base)
 aO   = l1*[-s1*dd1 - c1*d1**2, c1*dd1 - s1*d1**2]
 aG2  = aO + [-rOG2[1]*al2 - rOG2[0]*w2**2, rOG2[0]*al2 - rOG2[1]*w2**2]
 FG1  = m1*(aG1 - g);  FG2 = m2*(aG2 - g)

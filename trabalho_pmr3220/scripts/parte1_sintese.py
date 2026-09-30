@@ -5,8 +5,8 @@ Grupo C (rastreamento no software Tracker, arquivo dados/tracker_rascunho.csv).
 
 Somente ferramentas da disciplina:
   - pose de um corpo rigido no plano a partir de dois pontos (analise cinematica 2D);
-  - sintese dimensional analitica: diade padrao W(e^{i beta}-1) + Z(e^{i alpha}-1) = delta,
-    resolvida pela regra de Cramer, com as escolhas livres (beta2, beta3) por diade
+  - sintese dimensional analitica: diade padrao [Rot(beta)-I] W + [Rot(alpha)-I] Z = delta,
+    resolvida por blocos de matrizes 2x2 (regra de Cramer por blocos), com as escolhas livres (beta2, beta3) por diade
     determinadas por varredura;
   - analise de posicao (cadeia fechada) pelo metodo de Newton-Raphson.
 Notacao (metodo matricial): base 0 = coxa (fixa, origem no ponto medio de 3-4, eixos da
@@ -51,27 +51,13 @@ def rot(a):
     return np.array([[c, -s], [s, c]])
 
 
-def T_hom(a, p):
-    T = np.eye(3)
-    T[:2, :2] = rot(a)
-    T[:2, 2] = p
-    return T
-
-
-def aplica(T, r):
-    return (T @ np.array([r[0], r[1], 1.0]))[:2]
-
-
-def cx(v):
-    return complex(v[0], v[1])
-
-
-def vec(z):
-    return np.array([z.real, z.imag])
+def muda_base(a, p, r):
+    """Mudanca de base de ponto: 0r = [0R4] 4r + 0rO4, com [0R4] = Rot(a, z) e 0rO4 = p."""
+    return rot(a) @ np.asarray(r) + p
 
 
 # ---------------------------------------------------------------------------
-# 1) dados medidos -> poses 0T4 da perna (corpo rigido definido por dois pontos)
+# 1) dados medidos -> poses ([0R4], 0rO4) da perna (corpo rigido definido por dois pontos)
 # ---------------------------------------------------------------------------
 def le_tracker(caminho):
     D = {}
@@ -101,7 +87,7 @@ def poses_medidas(D):
         p = J[fr] - rot(a) @ J4
         comp = np.linalg.norm(P[fr] - J[fr])
         poses[fr] = dict(alpha=a, p=p, flexao=-np.degrees(a) + 0.0, JP=comp,
-                         dP=float(np.linalg.norm(aplica(T_hom(a, p), P4) - P[fr])))
+                         dP=float(np.linalg.norm(muda_base(a, p, P4) - P[fr])))
     return poses, J4, P4
 
 
@@ -109,14 +95,18 @@ def poses_medidas(D):
 # 2) sintese pela diade padrao
 # ---------------------------------------------------------------------------
 def diade(alphas, deltas, b2, b3):
-    """Resolve W(e^{i b_j}-1) + Z(e^{i a_j}-1) = delta_j (j = 2, 3) pela regra de Cramer."""
-    A11, A12 = np.exp(1j * b2) - 1, np.exp(1j * alphas[0]) - 1
-    A21, A22 = np.exp(1j * b3) - 1, np.exp(1j * alphas[1]) - 1
-    det = A11 * A22 - A12 * A21
-    if abs(det) < 1e-9:
+    """Resolve [Rot(b_j) - I] W + [Rot(a_j) - I] Z = delta_j (j = 2, 3) por blocos 2x2:
+    Delta = A2 B3 - B2 A3,  W = Delta^-1 (B3 d2 - B2 d3),  Z = Delta^-1 (A2 d3 - A3 d2)
+    (A_j e B_j comutam, pois tem a forma [[a, -b], [b, a]])."""
+    I = np.eye(2)
+    A2, A3 = rot(b2) - I, rot(b3) - I
+    B2, B3 = rot(alphas[0]) - I, rot(alphas[1]) - I
+    Delta = A2 @ B3 - B2 @ A3
+    if abs(np.linalg.det(Delta)) < 1e-9:
         return None
-    W = (deltas[0] * A22 - A12 * deltas[1]) / det
-    Z = (A11 * deltas[1] - deltas[0] * A21) / det
+    Dinv = np.linalg.inv(Delta)
+    W = Dinv @ (B3 @ deltas[0] - B2 @ deltas[1])
+    Z = Dinv @ (A2 @ deltas[1] - A3 @ deltas[0])
     return W, Z
 
 
@@ -126,7 +116,7 @@ def candidatos_diade(poses, prec, verif, passo, centro=None, janela=None):
     da diade na posicao de verificacao, e = | |0rQ(verif) - 0rC| - |W| |."""
     p1 = poses[prec[0]]
     alphas = [poses[f]["alpha"] - p1["alpha"] for f in prec[1:]]
-    deltas = [cx(poses[f]["p"] - p1["p"]) for f in prec[1:]]
+    deltas = [poses[f]["p"] - p1["p"] for f in prec[1:]]
     if centro is None:
         g = np.radians(np.arange(-180, 180, passo))
         grade = itertools.product(g, g)
@@ -140,11 +130,10 @@ def candidatos_diade(poses, prec, verif, passo, centro=None, janela=None):
         if sol is None:
             continue
         W, Z = sol
-        Q1 = cx(p1["p"]) - Z
-        Cf = Q1 - W
-        C = vec(Cf)
-        Q4 = rot(-p1["alpha"]) @ (vec(Q1) - p1["p"])
-        l = abs(W)
+        Q1 = p1["p"] - Z                                  # 0rQ(1) = 0rO4(1) - Z
+        C = Q1 - W                                        # 0rC = 0rQ(1) - W
+        Q4 = rot(p1["alpha"]).T @ (Q1 - p1["p"])          # 4rQ = [0R4]^T (0rQ - 0rO4)
+        l = np.linalg.norm(W)
         if not (CAIXA_FIXOS["xmin"] <= C[0] <= CAIXA_FIXOS["xmax"] and CAIXA_FIXOS["ymin"] <= C[1] <= CAIXA_FIXOS["ymax"]):
             continue
         if not (ELO_MIN <= l <= ELO_MAX):
@@ -152,7 +141,7 @@ def candidatos_diade(poses, prec, verif, passo, centro=None, janela=None):
         if not (CAIXA_MOVEIS["xmin"] <= Q4[0] <= CAIXA_MOVEIS["xmax"] and CAIXA_MOVEIS["ymin"] <= Q4[1] <= CAIXA_MOVEIS["ymax"]):
             continue
         pv = poses[verif]
-        e = abs(np.linalg.norm(aplica(T_hom(pv["alpha"], pv["p"]), Q4) - C) - l)
+        e = abs(np.linalg.norm(muda_base(pv["alpha"], pv["p"], Q4) - C) - l)
         out.append(dict(b2=b2, b3=b3, W=W, Z=Z, C=C, Q4=Q4, l=l, e=e))
     out.sort(key=lambda d: d["e"])
     return out
@@ -161,10 +150,10 @@ def candidatos_diade(poses, prec, verif, passo, centro=None, janela=None):
 def montagem(C, L, Q4, N4, alphas, pose_ini):
     """Analise de posicao: para cada orientacao alpha da perna, resolve a equacao de
     fechamento f(theta1, theta3) = 0 por Newton-Raphson, partindo do passo anterior."""
-    l1 = np.linalg.norm(aplica(T_hom(pose_ini["alpha"], pose_ini["p"]), Q4) - C)
-    l3 = np.linalg.norm(aplica(T_hom(pose_ini["alpha"], pose_ini["p"]), N4) - L)
-    Q0 = aplica(T_hom(pose_ini["alpha"], pose_ini["p"]), Q4)
-    N0 = aplica(T_hom(pose_ini["alpha"], pose_ini["p"]), N4)
+    l1 = np.linalg.norm(muda_base(pose_ini["alpha"], pose_ini["p"], Q4) - C)
+    l3 = np.linalg.norm(muda_base(pose_ini["alpha"], pose_ini["p"], N4) - L)
+    Q0 = muda_base(pose_ini["alpha"], pose_ini["p"], Q4)
+    N0 = muda_base(pose_ini["alpha"], pose_ini["p"], N4)
     t1 = np.arctan2(*(Q0 - C)[::-1])
     t3 = np.arctan2(*(N0 - L)[::-1])
     QN4 = N4 - Q4
@@ -216,8 +205,8 @@ def avalia_par(d1, d2, poses, prec, verif, P4, grade):
     erros = {}
     for f in FRAMES:
         t = porphi[round(poses[f]["flexao"], 6)]
-        erros[f] = float(np.linalg.norm(aplica(T_hom(t["alpha"], t["p"]), P4)
-                                        - aplica(T_hom(poses[f]["alpha"], poses[f]["p"]), P4)))
+        erros[f] = float(np.linalg.norm(muda_base(t["alpha"], t["p"], P4)
+                                        - muda_base(poses[f]["alpha"], poses[f]["p"], P4)))
     return dict(C=C, L=L, Q4=Q4, N4=N4, traj=traj, grade=grade, erros=erros, mus=mus,
                 custo=max(erros[verif], ERRO_ACEITAVEL) - 0.01 * min(mus), betas=(d1["b2"], d1["b3"]), gammas=(d2["b2"], d2["b3"]),
                 W=d1["W"], Z=d1["Z"], U=d2["W"], S=d2["Z"])
@@ -258,7 +247,7 @@ def main():
         w = csv.writer(f)
         w.writerow(["frame", "flexao_graus", "x_O4_mm", "y_O4_mm", "x_P_mm", "y_P_mm", "JP_mm", "dP_mm"])
         for fr, ps in sorted(poses.items()):
-            tp = aplica(T_hom(ps["alpha"], ps["p"]), P4)
+            tp = muda_base(ps["alpha"], ps["p"], P4)
             w.writerow([fr, f"{ps['flexao']:.2f}", f"{ps['p'][0]:.2f}", f"{ps['p'][1]:.2f}",
                         f"{tp[0]:.1f}", f"{tp[1]:.1f}", f"{ps['JP']:.0f}", f"{ps['dP']:.1f}"])
 
@@ -274,8 +263,8 @@ def main():
     combos.sort(key=lambda z: z[0])
     _, prec, cheque, r = combos[0]
     C, L, Q4, N4, traj, grade = r["C"], r["L"], r["Q4"], r["N4"], r["traj"], r["grade"]
-    comp = dict(l0=float(np.linalg.norm(C - L)), l1=float(abs(r["W"])),
-                l2=float(np.linalg.norm(Q4 - N4)), l3=float(abs(r["U"])))
+    comp = dict(l0=float(np.linalg.norm(C - L)), l1=float(np.linalg.norm(r["W"])),
+                l2=float(np.linalg.norm(Q4 - N4)), l3=float(np.linalg.norm(r["U"])))
     ls = sorted(comp.values())
     polos = [polo(C, L, t["t1"], t["t3"]) for t in traj]
     p1 = poses[prec[0]]
@@ -293,8 +282,7 @@ def main():
                    delta2=(poses[prec[1]]["p"] - p1["p"]).tolist(), delta3=(poses[prec[2]]["p"] - p1["p"]).tolist(),
                    beta2=float(np.degrees(r["betas"][0])), beta3=float(np.degrees(r["betas"][1])),
                    gamma2=float(np.degrees(r["gammas"][0])), gamma3=float(np.degrees(r["gammas"][1])),
-                   W=[r["W"].real, r["W"].imag], Z=[r["Z"].real, r["Z"].imag],
-                   U=[r["U"].real, r["U"].imag], S=[r["S"].real, r["S"].imag]),
+                   W=r["W"].tolist(), Z=r["Z"].tolist(), U=r["U"].tolist(), S=r["S"].tolist()),
         combinacoes=[dict(precisao=c[1], cheque=c[2], erro_cheque=float(c[3]["erros"][c[2][0]]),
                           mu_min=float(min(c[3]["mus"]))) for c in combos],
     )
@@ -331,8 +319,7 @@ def main():
     idx = {round(g, 6): i for i, g in enumerate(grade)}
     for fr in FRAMES:
         t = traj[idx[round(poses[fr]["flexao"], 6)]]
-        T = T_hom(t["alpha"], t["p"])
-        Q, N = aplica(T, Q4), aplica(T, N4)
+        Q, N = muda_base(t["alpha"], t["p"], Q4), muda_base(t["alpha"], t["p"], N4)
         cor = cores[fr]
         ax[0].plot([C[0], Q[0]], [C[1], Q[1]], "-o", color=cor, ms=3)
         ax[0].plot([L[0], N[0]], [L[1], N[1]], "-o", color=cor, ms=3)
@@ -349,10 +336,10 @@ def main():
     ax[0].set_xlabel("$^0x$ (mm)")
     ax[0].set_ylabel("$^0y$ (mm)")
     ax[0].set_title("Quadrilátero sintetizado (base 0)")
-    tor = np.array([aplica(T_hom(t["alpha"], t["p"]), P4) for t in traj])
+    tor = np.array([muda_base(t["alpha"], t["p"], P4) for t in traj])
     ax[1].plot(tor[:, 0], tor[:, 1], "r-", lw=1.2, label="mecanismo")
     for fr in FRAMES:
-        tm = aplica(T_hom(poses[fr]["alpha"], poses[fr]["p"]), P4)
+        tm = muda_base(poses[fr]["alpha"], poses[fr]["p"], P4)
         mk = "*" if fr in prec else "o"
         ax[1].plot(*tm, mk, color=cores[fr], ms=9 if mk == "*" else 6,
                    label=f"{fr} ({'precisão' if fr in prec else 'verificação'})")

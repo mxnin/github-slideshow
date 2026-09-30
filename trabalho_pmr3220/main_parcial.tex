@@ -50,13 +50,11 @@
 \newcommand{\rvd}[2]{{}^{#1}\dot{\mathbf{r}}_{#2}}
 \newcommand{\rvdd}[2]{{}^{#1}\ddot{\mathbf{r}}_{#2}}
 \newcommand{\vv}[2]{{}^{#1}\mathbf{v}_{#2}}
-\newcommand{\Tm}[2]{{}^{#1}T_{#2}}                   % transformacao homogenea da base #2 para a base #1
-\newcommand{\Tmd}[2]{{}^{#1}\dot T_{#2}}
-\newcommand{\Tmdd}[2]{{}^{#1}\ddot T_{#2}}
+\newcommand{\Rmd}[2]{[{}^{#1}\dot R_{#2}]}             % derivadas da matriz de rotacao
+\newcommand{\Rmdd}[2]{[{}^{#1}\ddot R_{#2}]}
+\newcommand{\Et}{\tilde{\mathbf k}}                   % matriz antissimetrica de k no plano
 \newcommand{\Rm}[2]{[{}^{#1}R_{#2}]}                 % matriz de rotacao
 \newcommand{\Rot}[2]{\mathrm{Rot}(#1,\,#2)}
-\newcommand{\hmg}[1]{\begin{bmatrix} #1 \\ 1 \end{bmatrix}}
-\newcommand{\hoz}[1]{\begin{bmatrix} #1 \\ 0 \end{bmatrix}}
 \newcommand{\Jm}[1]{[J_{#1}]}
 \newcommand{\e}{\mathrm{e}}
 \newcommand{\dd}{\,\mathrm{d}}
@@ -162,7 +160,7 @@ medições, do movimento relativo entre a coxa e a perna.
 \subsection{Notação}\label{sec:notacao}
 
 A modelagem cinemática segue o \emph{método matricial} adotado na disciplina, baseado em
-transformações homogêneas. A cada elo $i$ associa-se uma base (sistema de referência)
+matrizes de rotação e na mudança de base de pontos. A cada elo $i$ associa-se uma base (sistema de referência)
 $O_iX_iY_iZ_i$, de versores $\mathbf i_i$, $\mathbf j_i$, $\mathbf k_i$; a base $0$ é fixa. As
 convenções são:
 \begin{itemize}
@@ -183,15 +181,28 @@ convenções são:
     \end{aligned}
   \end{equation}
   no plano, usa-se apenas o bloco $2\times2$ superior;
-  \item mudança de base de um ponto: $\rv{A}{P} = \Rm{A}{B}\,\rv{B}{P} + \rv{A}{O_B}$, ou, na forma
-  homogênea,
+  \item mudança de base de um ponto: se $\rv{B}{P}$ são as coordenadas de $P$ na base $B$ e
+  $\rv{A}{O_B}$ a posição da origem de $B$ na base $A$, então
   \begin{equation}
-    \hmg{\rv{A}{P}} = \Tm{A}{B}\hmg{\rv{B}{P}},
-    \qquad
-    \Tm{A}{B} = \left[\begin{array}{c|c} \Rm{A}{B} & \rv{A}{O_B} \\ \hline \mathbf 0 & 1 \end{array}\right],
-    \label{eq:homogenea}
+    \rv{A}{P} = \Rm{A}{B}\,\rv{B}{P} + \rv{A}{O_B} ;
+    \label{eq:mudancabase}
   \end{equation}
-  e, para uma cadeia de elos, $\Tm{0}{n} = \Tm{0}{1}\,\Tm{1}{2}\cdots\Tm{n-1}{n}$;
+  para uma cadeia de bases $0, 1, 2$, aplica-se \eqref{eq:mudancabase} duas vezes, de dentro para fora:
+  \begin{equation}
+    \rv{0}{P} = \rv{0}{O_1} + \Rm{0}{1}\Big(\rv{1}{O_2} + \Rm{1}{2}\,\rv{2}{P}\Big),
+    \qquad
+    \Rm{0}{2} = \Rm{0}{1}\,\Rm{1}{2} ;
+    \label{eq:cadeia}
+  \end{equation}
+  \item derivada no tempo de uma rotação plana: de $\Rm{A}{B} = \Rot{\gamma}{z}$,
+  \begin{gather}
+    \Rmd{A}{B} = \dot\gamma\begin{bmatrix} -\sen\gamma & -\cos\gamma \\ \cos\gamma & -\sen\gamma \end{bmatrix}
+             = \dot\gamma\,\Rm{A}{B}\,\Et ,
+    \qquad
+    \Et = \begin{bmatrix} 0 & -1 \\ 1 & 0 \end{bmatrix},
+    \label{eq:derivR}\\
+    \Rmdd{A}{B} = \ddot\gamma\,\Rm{A}{B}\,\Et - \dot\gamma^2\,\Rm{A}{B} ;
+  \end{gather}
   \item abreviações: $c_i = \cos\theta_i$, $s_i = \sen\theta_i$, $c_{ij} = \cos(\theta_i+\theta_j)$,
   $s_{ij} = \sen(\theta_i+\theta_j)$; o ângulo $\theta_i$ da junta $i$ é medido do eixo $X_{i-1}$ ao
   eixo $X_i$ (ângulo \emph{relativo}), positivo no sentido anti-horário;
@@ -199,13 +210,27 @@ convenções são:
   $\tilde{\mathbf a} = \begin{bmatrix} 0 & -a_z & a_y\\ a_z & 0 & -a_x\\ -a_y & a_x & 0\end{bmatrix}$.
 \end{itemize}
 
-\subsection{Quadrilátero articulado e o joelho policêntrico}
+\subsection{Síntese do tipo e mobilidade: o quadrilátero articulado}
 
-Um quadrilátero articulado plano possui quatro elos ligados por quatro juntas de
-revolução e, pelo critério de Grübler, um grau de liberdade:
+A escolha do tipo de mecanismo parte da mobilidade desejada. O movimento relativo
+perna--coxa no plano sagital é comandado por uma única variável (a flexão do joelho), de
+modo que o mecanismo deve ter um grau de liberdade, $M = 1$. Pelo critério de Grübler para
+mecanismos planos,
 \begin{equation}
-  M = 3(n-1) - 2j_1 - j_2 = 3(4-1) - 2\cdot 4 - 0 = 1 .
+  M = 3(n-1) - 2j_1 - j_2 ,
 \end{equation}
+em que $n$ é o número de elos (incluindo o fixo), $j_1$ o de juntas de um grau de liberdade
+(revolução ou prismática) e $j_2$ o de juntas de dois graus de liberdade. Usando apenas
+juntas de revolução ($j_2 = 0$), $M = 1$ exige $3n - 2j_1 = 4$. A menor solução com $n > 2$ é
+$n = 4$, $j_1 = 4$:
+\begin{equation}
+  M = 3(4-1) - 2\cdot 4 - 0 = 1 ,
+\end{equation}
+ou seja, o \emph{quadrilátero articulado}. A alternativa $n = 2$, $j_1 = 1$ (uma única junta de
+revolução) também tem $M = 1$, mas impõe à perna um centro de rotação fixo, o que não
+reproduz o movimento do joelho (\cref{sec:processamento}). A solução seguinte,
+$n = 6$ e $j_1 = 7$, levaria a mecanismos de seis barras, mais complexos que o necessário.
+
 No joelho protético (\cref{fig:enunciado}) o elo fixo é a coxa (pivôs $C$ e $L$),
 as manivelas/balancins são $CQ$ e $LN$, e o \emph{acoplador} é a perna (pivôs $Q$ e $N$),
 ao qual se fixa rigidamente o pé. Como o acoplador executa um movimento plano geral,
@@ -276,28 +301,31 @@ $\ell_3 = \overline{LN}$.
   \label{fig:quadrilatero}
 \end{figure}
 
-As transformações homogêneas \eqref{eq:homogenea} de cada elo são
-\begin{equation}
-  \Tm{0}{1} = \left[\begin{array}{cc|c} c_1 & -s_1 & {}^0x_C\\ s_1 & c_1 & {}^0y_C\\ \hline 0 & 0 & 1\end{array}\right],\quad
-  \Tm{1}{2} = \left[\begin{array}{cc|c} c_2 & -s_2 & \ell_1\\ s_2 & c_2 & 0\\ \hline 0 & 0 & 1\end{array}\right],\quad
-  \Tm{0}{3} = \left[\begin{array}{cc|c} c_3 & -s_3 & {}^0x_L\\ s_3 & c_3 & {}^0y_L\\ \hline 0 & 0 & 1\end{array}\right],
-\end{equation}
+As matrizes de rotação e as origens das bases são
+\begin{gather}
+  \Rm{0}{1} = \begin{bmatrix} c_1 & -s_1 \\ s_1 & c_1 \end{bmatrix},\quad
+  \Rm{1}{2} = \begin{bmatrix} c_2 & -s_2 \\ s_2 & c_2 \end{bmatrix},\quad
+  \Rm{0}{3} = \begin{bmatrix} c_3 & -s_3 \\ s_3 & c_3 \end{bmatrix},\\
+  \rv{0}{O_1} = \rv{0}{C},\qquad \rv{1}{O_2} = \begin{bmatrix} \ell_1 \\ 0 \end{bmatrix},\qquad \rv{0}{O_3} = \rv{0}{L},
+\end{gather}
 com $\rv{2}{N} = [\ell_2\ \ 0]^{\mathsf T}$ e $\rv{3}{N} = [\ell_3\ \ 0]^{\mathsf T}$. O ponto $N$ pertence
 simultaneamente ao ramo $0\text{--}1\text{--}2$ e ao ramo $0\text{--}3$ da cadeia. Pelo ramo
-$0\text{--}1\text{--}2$, multiplica-se primeiro o ponto pela matriz mais à direita:
-\begin{equation*}
-  \Tm{1}{2}\hmg{\rv{2}{N}} = \begin{bmatrix} \ell_2 c_2 + \ell_1 \\ \ell_2 s_2 \\ 1\end{bmatrix},
-  \qquad
-  \Tm{0}{1}\begin{bmatrix} \ell_2 c_2 + \ell_1 \\ \ell_2 s_2 \\ 1\end{bmatrix}
-  = \begin{bmatrix} {}^0x_C + \ell_1 c_1 + \ell_2(c_1c_2 - s_1s_2) \\ {}^0y_C + \ell_1 s_1 + \ell_2(s_1c_2 + c_1s_2) \\ 1\end{bmatrix},
-\end{equation*}
-e as identidades $c_1c_2 - s_1s_2 = c_{12}$ e $s_1c_2 + c_1s_2 = s_{12}$ simplificam o resultado.
-Igualando ao ramo $0\text{--}3$, obtém-se a \emph{equação de fechamento}
+$0\text{--}1\text{--}2$, aplica-se \eqref{eq:cadeia} de dentro para fora:
+\begin{align*}
+  \rv{1}{N} &= \rv{1}{O_2} + \Rm{1}{2}\,\rv{2}{N}
+            = \begin{bmatrix} \ell_1 \\ 0 \end{bmatrix} + \begin{bmatrix} c_2 & -s_2 \\ s_2 & c_2 \end{bmatrix}\begin{bmatrix} \ell_2 \\ 0 \end{bmatrix}
+            = \begin{bmatrix} \ell_1 + \ell_2 c_2 \\ \ell_2 s_2 \end{bmatrix},\\
+  \rv{0}{N} &= \rv{0}{C} + \Rm{0}{1}\,\rv{1}{N}
+            = \begin{bmatrix} {}^0x_C + \ell_1 c_1 + \ell_2(c_1c_2 - s_1s_2) \\ {}^0y_C + \ell_1 s_1 + \ell_2(s_1c_2 + c_1s_2) \end{bmatrix},
+\end{align*}
+e as identidades $c_1c_2 - s_1s_2 = c_{12}$ e $s_1c_2 + c_1s_2 = s_{12}$ simplificam o resultado. Pelo
+ramo $0\text{--}3$, $\rv{0}{N} = \rv{0}{L} + \Rm{0}{3}\,\rv{3}{N}$. Igualando os dois ramos, obtém-se a
+\emph{equação de fechamento}
 \begin{equation}
-  \hmg{\rv{0}{N}} = \Tm{0}{1}\,\Tm{1}{2}\hmg{\rv{2}{N}} = \Tm{0}{3}\hmg{\rv{3}{N}}
+  \rv{0}{C} + \Rm{0}{1}\Big(\rv{1}{O_2} + \Rm{1}{2}\,\rv{2}{N}\Big) = \rv{0}{L} + \Rm{0}{3}\,\rv{3}{N}
   \;\Longrightarrow\;
-  \begin{bmatrix} {}^0x_C + \ell_1 c_1 + \ell_2 c_{12} \\ {}^0y_C + \ell_1 s_1 + \ell_2 s_{12} \\ 1 \end{bmatrix}
-  = \begin{bmatrix} {}^0x_L + \ell_3 c_3 \\ {}^0y_L + \ell_3 s_3 \\ 1 \end{bmatrix}.
+  \begin{bmatrix} {}^0x_C + \ell_1 c_1 + \ell_2 c_{12} \\ {}^0y_C + \ell_1 s_1 + \ell_2 s_{12} \end{bmatrix}
+  = \begin{bmatrix} {}^0x_L + \ell_3 c_3 \\ {}^0y_L + \ell_3 s_3 \end{bmatrix}.
   \label{eq:fechamento}
 \end{equation}
 Na prótese, a variável de entrada é a orientação da perna, $\psi = \theta_1 + \theta_2$
@@ -451,11 +479,11 @@ fixo do mecanismo. Os dados foram processados em dois passos.
 dos marcadores 3 e 4 (extremidade distal da coxa, junto ao joelho) e eixos paralelos aos
 da imagem: $X_0$ horizontal, para a frente, e $Y_0$ vertical, para cima. Como a rotação do
 quadril é desconsiderada, $\Rm{im}{0} = \Rot{0}{z_0} = I$, e a base da coxa apenas
-acompanha a translação da região do joelho entre os quadros:
+acompanha a translação da região do joelho entre os quadros. Com
+$\rv{im}{O_0} = \tfrac12\big(\rv{im}{3} + \rv{im}{4}\big)$, a mudança de base inversa de
+\eqref{eq:mudancabase} fornece as coordenadas de cada marcador $k$ na base da coxa:
 \begin{equation}
-  \Tm{im}{0} = \left[\begin{array}{c|c} I & \tfrac12\big(\rv{im}{3} + \rv{im}{4}\big) \\ \hline \mathbf 0 & 1 \end{array}\right],
-  \qquad
-  \rv{0}{k} = \rv{im}{k} - \tfrac12\big(\rv{im}{3} + \rv{im}{4}\big).
+  \rv{0}{k} = \Rm{im}{0}^{\mathsf T}\big(\rv{im}{k} - \rv{im}{O_0}\big) = \rv{im}{k} - \tfrac12\big(\rv{im}{3} + \rv{im}{4}\big).
 \end{equation}
 Os marcadores 1 e 2 (quadril) não entram no processamento.
 
