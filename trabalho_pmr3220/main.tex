@@ -409,14 +409,14 @@ escolhas livres} por díade; adotam-se $\beta_2$ e $\beta_3$.
 
 \paragraph{2º passo -- solução do sistema linear.} Escolhidos $\beta_2$ e $\beta_3$, o sistema
 \eqref{eq:diade} é linear em $\mathbf W$ e $\mathbf Z$ e pode ser escrito em blocos $2\times2$:
-\begin{equation}
+\begin{gather}
   \begin{bmatrix} A_2 & B_2 \\ A_3 & B_3 \end{bmatrix}
   \begin{bmatrix} \mathbf W \\ \mathbf Z \end{bmatrix}
   = \begin{bmatrix} \boldsymbol\delta_2 \\ \boldsymbol\delta_3 \end{bmatrix} ,
-  \qquad
+  \\
   A_j = \begin{bmatrix} \cos\beta_j - 1 & -\sen\beta_j \\ \sen\beta_j & \cos\beta_j - 1 \end{bmatrix},\quad
   B_j = \begin{bmatrix} \cos\alpha_j - 1 & -\sen\alpha_j \\ \sen\alpha_j & \cos\alpha_j - 1 \end{bmatrix}.
-\end{equation}
+\end{gather}
 As matrizes $A_j$ e $B_j$ têm a forma $\left[\begin{smallmatrix} a & -b \\ b & a \end{smallmatrix}\right]$ e, por isso,
 comutam entre si. Isso permite eliminar $\mathbf Z$ (multiplicando a primeira linha por $B_3$ e a
 segunda por $B_2$ e subtraindo) e, de modo análogo, $\mathbf W$, o que equivale à regra de Cramer
@@ -845,11 +845,11 @@ mecanismo RR do método matricial. As bases são (\cref{fig:modelo}):
 A orientação absoluta da perna é, portanto, $\theta_1 + \theta_2$, e as coordenadas
 generalizadas são $\mathbf q = [\theta_1\ \ \theta_2]^{\mathsf T}$. As matrizes de rotação e as origens
 das bases são
-\begin{equation}
+\begin{gather}
   \Rm{0}{1} = \Rot{\theta_1}{z} = \begin{bmatrix} c_1 & -s_1 \\ s_1 & c_1 \end{bmatrix},\quad
-  \Rm{1}{2} = \Rot{\theta_2}{z} = \begin{bmatrix} c_2 & -s_2 \\ s_2 & c_2 \end{bmatrix},\quad
+  \Rm{1}{2} = \Rot{\theta_2}{z} = \begin{bmatrix} c_2 & -s_2 \\ s_2 & c_2 \end{bmatrix},\\
   \rv{0}{O_1} = \mathbf 0,\quad \rv{1}{O_2} = \begin{bmatrix} \ell_1 \\ 0 \end{bmatrix},
-\end{equation}
+\end{gather}
 e $\Rm{0}{2} = \Rm{0}{1}\Rm{1}{2} = \Rot{\theta_1+\theta_2}{z}$. Os pontos de interesse têm coordenadas
 constantes nas bases dos seus elos: $\rv{1}{O} = [\ell_1\ \ 0]^{\mathsf T}$, $\rv{2}{P} = [\ell_2\ \ 0]^{\mathsf T}$ e
 $\rv{2}{R} = [\ell_2\ \ \ell_3]^{\mathsf T}$. Pela mudança de base em cadeia \eqref{eq:cadeia}:
