@@ -761,36 +761,6 @@ estabilidade voluntária na fase de apoio \cite{radcliffe1994}.
 
 \subsection{Maquete}\label{cap:maquete}
 
-A maquete, em escala 1:1, permite avaliar qualitativamente o funcionamento do
-mecanismo. O programa gera um gabarito em A4 (\texttt{figuras/p1\_gabarito\_maquete.pdf},
-\cref{fig:gabarito}) com a posição exata dos furos.
-
-\begin{itemize}
-  \item \textbf{Material}: MDF ou acrílico de \SI{3}{mm} (corte a laser) para as placas da
-  coxa e da perna; os elos $CQ$ e $LN$ em acrílico de \SI{3}{mm} ou alumínio em chapa de
-  \SI{2}{mm}.
-  \item \textbf{Articulações}: parafusos M4 com arruelas de náilon e porcas
-  autotravantes (ou rebites de repuxo de \SI{4}{mm}), furos de \SI{4,2}{mm}. Os elos
-  $CQ$ e $LN$ devem ficar em planos diferentes (um de cada lado das placas) para que
-  não colidam quando se cruzam.
-  \item \textbf{Segmentos}: a placa da coxa prolonga-se até o quadril (cerca de \SI{375}{mm},
-  comprimento medido) e a da perna até o tornozelo (ponto 8), com o pé triangular
-  (pontos 8, 10 e 11) fixado rigidamente.
-\end{itemize}
-
-\noindent\textbf{Ensaios qualitativos sugeridos}: (1) verificar a faixa de movimento de
-\SI{0}{\degree} a \phimax\si{\degree}; (2) comparar lado a lado com o movimento filmado,
-fotografando a maquete nas mesmas flexões dos quadros da \cref{tab:poses}; (3) marcar o polo (intersecção de $CQ$ e $LN$) com uma linha
-esticada e observar a migração da centroide; (4) aplicar carga vertical com o joelho
-estendido e observar a tendência de flexão.
-
-\begin{figure}[htbp]
-  \centering
-  \fbox{\includegraphics[width=0.55\textwidth]{figuras/p1_gabarito_maquete.pdf}}
-  \caption{Gabarito da maquete (imprimir em escala 100\%).}
-  \label{fig:gabarito}
-\end{figure}
-
 \section{Parte II -- Modelagem cinemática}\label{cap:cinematica}
 
 Nesta parte, analisa-se uma órtese para um indivíduo de \SIrange{60}{80}{kg} cuja
@@ -1474,8 +1444,7 @@ Os programas estão na pasta \texttt{scripts/} e são executados pelo \texttt{Ma
   \item[\texttt{parte1\_sintese.py}] leitura dos dados do \emph{Tracker}; base da coxa e poses
   da perna por dois pontos; síntese pela díade padrão (regra de Cramer) com varredura das
   escolhas livres; análise de posição por Newton--Raphson;
-  erro na verificação, ângulo de transmissão e centroide; gabarito da
-  maquete.
+  erro na verificação, ângulo de transmissão e centroide.
   \item[\texttt{parte2\_ortese.py}] parâmetros antropométricos e da órtese; trajetórias
   quínticas; torques por Newton--Euler e suas parcelas.
   \item[\texttt{gera\_valores\_tex.py}] exporta os resultados para \texttt{dados/valores.tex}.
