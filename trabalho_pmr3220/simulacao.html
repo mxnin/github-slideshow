@@ -1,0 +1,477 @@
+<title>Joelho de quatro barras</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: prancheta técnica. Desenho do joelho (grande) e do membro lado a lado, controles e camadas abaixo,
+   painel de leitura com as matrizes de mudança de base à direita (empilha no celular). */
+:root {
+  --bg: #f3f4f1;
+  --panel: #ffffff;
+  --ink: #1f2522;
+  --muted: #5d6762;
+  --line: #d6dbd6;
+  --grid: #e8ebe7;
+  --bone: #d5dad5;
+  --bone-edge: #8b958f;
+  --mech: #1f5fa8;
+  --mech-soft: rgba(31, 95, 168, 0.12);
+  --b0: #2b3330;
+  --b4: #1e7a46;
+  --dA: #7a3fa3;
+  --dB: #0d7f8a;
+  --pos: #b46a12;
+  --pole: #b3261e;
+  --font-ui: "Barlow", "Segoe UI", system-ui, sans-serif;
+  --font-head: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
+  --font-num: "JetBrains Mono", ui-monospace, "SFMono-Regular", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141816; --panel: #1c211f; --ink: #e6ebe7; --muted: #9aa49f; --line: #303834;
+    --grid: #232a27; --bone: #343c38; --bone-edge: #7b8681; --mech: #6aa6ec; --mech-soft: rgba(106, 166, 236, 0.14);
+    --b0: #dfe5e1; --b4: #5fd08f; --dA: #c79bf0; --dB: #4fd0dc; --pos: #e3a14f; --pole: #ff7a6e;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #141816; --panel: #1c211f; --ink: #e6ebe7; --muted: #9aa49f; --line: #303834;
+  --grid: #232a27; --bone: #343c38; --bone-edge: #7b8681; --mech: #6aa6ec; --mech-soft: rgba(106, 166, 236, 0.14);
+  --b0: #dfe5e1; --b4: #5fd08f; --dA: #c79bf0; --dB: #4fd0dc; --pos: #e3a14f; --pole: #ff7a6e;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-ui); font-size: 15px; line-height: 1.5; margin: 0; }
+.wrap { max-width: 1240px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 40px; display: grid; gap: 16px; }
+header h1 { font-family: var(--font-head); font-weight: 600; font-size: 1.9rem; letter-spacing: 0.01em; margin: 0; text-wrap: balance; }
+header p { margin: 4px 0 0; color: var(--muted); max-width: 78ch; }
+.view { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; align-items: start; }
+@media (max-width: 900px) { .view { grid-template-columns: minmax(0, 1fr); } }
+.stage { display: grid; gap: 12px; min-width: 0; }
+figure { margin: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 8px; min-width: 0; }
+figcaption { font-family: var(--font-head); font-weight: 500; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); padding: 2px 4px 6px; }
+canvas { display: block; width: 100%; height: auto; max-width: 100%; }
+.controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 12px; }
+.controls label { font-size: 0.85rem; color: var(--muted); }
+.controls input[type="range"] { flex: 1 1 200px; accent-color: var(--mech); min-width: 0; }
+.slider-row { display: flex; align-items: center; gap: 10px; flex: 1 1 320px; min-width: 0; }
+.slider-row output { font-family: var(--font-num); font-size: 0.95rem; min-width: 6.5ch; text-align: right; font-variant-numeric: tabular-nums; }
+button.play { font: 600 0.9rem var(--font-ui); color: var(--panel); background: var(--mech); border: 0; border-radius: 4px; padding: 8px 14px; cursor: pointer; min-width: 92px; }
+button.ghost { font: 500 0.85rem var(--font-ui); color: var(--ink); background: none; border: 1px solid var(--line); border-radius: 4px; padding: 7px 10px; cursor: pointer; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--mech); outline-offset: 2px; }
+.layers { display: flex; flex-wrap: wrap; gap: 6px 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; }
+.layers label { display: inline-flex; align-items: center; gap: 7px; font-size: 0.88rem; cursor: pointer; }
+.layers input { accent-color: var(--mech); width: 16px; height: 16px; margin: 0; }
+.sw { width: 16px; height: 3px; border-radius: 2px; display: inline-block; flex: none; }
+aside { display: grid; gap: 12px; min-width: 0; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; }
+.card h2 { font-family: var(--font-head); font-weight: 600; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.06em; margin: 0 0 8px; color: var(--muted); }
+dl { display: grid; grid-template-columns: 1fr auto; gap: 3px 12px; margin: 0; }
+dt { color: var(--muted); font-size: 0.9rem; }
+dd { margin: 0; font-family: var(--font-num); font-size: 0.88rem; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.eq { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-family: var(--font-num); font-size: 0.82rem; font-variant-numeric: tabular-nums; margin: 6px 0 10px; }
+.eq .lab { font-family: var(--font-ui); font-size: 0.92rem; }
+.mat { display: inline-grid; gap: 0 10px; padding: 2px 6px; border-left: 1.5px solid var(--ink); border-right: 1.5px solid var(--ink); border-radius: 3px; text-align: right; }
+.mat.c2 { grid-template-columns: auto auto; }
+.mat.c1 { grid-template-columns: auto; }
+.note { font-size: 0.84rem; color: var(--muted); margin: 0; }
+.chip { display: inline-block; font: 500 0.78rem var(--font-ui); padding: 2px 8px; border-radius: 99px; border: 1px solid var(--line); }
+.chip.ok { color: var(--mech); border-color: var(--mech); }
+.chip.warn { color: var(--pole); border-color: var(--pole); }
+sup, sub { font-size: 0.72em; line-height: 0; }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Joelho de quatro barras — bases e vetores</h1>
+    <p>Grupo C · PMR3220 · Parte I. Quadrilátero CQNL sintetizado pelas díades nas posições de precisão (frames 307, 390, 456), com os pontos levados da base 4 (perna) para a base 0 (coxa) por <b>⁰r = [⁰R₄]·⁴r + ⁰r<sub>O4</sub></b>. Medidas em mm.</p>
+  </header>
+
+  <section class="view">
+    <div class="stage">
+      <figure><figcaption>Joelho: bases 0, 1, 2, 3, 4 e díades</figcaption><canvas id="c-knee" width="840" height="640" aria-label="Quadrilátero CQNL ampliado com as bases e os vetores das díades"></canvas></figure>
+      <div class="controls">
+        <button class="play" id="play" type="button">▶ Animar</button>
+        <div class="slider-row">
+          <label for="phi">Flexão φ</label>
+          <input type="range" id="phi" min="0" max="132" step="0.25" value="0">
+          <output id="phi-out" for="phi">0,0°</output>
+        </div>
+        <button class="ghost" id="snap" type="button">Próximo frame medido</button>
+      </div>
+      <div class="layers" id="layers">
+        <label><input type="checkbox" data-k="b04" checked><i class="sw" style="background:var(--b0)"></i>Bases 0 e 4</label>
+        <label><input type="checkbox" data-k="b123" checked><i class="sw" style="background:var(--mech)"></i>Bases dos elos 1, 2, 3</label>
+        <label><input type="checkbox" data-k="dyad" checked><i class="sw" style="background:var(--dA)"></i>Díades W, Z · U, S</label>
+        <label><input type="checkbox" data-k="pos" checked><i class="sw" style="background:var(--pos)"></i>Vetores de posição</label>
+        <label><input type="checkbox" data-k="pole"><i class="sw" style="background:var(--pole)"></i>Polo I₁₃</label>
+      </div>
+    </div>
+
+    <aside>
+      <figure><figcaption>Membro na base 0 (coxa fixa)</figcaption><canvas id="c-leg" width="440" height="500" aria-label="Coxa fixa, perna e pé movidos pelo quadrilátero"></canvas></figure>
+      <div class="card">
+        <h2>Ângulos</h2>
+        <dl>
+          <dt>Flexão φ</dt><dd id="r-phi">–</dd>
+          <dt>α = −φ (giro da base 4)</dt><dd id="r-a">–</dd>
+          <dt>β (giro do elo CQ)</dt><dd id="r-b">–</dd>
+          <dt>γ (giro do elo LN)</dt><dd id="r-g">–</dd>
+          <dt>θ₁ · θ₂ · θ₃</dt><dd id="r-t">–</dd>
+          <dt>Transmissão μ</dt><dd id="r-mu">–</dd>
+        </dl>
+        <p class="note" style="margin-top:8px"><span id="r-mu-chip" class="chip ok">μ ≥ 30°</span></p>
+      </div>
+
+      <div class="card">
+        <h2>Mudança de base de ponto</h2>
+        <div class="eq"><span class="lab">[⁰R₄] =</span><span class="mat c2" id="m-R"></span></div>
+        <div class="eq"><span class="lab">⁰r<sub>O4</sub> = δ =</span><span class="mat c1" id="m-O"></span></div>
+        <div class="eq"><span class="lab">⁰r<sub>Q</sub> =</span><span class="mat c2" id="m-R2"></span><span class="mat c1" id="m-Q4"></span>+<span class="mat c1" id="m-O2"></span>=<span class="mat c1" id="m-Q"></span></div>
+        <div class="eq"><span class="lab">⁰r<sub>P</sub> =</span><span class="mat c1" id="m-P"></span><span class="note">(⁴r<sub>P</sub> = <span id="m-P4"></span>)</span></div>
+        <p class="note">⁴r<sub>Q</sub>, ⁴r<sub>N</sub> e ⁴r<sub>P</sub> são constantes (presos à perna); só [⁰R₄] e ⁰r<sub>O4</sub> mudam com a flexão.</p>
+      </div>
+
+      <div class="card">
+        <h2>Díades na posição atual (base 0)</h2>
+        <dl>
+          <dt>W = [Rot β]·W₁</dt><dd id="v-W">–</dd>
+          <dt>Z = [Rot α]·Z₁</dt><dd id="v-Z">–</dd>
+          <dt>U = [Rot γ]·U₁</dt><dd id="v-U">–</dd>
+          <dt>S = [Rot α]·S₁</dt><dd id="v-S">–</dd>
+          <dt>⁰r<sub>C</sub> + W + Z − ⁰r<sub>O4</sub></dt><dd id="v-cA">–</dd>
+          <dt>⁰r<sub>L</sub> + U + S − ⁰r<sub>O4</sub></dt><dd id="v-cB">–</dd>
+        </dl>
+        <p class="note" style="margin-top:8px">Cada díade fecha em O4: [Rot β − I]W₁ + [Rot α − I]Z₁ = δ. Nas posições de precisão, δ coincide com o medido.</p>
+      </div>
+
+      <div class="card">
+        <h2>Quadrilátero</h2>
+        <dl>
+          <dt>ℓ₀ = CL (fixo na coxa)</dt><dd>23,5</dd>
+          <dt>ℓ₁ = CQ</dt><dd>64,8</dd>
+          <dt>ℓ₂ = QN (acoplador = perna)</dt><dd>56,0</dd>
+          <dt>ℓ₃ = LN</dt><dd>21,8</dd>
+        </dl>
+      </div>
+    </aside>
+  </section>
+</div>
+
+<script>
+(() => {
+  // ------------------------------------------------------------------ dados (dados/resultado_parte1.json)
+  const D = {"C":[-6.273774904031953,-14.382731932398343],"L":[-27.97939200654947,-23.323807904373478],
+    "Q4":[27.21521864443696,-69.84863753767844],"N4":[-6.28373098463191,-24.9533620666928],
+    "P4":[39.6025,-418.976],
+    "pe4":{"7":[1.5,-431.5],"8":[39.6,-419.0],"9":[77.2,-413.2],"10":[13.1,-527.7],"11":[213.6,-470.8]},
+    "coxa":{"1":[-159.5,361.0],"2":[-17.7,368.0],"3":[-37.5,-10.6],"4":[37.5,10.6]},
+    "perna4":{"5":[-32.3,-60.7],"6":[37.8,-63.7]},
+    "poses":{"307":{"phi":0.0,"x":0,"y":0},"390":{"phi":51.72112523003925,"x":17.258307480443044,"y":-12.910389681901982},
+             "423":{"phi":97.1646648389987,"x":16.68694034179,"y":-37.22655834246403},"456":{"phi":131.91068853763522,"x":1.9656051644811185,"y":-59.862223570890755}},
+    "prec":[307,390,456],"phimax":132.0};
+
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const fmt = (v, d = 1) => (Math.abs(v) < 0.5 * 10 ** -d ? 0 : v).toFixed(d).replace(".", ",").replace("-", "−");
+  const rad = d => d * Math.PI / 180, deg = r => r * 180 / Math.PI;
+  const rot = (a, v) => [Math.cos(a) * v[0] - Math.sin(a) * v[1], Math.sin(a) * v[0] + Math.cos(a) * v[1]];
+  const add = (a, b) => [a[0] + b[0], a[1] + b[1]], sub = (a, b) => [a[0] - b[0], a[1] - b[1]];
+  const norm = v => Math.hypot(v[0], v[1]);
+  const e = t => [Math.cos(t), Math.sin(t)];
+  // mudança de base de ponto: 0r = [0R4] 4r + 0rO4
+  const mb = (a, p, r) => add(rot(a, r), p);
+
+  function setupCanvas(cv) {
+    const dpr = Math.max(1, window.devicePixelRatio || 1);
+    if (!cv.dataset.w) { cv.dataset.w = cv.width; cv.dataset.h = cv.height; }
+    const W = +cv.dataset.w, H = +cv.dataset.h;
+    cv.width = W * dpr; cv.height = H * dpr;
+    const ctx = cv.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return { ctx, W, H };
+  }
+
+  // ------------------------------------------------------------------ análise de posição (Newton–Raphson em θ1, θ3)
+  const C = D.C, L = D.L, Q4 = D.Q4, N4 = D.N4;
+  const l1 = norm(sub(Q4, C)), l3 = norm(sub(N4, L)), l2 = norm(sub(N4, Q4));
+  const psi0 = Math.atan2(N4[1] - Q4[1], N4[0] - Q4[0]);
+  const t10 = Math.atan2(Q4[1] - C[1], Q4[0] - C[0]), t30 = Math.atan2(N4[1] - L[1], N4[0] - L[0]);
+  const W1 = sub(Q4, C), Z1 = sub([0, 0], Q4), U1 = sub(N4, L), S1 = sub([0, 0], N4);
+  const STEP = 0.25, tab = [];
+  {
+    let t1 = t10, t3 = t30;
+    for (let phi = 0; phi <= D.phimax + 1e-9; phi += STEP) {
+      const a = -rad(phi), psi = psi0 + a;
+      for (let k = 0; k < 40; k++) {
+        const f1 = C[0] + l1 * Math.cos(t1) + l2 * Math.cos(psi) - L[0] - l3 * Math.cos(t3);
+        const f2 = C[1] + l1 * Math.sin(t1) + l2 * Math.sin(psi) - L[1] - l3 * Math.sin(t3);
+        const j11 = -l1 * Math.sin(t1), j12 = l3 * Math.sin(t3), j21 = l1 * Math.cos(t1), j22 = -l3 * Math.cos(t3);
+        const det = j11 * j22 - j12 * j21;
+        const d1 = (-f1 * j22 + f2 * j12) / det, d3 = (-j11 * f2 + j21 * f1) / det;
+        t1 += d1; t3 += d3;
+        if (Math.abs(d1) + Math.abs(d3) < 1e-13) break;
+      }
+      const Q = add(C, rot(t1, [l1, 0]));
+      const p = sub(Q, rot(a, Q4));                       // 0rO4 = 0rQ − [0R4] 4rQ
+      let dd = deg(psi - t3) % 180; if (dd < 0) dd += 180;
+      const mu = Math.min(dd, 180 - dd);
+      const e1 = e(t1), e3 = e(t3);
+      const den = -e1[0] * e3[1] + e3[0] * e1[1], rhs = sub(L, C);
+      const s = (-rhs[0] * e3[1] + e3[0] * rhs[1]) / den;
+      tab.push({ phi, a, p, t1, t3, psi, mu, pole: add(C, [s * e1[0], s * e1[1]]), ank: mb(a, p, D.P4) });
+    }
+  }
+  const at = phi => tab[Math.max(0, Math.min(tab.length - 1, Math.round(phi / STEP)))];
+
+  // ------------------------------------------------------------------ primitivas de desenho
+  const cvLeg = document.getElementById("c-leg"), cvKnee = document.getElementById("c-knee");
+  let LC = setupCanvas(cvLeg), KC = setupCanvas(cvKnee);
+
+  function viewport(c, xmin, xmax, ymin, ymax, pad = 16) {
+    const s = Math.min((c.W - 2 * pad) / (xmax - xmin), (c.H - 2 * pad) / (ymax - ymin));
+    const ox = pad + ((c.W - 2 * pad) - s * (xmax - xmin)) / 2, oy = pad + ((c.H - 2 * pad) - s * (ymax - ymin)) / 2;
+    return { s, X: x => ox + (x - xmin) * s, Y: y => oy + (ymax - y) * s, box: [xmin, xmax, ymin, ymax] };
+  }
+  function poly(ctx, pts, v, fill, stroke, lw = 1.2) {
+    ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(v.X(p[0]), v.Y(p[1])) : ctx.moveTo(v.X(p[0]), v.Y(p[1]))); ctx.closePath();
+    if (fill) { ctx.fillStyle = fill; ctx.fill(); } if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lw; ctx.stroke(); }
+  }
+  function line(ctx, a, b, v, color, lw = 2, dash) {
+    ctx.beginPath(); ctx.setLineDash(dash || []); ctx.moveTo(v.X(a[0]), v.Y(a[1])); ctx.lineTo(v.X(b[0]), v.Y(b[1]));
+    ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.lineCap = "round"; ctx.stroke(); ctx.setLineDash([]);
+  }
+  function dot(ctx, p, v, r, fill, stroke) {
+    ctx.beginPath(); ctx.arc(v.X(p[0]), v.Y(p[1]), r, 0, 2 * Math.PI);
+    if (fill) { ctx.fillStyle = fill; ctx.fill(); } if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1.5; ctx.stroke(); }
+  }
+  function star(ctx, p, v, r, color) {
+    ctx.beginPath();
+    for (let i = 0; i < 10; i++) { const ang = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r * 0.45 : r;
+      const x = v.X(p[0]) + rr * Math.cos(ang), y = v.Y(p[1]) + rr * Math.sin(ang); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+    ctx.closePath(); ctx.fillStyle = color; ctx.fill();
+  }
+  // texto com sobrescrito à esquerda e subscrito à direita: ⁰r_O4 -> tex(ctx, "0", "r", "O4", ...)
+  function tex(ctx, x, y, sup, main, sub, color, size = 13, bold = false) {
+    ctx.fillStyle = color; ctx.textBaseline = "alphabetic";
+    const f = (sz, w) => `${w} ${sz}px ${css("--font-ui")}`;
+    let cx = x;
+    if (sup) { ctx.font = f(size * 0.7, 500); ctx.fillText(sup, cx, y - size * 0.45); cx += ctx.measureText(sup).width + 0.5; }
+    ctx.font = f(size, bold ? 700 : 600); ctx.fillText(main, cx, y); cx += ctx.measureText(main).width + 0.5;
+    if (sub) { ctx.font = f(size * 0.7, 500); ctx.fillText(sub, cx, y + size * 0.3); }
+  }
+  function halo(ctx, fn) { // contorno com a cor do painel para o rótulo não se perder sobre linhas
+    ctx.save(); ctx.strokeStyle = css("--panel"); ctx.lineWidth = 3.5; ctx.lineJoin = "round";
+    const ft = ctx.fillText.bind(ctx); ctx.fillText = (t, x, y) => { ctx.strokeText(t, x, y); ft(t, x, y); };
+    fn(); ctx.fillText = ft; ctx.restore();
+  }
+  // seta de a até b; rótulo no meio, deslocado para o lado esquerdo (side = +1) ou direito (−1)
+  function arrow(ctx, a, b, v, color, lw, lab, side = 1, along = 0.5) {
+    const x0 = v.X(a[0]), y0 = v.Y(a[1]), x1 = v.X(b[0]), y1 = v.Y(b[1]);
+    const dx = x1 - x0, dy = y1 - y0, L_ = Math.hypot(dx, dy);
+    if (L_ < 2) return;
+    const ux = dx / L_, uy = dy / L_, h = Math.min(10, L_ * 0.45);
+    ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1 - ux * h * 0.8, y1 - uy * h * 0.8);
+    ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.lineCap = "round"; ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x1 - ux * h - uy * h * 0.42, y1 - uy * h + ux * h * 0.42);
+    ctx.lineTo(x1 - ux * h + uy * h * 0.42, y1 - uy * h - ux * h * 0.42); ctx.closePath(); ctx.fillStyle = color; ctx.fill();
+    if (lab) {
+      const mx = x0 + dx * along + uy * 13 * side, my = y0 + dy * along - ux * 13 * side;
+      halo(ctx, () => tex(ctx, mx - 6, my + 5, lab[0], lab[1], lab[2], color, 14, true));
+    }
+  }
+  // eixos de uma base: origem o, ângulo t, comprimento len (mm na escala do viewport)
+  function frame(ctx, o, t, v, len, color, name, lw = 2) {
+    const ex = add(o, rot(t, [len, 0])), ey = add(o, rot(t, [0, len]));
+    arrow(ctx, o, ex, v, color, lw); arrow(ctx, o, ey, v, color, lw);
+    const off = (p, d) => [v.X(p[0]) + d[0], v.Y(p[1]) + d[1]];
+    const dX = [Math.cos(t) * 10 - 4, -Math.sin(t) * 10 + 5], dY = [-Math.sin(t) * 10 - 4, -Math.cos(t) * 10 + 5];
+    halo(ctx, () => {
+      let [x, y] = off(ex, dX); tex(ctx, x, y, "", "x", name, color, 13);
+      [x, y] = off(ey, dY); tex(ctx, x, y, "", "y", name, color, 13);
+    });
+    dot(ctx, o, v, 2.6, color);
+  }
+  function angArc(ctx, o, t0, t1, v, rpx, color, lab) {
+    const cx = v.X(o[0]), cy = v.Y(o[1]);
+    ctx.beginPath(); ctx.arc(cx, cy, rpx, -t0, -t1, t1 > t0); ctx.strokeStyle = color; ctx.lineWidth = 1.2; ctx.stroke();
+    if (lab) { const tm = (t0 + t1) / 2; halo(ctx, () => tex(ctx, cx + (rpx + 9) * Math.cos(tm) - 5, cy - (rpx + 9) * Math.sin(tm) + 5, "", lab[0], lab[1], color, 12)); }
+  }
+  function grid(ctx, v, step) {
+    const [x0, x1, y0, y1] = v.box;
+    ctx.strokeStyle = css("--grid"); ctx.lineWidth = 1;
+    for (let x = Math.ceil(x0 / step) * step; x <= x1; x += step) { ctx.beginPath(); ctx.moveTo(v.X(x), v.Y(y0)); ctx.lineTo(v.X(x), v.Y(y1)); ctx.stroke(); }
+    for (let y = Math.ceil(y0 / step) * step; y <= y1; y += step) { ctx.beginPath(); ctx.moveTo(v.X(x0), v.Y(y)); ctx.lineTo(v.X(x1), v.Y(y)); ctx.stroke(); }
+  }
+
+  const shankBody = [D.perna4["5"], D.perna4["6"], D.pe4["9"], D.pe4["7"]];
+  const footBody = [D.pe4["7"], D.pe4["9"], D.pe4["11"], D.pe4["10"]];
+  const thighBody = [D.coxa["1"], D.coxa["2"], D.coxa["4"], D.coxa["3"]];
+  const O0 = [0, 0];
+
+  // ------------------------------------------------------------------ camadas
+  const show = { b04: true, b123: true, dyad: true, pos: true, pole: false };
+  try { Object.assign(show, JSON.parse(localStorage.getItem("pmr3220-camadas") || "{}")); } catch (err) {}
+  document.querySelectorAll("#layers input").forEach(inp => {
+    inp.checked = !!show[inp.dataset.k];
+    inp.addEventListener("change", () => { show[inp.dataset.k] = inp.checked; try { localStorage.setItem("pmr3220-camadas", JSON.stringify(show)); } catch (err) {} draw(+phiIn.value); });
+  });
+
+  // ------------------------------------------------------------------ desenho
+  function draw(phi) {
+    const s = at(phi);
+    const Q = mb(s.a, s.p, Q4), N = mb(s.a, s.p, N4), O4 = s.p;
+    const col = n => css(n);
+    const mech = col("--mech"), pos = col("--pos"), pole = col("--pole"), edge = col("--bone-edge"), bone = col("--bone"),
+      ink = col("--ink"), muted = col("--muted"), b0 = col("--b0"), b4 = col("--b4"), dA = col("--dA"), dB = col("--dB"), panel = col("--panel");
+
+    // ====== detalhe do joelho
+    let ctx = KC.ctx; ctx.clearRect(0, 0, KC.W, KC.H);
+    const k = viewport(KC, -100, 71, -90, 40);
+    grid(ctx, k, 10);
+    poly(ctx, thighBody, k, bone, edge);
+    poly(ctx, shankBody.map(r => mb(s.a, s.p, r)), k, col("--mech-soft"), edge);
+
+    // trajetória de O4 (acoplador) e posições medidas de O4 (δ_j)
+    if (show.pos) {
+      ctx.beginPath(); tab.forEach((t, i) => i ? ctx.lineTo(k.X(t.p[0]), k.Y(t.p[1])) : ctx.moveTo(k.X(t.p[0]), k.Y(t.p[1])));
+      ctx.strokeStyle = pos; ctx.lineWidth = 1.1; ctx.setLineDash([4, 4]); ctx.stroke(); ctx.setLineDash([]);
+      for (const [fr, ps] of Object.entries(D.poses)) {
+        const pm = [ps.x, ps.y];
+        if (D.prec.includes(+fr)) star(ctx, pm, k, 7, pos); else dot(ctx, pm, k, 4, null, pos);
+        if (+fr !== 307) { ctx.fillStyle = muted; ctx.font = `500 11px ${css("--font-num")}`; ctx.fillText(fr, k.X(pm[0]) + 9, k.Y(pm[1]) + 4); }
+      }
+    }
+    if (show.pole) {
+      ctx.beginPath(); let st = false; const [x0, x1, y0, y1] = k.box;
+      tab.forEach(t => { const [x, y] = t.pole; if (x > x0 && x < x1 && y > y0 && y < y1) { st ? ctx.lineTo(k.X(x), k.Y(y)) : ctx.moveTo(k.X(x), k.Y(y)); st = true; } else st = false; });
+      ctx.strokeStyle = pole; ctx.lineWidth = 1.2; ctx.setLineDash([3, 3]); ctx.stroke(); ctx.setLineDash([]);
+      if (Math.abs(s.pole[0]) < 400 && Math.abs(s.pole[1]) < 400) { line(ctx, C, s.pole, k, pole, 1, [2, 3]); line(ctx, L, s.pole, k, pole, 1, [2, 3]); }
+    }
+
+    // elos
+    line(ctx, C, L, k, edge, 2.4, [6, 4]);
+    line(ctx, C, Q, k, mech, 4); line(ctx, L, N, k, mech, 4); line(ctx, Q, N, k, mech, 4);
+
+    // bases dos elos 1 (CQ), 2 (QN) e 3 (LN) com os ângulos θ medidos a partir de x0
+    if (show.b123) {
+      const fl = 12;
+      line(ctx, C, add(C, [8, 0]), k, muted, 1, [2, 3]); angArc(ctx, C, 0, s.t1, k, 22, mech, ["θ", "1"]);
+      line(ctx, L, add(L, [7, 0]), k, muted, 1, [2, 3]); angArc(ctx, L, 0, s.t3, k, 18, mech, ["θ", "3"]);
+      frame(ctx, C, s.t1, k, fl, mech, "1", 1.6);
+      frame(ctx, Q, s.psi, k, fl, mech, "2", 1.6);
+      frame(ctx, L, s.t3, k, fl, mech, "3", 1.6);
+      // θ2 relativo: de x1 para x2 em Q
+      const t2 = ((s.psi - s.t1 + 3 * Math.PI) % (2 * Math.PI)) - Math.PI;
+      angArc(ctx, Q, s.t1, s.t1 + t2, k, 16, mech, ["θ", "2"]);
+    }
+
+    // díades: W (C→Q), Z (Q→O4); U (L→N), S (N→O4)
+    if (show.dyad) {
+      arrow(ctx, C, Q, k, dA, 2.4, ["", "W", ""], -1, 0.55);
+      arrow(ctx, Q, O4, k, dA, 2.4, ["", "Z", ""], -1, 0.5);
+      arrow(ctx, L, N, k, dB, 2.4, ["", "U", ""], 1, 0.5);
+      arrow(ctx, N, O4, k, dB, 2.4, ["", "S", ""], 1, 0.5);
+    }
+
+    // vetores de posição na base 0
+    if (show.pos) {
+      arrow(ctx, O0, C, k, pos, 1.6, ["0", "r", "C"], -1, 0.45);
+      arrow(ctx, O0, L, k, pos, 1.6, ["0", "r", "L"], 1, 0.5);
+      if (norm(O4) > 1.5) arrow(ctx, O0, O4, k, pos, 2.2, ["0", "r", "O4"], 1, 0.5);
+    }
+
+    // bases 0 (coxa) e 4 (perna)
+    if (show.b04) {
+      const same = Math.abs(s.a) < 1e-6;   // no frame 307 a base 4 coincide com a base 0
+      frame(ctx, O0, 0, k, 24, b0, same ? "0 = 4" : "0", 2.2);
+      if (!same) frame(ctx, O4, s.a, k, 24, b4, "4", 2.2);
+      if (Math.abs(s.a) > rad(3)) {
+        line(ctx, O4, add(O4, [20, 0]), k, b4, 1, [2, 3]);
+        angArc(ctx, O4, 0, s.a, k, 52, b4, ["α", ""]);
+      }
+    }
+
+    for (const [p, n, dx, dy] of [[C, "C", 8, -8], [L, "L", -16, -8], [Q, "Q", 9, 14], [N, "N", -18, 16]]) {
+      dot(ctx, p, k, 5, panel, mech); halo(ctx, () => tex(ctx, k.X(p[0]) + dx, k.Y(p[1]) + dy, "", n, "", ink, 14, true));
+    }
+    dot(ctx, O4, k, 4, b4);
+    if (show.pole && s.pole[0] > k.box[0] && s.pole[0] < k.box[1] && s.pole[1] > k.box[2] && s.pole[1] < k.box[3]) {
+      dot(ctx, s.pole, k, 4.5, pole); halo(ctx, () => tex(ctx, k.X(s.pole[0]) + 7, k.Y(s.pole[1]) + 15, "", "I", "13", pole, 13));
+    }
+    ctx.fillStyle = muted; ctx.font = `400 11px ${css("--font-num")}`; ctx.fillText("grade 10 mm", 20, KC.H - 20);
+
+    // ====== membro inteiro
+    ctx = LC.ctx; ctx.clearRect(0, 0, LC.W, LC.H);
+    const v = viewport(LC, -560, 260, -570, 400);
+    grid(ctx, v, 100);
+    poly(ctx, thighBody, v, bone, edge);
+    poly(ctx, shankBody.map(r => mb(s.a, s.p, r)), v, bone, edge);
+    poly(ctx, footBody.map(r => mb(s.a, s.p, r)), v, bone, edge);
+    ctx.beginPath(); tab.forEach((t, i) => i ? ctx.lineTo(v.X(t.ank[0]), v.Y(t.ank[1])) : ctx.moveTo(v.X(t.ank[0]), v.Y(t.ank[1])));
+    ctx.strokeStyle = mech; ctx.lineWidth = 1.2; ctx.setLineDash([5, 4]); ctx.stroke(); ctx.setLineDash([]);
+    for (const [fr, ps] of Object.entries(D.poses)) {
+      const pm = mb(-rad(ps.phi), [ps.x, ps.y], D.P4);
+      if (D.prec.includes(+fr)) star(ctx, pm, v, 7, pos); else dot(ctx, pm, v, 4, null, pos);
+      ctx.fillStyle = muted; ctx.font = `500 11px ${css("--font-num")}`; ctx.fillText(fr, v.X(pm[0]) + 8, v.Y(pm[1]) - 6);
+    }
+    line(ctx, C, Q, v, mech, 2); line(ctx, L, N, v, mech, 2); line(ctx, Q, N, v, mech, 2);
+    if (show.pos) {
+      arrow(ctx, O0, s.ank, v, pos, 1.6, ["0", "r", "P"], -1, 0.62);
+      arrow(ctx, O4, s.ank, v, b4, 1.6, ["4", "r", "P"], 1, 0.4);
+    }
+    if (show.b04) { frame(ctx, O0, 0, v, 110, b0, Math.abs(s.a) < 1e-6 ? "0 = 4" : "0", 2); if (Math.abs(s.a) >= 1e-6) frame(ctx, O4, s.a, v, 110, b4, "4", 2); }
+    dot(ctx, s.ank, v, 4.5, mech);
+    halo(ctx, () => tex(ctx, v.X(s.ank[0]) + 9, v.Y(s.ank[1]) + 16, "", "P", "", ink, 14, true));
+    ctx.fillStyle = muted; ctx.font = `500 12px ${css("--font-ui")}`; ctx.fillText("coxa (fixa)", v.X(-140), v.Y(190));
+    ctx.font = `400 11px ${css("--font-num")}`; ctx.fillText("grade 100 mm", 18, LC.H - 18);
+
+    // ====== leituras
+    const set = (id, t) => { document.getElementById(id).textContent = t; };
+    const vec = u => `(${fmt(u[0])}; ${fmt(u[1])})`;
+    const beta = s.t1 - t10, gam = s.t3 - t30, t2 = deg(s.psi - s.t1);
+    set("phi-out", fmt(phi) + "°"); set("r-phi", fmt(phi) + "°"); set("r-a", fmt(deg(s.a)) + "°");
+    set("r-b", fmt(deg(beta)) + "°"); set("r-g", fmt(deg(gam)) + "°");
+    set("r-t", `${fmt(deg(s.t1), 0)}° · ${fmt(((t2 + 540) % 360) - 180, 0)}° · ${fmt(deg(s.t3), 0)}°`);
+    set("r-mu", fmt(s.mu) + "°");
+    const chip = document.getElementById("r-mu-chip");
+    chip.textContent = s.mu >= 30 ? "μ ≥ 30° · boa transmissão" : "μ < 30°"; chip.className = "chip " + (s.mu >= 30 ? "ok" : "warn");
+
+    const ca = Math.cos(s.a), sa = Math.sin(s.a);
+    const mat = (id, vals, d = 3) => { document.getElementById(id).innerHTML = vals.map(x => `<span>${fmt(x, d)}</span>`).join(""); };
+    mat("m-R", [ca, -sa, sa, ca]); mat("m-R2", [ca, -sa, sa, ca]);
+    mat("m-O", O4, 1); mat("m-O2", O4, 1); mat("m-Q4", Q4, 1); mat("m-Q", Q, 1); mat("m-P", s.ank, 1);
+    set("m-P4", vec(D.P4));
+
+    const Wc = rot(beta, W1), Zc = rot(s.a, Z1), Uc = rot(gam, U1), Sc = rot(s.a, S1);
+    set("v-W", vec(Wc)); set("v-Z", vec(Zc)); set("v-U", vec(Uc)); set("v-S", vec(Sc));
+    set("v-cA", fmt(norm(sub(add(add(C, Wc), Zc), O4)), 3) + " mm");
+    set("v-cB", fmt(norm(sub(add(add(L, Uc), Sc), O4)), 3) + " mm");
+  }
+
+  // ------------------------------------------------------------------ controles
+  const phiIn = document.getElementById("phi");
+  phiIn.addEventListener("input", () => { stop(); draw(+phiIn.value); });
+  let anim = null, dir = 1;
+  const btn = document.getElementById("play");
+  function stop() { if (anim) cancelAnimationFrame(anim); anim = null; btn.textContent = "▶ Animar"; }
+  btn.addEventListener("click", () => {
+    if (anim) return stop();
+    btn.textContent = "❚❚ Pausar"; let last = performance.now();
+    const loop = now => { const dt = Math.min(0.05, (now - last) / 1000); last = now;
+      let x = +phiIn.value + dir * 30 * dt;
+      if (x >= D.phimax) { x = D.phimax; dir = -1; } if (x <= 0) { x = 0; dir = 1; }
+      phiIn.value = x; draw(x); anim = requestAnimationFrame(loop); };
+    anim = requestAnimationFrame(loop);
+  });
+  const frames = Object.values(D.poses).map(p => p.phi);
+  document.getElementById("snap").addEventListener("click", () => {
+    stop(); const cur = +phiIn.value; const nxt = frames.find(f => f > cur + 0.3); const x = nxt === undefined ? frames[0] : nxt;
+    phiIn.value = x; draw(x);
+  });
+
+  const redraw = () => { LC = setupCanvas(cvLeg); KC = setupCanvas(cvKnee); draw(+phiIn.value); };
+  matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", redraw);
+  new MutationObserver(redraw).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  document.fonts?.ready.then(redraw);
+  draw(0);
+})();
+</script>
