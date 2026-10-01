@@ -280,8 +280,11 @@ A \cref{fig:quadrilatero} mostra as bases adotadas, seguindo a convenção da
 extensão, $X_0$ para a frente (anterior) e $Y_0$ para cima (proximal). As bases $1$, $2$ e $3$
 estão presas, respectivamente, ao elo $CQ$ (origem em $C$, $X_1$ ao longo de $CQ$), ao
 acoplador (origem em $Q$, $X_2$ ao longo de $QN$) e ao elo $LN$ (origem em $L$, $X_3$ ao longo
-de $LN$). A base $4$ também está presa à perna, com origem no ponto de referência do
-joelho e $Y_4$ ao longo do eixo da perna (é a base em que se fazem as medições). Os
+de $LN$). A base $4$ também está presa à perna, com origem no ponto $J$ (ponto médio dos
+marcadores 5 e 6, logo abaixo do joelho) e eixos paralelos aos da base $0$ com o membro
+estendido (é a base em que se fazem as medições). Todas as bases, portanto, são solidárias a
+uma peça: a base $0$ à coxa, as bases $1$ e $3$ às barras $CQ$ e $LN$ e as bases $2$ e $4$ à
+perna, que é o acoplador. Os
 comprimentos são $\ell_0 = \overline{CL}$, $\ell_1 = \overline{CQ}$, $\ell_2 = \overline{QN}$ e
 $\ell_3 = \overline{LN}$.
 
@@ -373,8 +376,11 @@ $I_{13}$ (CIR da perna em relação à coxa) é a intersecção dos eixos $X_1$ 
 \begin{equation}
   \rv{0}{I} = \rv{0}{C} + \lambda\begin{bmatrix} c_1\\ s_1\end{bmatrix} = \rv{0}{L} + \kappa\begin{bmatrix} c_3\\ s_3\end{bmatrix},
 \end{equation}
-e o ângulo de transmissão é o ângulo agudo entre $X_2$ e $X_3$, $\mu = |\psi - \theta_3|$
-(reduzido a $[0, \SI{90}{\degree}]$).
+e o ângulo de transmissão é o ângulo agudo entre $X_2$ e $X_3$, $\mu_N = |\psi - \theta_3|$
+(reduzido a $[0, \SI{90}{\degree}]$). Na outra articulação móvel, o ângulo agudo entre $X_1$ e
+$X_2$ é $\mu_Q = |\theta_2|$ (reduzido a $[0, \SI{90}{\degree}]$). Se $\mu_N$ ou $\mu_Q$ se anulam, duas
+barras ficam alinhadas e o quadrilátero se ``dobra'' sobre si mesmo (posição de ponto morto
+ou de mudança de ramo); por isso os dois ângulos são mantidos longe de zero.
 
 \subsection{Síntese dimensional analítica: três posições de precisão}\label{sec:diade}
 
@@ -444,14 +450,25 @@ $\ell_0 = |\rv{0}{L} - \rv{0}{C}|$ (elo fixo) e $\ell_2 = |\mathbf Z - \mathbf S
 
 \paragraph{4º passo -- escolhas livres.} Cada par $(\beta_2, \beta_3)$ gera uma díade que passa
 exatamente pelas três posições de precisão. As escolhas livres são usadas para satisfazer os
-requisitos de projeto -- pivôs no volume do joelho, comprimentos razoáveis e bom ângulo de
-transmissão -- e para aproximar posições medidas adicionais (\cref{sec:escolha}).
+requisitos de projeto -- pivôs no volume do joelho, comprimentos razoáveis e bons ângulos nas
+articulações móveis -- e para aproximar o restante do movimento (\cref{sec:escolha}).
+
+\paragraph{5º passo -- onde colocar as posições de precisão.} Entre as posições de precisão o
+erro do mecanismo não é nulo (erro estrutural). Para $n$ posições num intervalo
+$[\varphi_a, \varphi_b]$, o espaçamento de Chebyshev,
+\begin{equation}
+  \varphi_j = \frac{\varphi_a + \varphi_b}{2} - \frac{\varphi_b - \varphi_a}{2}\cos\frac{(2j-1)\pi}{2n},
+  \qquad j = 1, \dots, n,
+  \label{eq:chebyshev}
+\end{equation}
+distribui melhor esse erro ao longo do intervalo do que posições igualmente espaçadas, pois
+não coloca posições exatamente nas extremidades.
 
 \subsection{Pose de um corpo rígido a partir de dois pontos}\label{sec:pose2pontos}
 
 No plano, a pose de um corpo rígido fica determinada por dois de seus pontos. Sejam $J$ e
 $P$ dois pontos da perna, com coordenadas $\rv{0}{J}^{(j)}$ e $\rv{0}{P}^{(j)}$ medidas na base da
-coxa no quadro $j$, e $\rv{4}{J}$ as coordenadas de $J$ na base $4$ da perna.
+coxa no quadro $j$; a base $4$ da perna tem origem em $J$, isto é, $\rv{4}{J} = \mathbf 0$.
 
 \paragraph{1º passo -- orientação.} O ângulo do segmento $JP$ em relação a $X_0$ é
 \begin{equation}
@@ -462,10 +479,11 @@ base $0$) e o quadro $j$ é $\alpha_j = \beta_{JP}^{(j)} - \beta_{JP}^{(r)}$, ou
 $\Rm{0}{4}^{(j)} = \Rot{\alpha_j}{z_4}$.
 
 \paragraph{2º passo -- posição da origem.} Da mudança de base
-$\rv{0}{J}^{(j)} = \Rm{0}{4}^{(j)}\,\rv{4}{J} + \rv{0}{O_4}^{(j)}$ (\cref{eq:mudancabase}),
+$\rv{0}{J}^{(j)} = \Rm{0}{4}^{(j)}\,\rv{4}{J} + \rv{0}{O_4}^{(j)}$ (\cref{eq:mudancabase}), com $\rv{4}{J} = \mathbf 0$,
 \begin{equation}
-  \rv{0}{O_4}^{(j)} = \rv{0}{J}^{(j)} - \Rot{\alpha_j}{z_4}\,\rv{4}{J} .
+  \rv{0}{O_4}^{(j)} = \rv{0}{J}^{(j)} ,
 \end{equation}
+ou seja, a origem da base da perna é o próprio ponto medido $J$.
 Com $\Rm{0}{4}^{(j)}$ e $\rv{0}{O_4}^{(j)}$ determinados, a posição de qualquer ponto da perna segue da
 mudança de base $\rv{0}{X}^{(j)} = \Rm{0}{4}^{(j)}\,\rv{4}{X} + \rv{0}{O_4}^{(j)}$. Como o corpo
 é tratado como rígido, a variação do comprimento medido $\overline{JP}$ entre os quadros indica a
@@ -576,11 +594,10 @@ permitiu visualizar graficamente a evolução temporal dessas coordenadas.
 
 A planilha de dados obtida a partir do rastreamento contém as coordenadas dos onze
 pontos para os \emph{frames} 234, 307, 390, 423, 456 e 561 (\cref{tab:tracker}, na
-\cref{sec:anexos}). Para a análise do movimento, foram selecionados os \emph{frames}
-307, 390, 423 e 456. O \emph{frame} 234 foi utilizado como referência durante a
-identificação e numeração dos pontos, enquanto o \emph{frame} 561 foi desconsiderado,
-pois corresponde a uma etapa do movimento em que houve auxílio manual para conduzir a
-perna.
+\cref{sec:anexos}). Para a análise do movimento, foram usados os \emph{frames}
+234, 307, 390, 423 e 456, todos dentro da faixa de flexão de interesse. O \emph{frame} 561
+foi desconsiderado, pois corresponde a uma etapa do movimento em que houve auxílio manual
+para conduzir a perna (os marcadores da coxa se deslocaram em relação aos do quadril).
 
 \subsection{Processamento dos dados e posições de precisão}\label{sec:processamento}
 
@@ -588,7 +605,7 @@ As coordenadas do \emph{Tracker} estão na base da imagem. O que interessa ao
 quadrilátero do joelho é apenas o movimento \emph{relativo} entre a coxa e a perna; por
 isso, o movimento angular do quadril (a rotação da coxa em relação ao tronco, que
 também ocorre levemente durante o experimento) foi desconsiderado, e a coxa foi tratada
-como o elo fixo do mecanismo. Os dados foram processados em três passos.
+como o elo fixo do mecanismo. Os dados foram processados em quatro passos.
 
 \paragraph{1º passo -- base da coxa em cada quadro.} A base $0$ tem origem no ponto médio
 dos marcadores 3 e 4 (extremidade distal da coxa, junto ao joelho) e eixos paralelos aos
@@ -605,26 +622,58 @@ rotação da coxa fosse descontada (eixo definido pelos pontos médios 1--2 e 3-
 flexões mudariam de cerca de \SI{5}{\degree}, porque a coxa girou apenas alguns graus durante
 o experimento.
 
-\paragraph{2º passo -- pose da perna.} A base $4$ é presa à perna e coincide com a base $0$
-no quadro \frA{} (membro estendido). A perna é tratada como corpo rígido definido por dois
+\paragraph{2º passo -- pose da perna.} A perna é tratada como corpo rígido definido por dois
 pontos (\cref{sec:pose2pontos}): $J$, ponto médio dos marcadores 5 e 6 (logo abaixo do
-joelho), e $P$, marcador 8 (conexão perna--pé, tornozelo). Assim,
-$\rv{4}{J} = \rv{0}{J}^{(307)} = [\Jx\ \ \Jy]^{\mathsf T}$~mm e $\rv{4}{P} = [\Px\ \ \Py]^{\mathsf T}$~mm, e em cada
-quadro obtêm-se $\alpha_j$ e $\rv{0}{O_4}^{(j)}$. A flexão do joelho é $\varphi_j = -\alpha_j$.
+joelho), e $P$, marcador 8 (conexão perna--pé, tornozelo). A base $4$ é presa à perna com
+origem em $J$ e, no quadro \frRef{} (membro estendido), eixos paralelos aos da base $0$, de
+modo que $\Rm{0}{4}^{(\frRef)} = I$, $\rv{0}{J}^{(\frRef)} = [\Jx\ \ \Jy]^{\mathsf T}$~mm e
+$\rv{4}{P} = \rv{0}{P}^{(\frRef)} - \rv{0}{J}^{(\frRef)} = [\Px\ \ \Py]^{\mathsf T}$~mm. Em cada quadro obtêm-se
+$\alpha_j$ e $\rv{0}{O_4}^{(j)} = \rv{0}{J}^{(j)}$; a flexão do joelho é $\varphi_j = -\alpha_j$.
 
 \paragraph{3º passo -- tornozelo.} A posição do tornozelo segundo o modelo rígido é
 $\rv{0}{P}^{(j)} = \Rm{0}{4}^{(j)}\,\rv{4}{P} + \rv{0}{O_4}^{(j)}$; é essa posição que será comparada com a
 gerada pelo mecanismo.
 
+\paragraph{4º passo -- suavização por mínimos quadrados.} As poses medidas contêm erros de
+alguns milímetros (marcação manual e deslizamento da pele sobre os ossos). Em vez de impor ao
+mecanismo pontos com esse ruído, a trajetória de $J$ foi ajustada por um polinômio de 2º grau
+em função da flexão, ${}^0x_J(\varphi) = a_0 + a_1\varphi + a_2\varphi^2$ (e o mesmo para
+${}^0y_J$, com coeficientes $b_k$). Com os $m = 5$ quadros medidos, em forma matricial,
+\begin{equation}
+  [A] = \begin{bmatrix} 1 & \varphi_1 & \varphi_1^2 \\ \vdots & \vdots & \vdots \\ 1 & \varphi_m & \varphi_m^2 \end{bmatrix},
+  \qquad
+  [A]^{\mathsf T}[A]\,\mathbf a = [A]^{\mathsf T}\,\mathbf x_J ,
+  \qquad
+  [A]^{\mathsf T}[A]\,\mathbf b = [A]^{\mathsf T}\,\mathbf y_J ,
+  \label{eq:minquad}
+\end{equation}
+em que $\mathbf x_J$ e $\mathbf y_J$ reúnem as coordenadas medidas. São três equações para três
+incógnitas, resolvidas como um sistema linear comum. Obtiveram-se
+$\mathbf a = [\cxZero\ \ \cxUm\ \ \cxDois]^{\mathsf T}$ e $\mathbf b = [\cyZero\ \ \cyUm\ \ \cyDois]^{\mathsf T}$
+(mm e graus), com resíduos de no máximo \resmax~mm (\cref{fig:ajuste}), da ordem da incerteza
+das medições. A pose ajustada em qualquer flexão é então
+$\Rm{0}{4}(\varphi) = \Rot{-\varphi}{z_4}$ e $\rv{0}{O_4}(\varphi) = [{}^0x_J(\varphi)\ \ {}^0y_J(\varphi)]^{\mathsf T}$, e é sobre
+essa trajetória suavizada que se escolhem as posições de precisão. Os pontos medidos
+continuam sendo usados para verificar o resultado.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.95\textwidth]{figuras/p1_ajuste.pdf}
+  \caption{Coordenadas medidas de $J$ na base da coxa e ajuste de 2º grau por mínimos
+  quadrados (linhas pontilhadas: flexões das posições de precisão).}
+  \label{fig:ajuste}
+\end{figure}
+
 \begin{table}[htbp]
   \centering
-  \caption{Poses da perna na base $0$ (coxa) obtidas das medições (mm). $\star$:
-  posição de precisão; $\circ$: posição de verificação; $\dagger$: quadro não utilizado na
-  síntese. $\overline{JP}$: comprimento medido entre os pontos $J$ e $P$.}
+  \caption{Poses da perna na base $0$ (coxa) obtidas das medições (mm). $\dagger$: quadro não
+  utilizado. $\overline{JP}$: comprimento medido entre os pontos $J$ e $P$; $r$: resíduo do
+  ajuste em $J$; $e$: distância entre o tornozelo do mecanismo sintetizado e o medido.}
   \label{tab:poses}
-  \begin{tabular}{lrrrrrr}
+  \small
+  \begin{tabular}{lrrrrrrrr}
     \toprule
-    Quadro & $\varphi$ (\si{\degree}) & ${}^0x_{O_4}$ & ${}^0y_{O_4}$ & ${}^0x_{P}$ & ${}^0y_{P}$ & $\overline{JP}$ \\
+    Quadro & $\varphi$ (\si{\degree}) & ${}^0x_{J}$ & ${}^0y_{J}$ & ${}^0x_{P}$ & ${}^0y_{P}$ & $\overline{JP}$ & $r$ & $e$ \\
     \midrule
     \tabelaposes
     \bottomrule
@@ -639,29 +688,31 @@ gerada pelo mecanismo.
   \label{fig:medicoes}
 \end{figure}
 
-Os quadros selecionados correspondem a flexões de \phiA, \phiB, \phiC{} e
-\phiD\si{\degree} (\cref{tab:poses,fig:medicoes}), próximas das configurações inicial
-(\SI{0}{\degree}), intermediárias (\SI{45}{\degree} e \SI{90}{\degree}) e de máxima
+Os quadros utilizados correspondem a flexões de \phiB, \phiA, \phiC, \phiD{} e
+\phiE\si{\degree} (\cref{tab:poses,fig:medicoes}), da extensão completa à máxima
 flexão. O comprimento $\overline{JP}$ varia entre \JPmin{} e \JPmax~mm (cerca de
 \SI{\JPvar}{\percent}), o que mede a incerteza da marcação manual e dos artefatos de pele.
-Nota-se também que a origem $O_4$ se desloca cerca de \SI{\deslO}{mm} durante o movimento:
+Nota-se também que, além de girar, a perna se desloca: o ponto $J$ muda de posição em até
+cerca de \SI{\deslO}{mm} na base da coxa durante o movimento:
 esse é justamente o efeito que uma junta de revolução simples não reproduz e que motiva
 o uso do quadrilátero.
 
-\paragraph{Escolha das posições de precisão.} Dispondo de quatro posições medidas, três
-são usadas como posições de precisão na síntese e a quarta é usada para verificação.
-Foram testadas as três combinações que incluem a extensão completa (\cref{tab:combos});
-adotou-se a de melhor desempenho segundo o critério da \cref{sec:escolha}: quadros \precA, \precB{} e \precC{}
-como posições de precisão e o quadro \cheque{} ($\varphi = \phicheque\si{\degree}$) como
-verificação.
+\paragraph{Escolha das posições de precisão.} As três posições de precisão são tomadas
+sobre a trajetória ajustada, entre \SI{0}{\degree} e a maior flexão medida, \phimax\si{\degree}.
+Foram comparadas duas escolhas (\cref{tab:combos}): posições igualmente espaçadas e o
+espaçamento de Chebyshev (\cref{eq:chebyshev}). Adotou-se a de menor erro,
+$\varphi_1 = \precphiA$, $\varphi_2 = \precphiB$ e $\varphi_3 = \precphiC\si{\degree}$ (Chebyshev).
 
 \begin{table}[htbp]
   \centering
-  \caption{Combinações de posições de precisão testadas.}
+  \caption{Escolhas de posições de precisão testadas. $e_{\max}$: maior distância entre o
+  tornozelo do mecanismo e o da trajetória ajustada em toda a faixa; $e_{\mathrm{med}}$: maior
+  distância ao tornozelo medido nos cinco quadros; $\mu_{\min}$: menor ângulo nas articulações
+  móveis.}
   \label{tab:combos}
-  \begin{tabular}{lccc}
+  \begin{tabular}{lcccc}
     \toprule
-    Precisão (quadros) & Verificação & Erro na verificação (mm) & $\mu_{\min}$ (\si{\degree}) \\
+    Espaçamento & $\varphi_1;\ \varphi_2;\ \varphi_3$ (\si{\degree}) & $e_{\max}$ (mm) & $e_{\mathrm{med}}$ (mm) & $\mu_{\min}$ (\si{\degree}) \\
     \midrule
     \tabelacombos
     \bottomrule
@@ -676,20 +727,21 @@ $(\gamma_2, \gamma_3)$ para $LN$. Elas foram determinadas por varredura, em quat
   \item para cada díade, $\beta_2$ e $\beta_3$ percorrem de \SI{-180}{\degree} a \SI{180}{\degree} em passos
   de \SI{4}{\degree}; para cada par, $\mathbf W$ e $\mathbf Z$ são calculados pela \cref{eq:cramer};
   \item descartam-se as díades cujo pivô fixo cai fora da região do joelho
-  ($|{}^0x| \le \SI{60}{mm}$, $\SI{-40}{mm} \le {}^0y \le \SI{60}{mm}$) ou cujo comprimento
-  $|\mathbf W|$ não está entre \SI{20}{mm} e \SI{120}{mm}; as restantes são ordenadas pelo erro da
-  díade na posição de verificação, $\big|\,|\rv{0}{Q}^{(v)} - \rv{0}{C}| - |\mathbf W|\,\big|$, que é nulo quando o pivô
-  móvel também está sobre a circunferência de centro $C$ nessa posição;
-  \item as 60 melhores díades são combinadas duas a duas; para cada par, o mecanismo é montado
-  por Newton--Raphson (\cref{eq:newton}) de \SI{0}{\degree} até a flexão máxima medida, e
-  descartam-se os que mudam de ramo, atingem ponto morto ou têm $\mu < \SI{30}{\degree}$;
-  \item entre os mecanismos restantes, cujo erro no tornozelo na posição de verificação,
+  ($|{}^0x| \le \SI{60}{mm}$, $\SI{-40}{mm} \le {}^0y \le \SI{60}{mm}$), cujo pivô móvel cai fora da
+  parte proximal da perna ($|{}^4x| \le \SI{60}{mm}$, $|{}^4y| \le \SI{60}{mm}$, em torno de $J$) ou
+  cujo comprimento $|\mathbf W|$ não está entre \SI{20}{mm} e \SI{120}{mm};
+  \item todas as díades restantes são combinadas duas a duas ($CQ$ com $LN$); para cada par, o
+  mecanismo é montado por Newton--Raphson (\cref{eq:newton}) de \SI{0}{\degree} até a flexão
+  máxima medida, e descartam-se os que mudam de ramo, atingem ponto morto ou têm
+  $\mu_N < \SI{30}{\degree}$ ou $\mu_Q < \SI{30}{\degree}$ em algum ponto da faixa (barras quase
+  alinhadas);
+  \item para cada mecanismo restante, calcula-se o maior erro no tornozelo em relação à
+  trajetória ajustada,
   \begin{equation}
-    e_v = \Big\lVert \rv{0}{P}^{\,\mathrm{mec}}(\varphi_v) - \rv{0}{P}^{\,\mathrm{med}}(\varphi_v) \Big\rVert ,
+    e_{\max} = \max_{0 \le \varphi \le \varphi_{\max}} \Big\lVert \rv{0}{P}^{\,\mathrm{mec}}(\varphi) - \rv{0}{P}^{\,\mathrm{aj}}(\varphi) \Big\rVert ,
   \end{equation}
-  seja menor que \SI{1}{mm} (bem abaixo da incerteza das medições), escolhe-se o de maior
-  ângulo de transmissão mínimo; a varredura é então refinada com passo de \SI{0,5}{\degree} em
-  torno das escolhas encontradas.
+  e escolhe-se o de menor $e_{\max}$ (abaixo de \SI{1}{mm}, prefere-se o de maior ângulo mínimo);
+  a varredura é então refinada com passo de \SI{0,5}{\degree} em torno das escolhas encontradas.
 \end{enumerate}
 
 \section{Parte I -- Resultados da síntese}\label{cap:resultados1}
@@ -708,7 +760,8 @@ os comprimentos resultantes.
     \toprule
     & Ângulos (\si{\degree}) & Vetores (mm) \\
     \midrule
-    Dados (quadros \precA, \precB, \precC) & $\alpha_2 = \dalphaA$ & $\boldsymbol\delta_2 = [\ddeltaAx\ \ \ddeltaAy]^{\mathsf T}$ \\
+    Dados ($\varphi_1 = \precphiA$) & & $\rv{0}{O_4}^{(1)} = [\dOx\ \ \dOy]^{\mathsf T}$ \\
+    Dados ($\varphi_2 = \precphiB$, $\varphi_3 = \precphiC$) & $\alpha_2 = \dalphaA$ & $\boldsymbol\delta_2 = [\ddeltaAx\ \ \ddeltaAy]^{\mathsf T}$ \\
                                             & $\alpha_3 = \dalphaB$ & $\boldsymbol\delta_3 = [\ddeltaBx\ \ \ddeltaBy]^{\mathsf T}$ \\
     \midrule
     Díade $CQ$ (escolhas livres) & $\beta_2 = \dbetaA$ & $\mathbf W = [\dWx\ \ \dWy]^{\mathsf T}$ \\
@@ -740,47 +793,54 @@ os comprimentos resultantes.
 
 \paragraph{Grashof.} Com $s=\grashofs$, $p=\grashofp$, $q=\grashofq$ e $l=\grashofl$~mm,
 $s+l=\grashofsl \grashofsinal p+q=\grashofpq$: o mecanismo \grashof{} a condição
-\eqref{eq:grashof}. A simulação de montagem confirma que ele percorre continuamente a
-faixa de \SI{0}{\degree} a \phimax\si{\degree} sem atingir pontos mortos, com $\mu$ entre
-\mumin\si{\degree} e \mumax\si{\degree} (\cref{fig:erro}).
+\eqref{eq:grashof}, o que não é um problema, pois o joelho só precisa percorrer a faixa de
+flexão medida. A simulação de montagem confirma que ele percorre continuamente a faixa de
+\SI{0}{\degree} a \phimax\si{\degree} sem atingir pontos mortos, com $\mu_N$ entre
+\mumin\si{\degree} e \mumax\si{\degree} e $\mu_Q$ entre \muQmin\si{\degree} e
+\muQmax\si{\degree} (\cref{fig:erro}): nenhuma das articulações móveis se aproxima do
+alinhamento, e o quadrilátero (cruzado, como em muitos joelhos policêntricos) não se dobra
+sobre si mesmo.
 
-\paragraph{Precisão.} Nas três posições de precisão o erro é nulo (a menos da tolerância
-numérica), como esperado. Na posição de verificação (quadro \cheque,
-$\varphi = \phicheque\si{\degree}$), o erro no tornozelo é de \errcheque~mm, muito inferior à
-incerteza das próprias medições (a variação de $\overline{JP}$ entre os quadros é de
-\JPmin{} a \JPmax~mm). O mecanismo reproduz, portanto, o movimento medido dentro da
-incerteza experimental. A \cref{fig:mecanismo} mostra o
-mecanismo nas quatro posições medidas, a centroide (trajetória do polo $I_{13}$) e a
+\paragraph{Precisão.} Nas três posições de precisão o erro em relação à trajetória ajustada é
+nulo (a menos da tolerância numérica), como esperado, e em toda a faixa ele não passa de
+$e_{\max} = \ecurva$~mm. Em relação aos cinco quadros medidos, o tornozelo do mecanismo fica
+entre \emedmin{} e \emedmax~mm do tornozelo medido (\cref{tab:poses}), valores da ordem dos
+resíduos do próprio ajuste e inferiores à incerteza das medições (a variação de
+$\overline{JP}$ entre os quadros é de \JPmin{} a \JPmax~mm). O mecanismo reproduz, portanto, o
+movimento medido dentro da incerteza experimental. A \cref{fig:mecanismo} mostra o
+mecanismo nos cinco quadros medidos, a centroide (trajetória do polo $I_{13}$) e a
 trajetória do tornozelo.
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=\textwidth]{figuras/p1_mecanismo.pdf}
-  \caption{Esquerda: quadrilátero sintetizado nas quatro posições medidas (tracejado:
-  acoplador $QN$) e centroide. Direita: trajetória do tornozelo gerada pelo mecanismo e
-  posições medidas.}
+  \caption{Esquerda: quadrilátero sintetizado nos cinco quadros medidos (tracejado:
+  acoplador $QN$) e centroide. Direita: trajetória do tornozelo gerada pelo mecanismo, trajetória
+  ajustada, posições de precisão ($\star$) e posições medidas.}
   \label{fig:mecanismo}
 \end{figure}
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.6\textwidth]{figuras/p1_erro_mu.pdf}
-  \caption{Ângulo de transmissão em função da flexão (linhas verticais: posições medidas).}
+  \caption{Ângulos nas articulações móveis em função da flexão (linhas verticais: quadros medidos).}
   \label{fig:erro}
 \end{figure}
 
 \subsection{Discussão}
 
-O ângulo de transmissão permanece acima de \mumin\si{\degree} em toda a faixa, com
-folga em relação ao limite de \SI{30}{\degree} imposto na escolha das escolhas livres, de
-modo que a transmissão de forças é boa em todas as posições. Os pivôs fixos ficam na
+Os ângulos nas duas articulações móveis permanecem acima de \mumindois\si{\degree} em toda
+a faixa, respeitando o limite de \SI{30}{\degree} imposto na escolha das escolhas livres, de
+modo que a transmissão de forças é boa e as barras nunca ficam alinhadas. Os pivôs fixos ficam na
 região da articulação do joelho e os móveis, na parte proximal da perna, com elos entre
 \rminelo{} e \rmaxelo~mm. O polo parte de
 $(\ciOx;\ \ciOy)$~mm na extensão e migra posteriormente até $(\ciFx;\ \ciFy)$~mm na
 flexão máxima, comportamento qualitativamente semelhante à centroide em ``J'' descrita
-por \textcite{oconnor1989}. Como a incerteza das medições é de alguns milímetros, o
-refinamento natural do projeto é repetir a medição e usar outros quadros do vídeo como
-posições de verificação. Para uma prótese transfemoral real, recomenda-se ainda verificar a posição
+por \textcite{oconnor1989}. A suavização por mínimos quadrados e o espaçamento de Chebyshev
+foram decisivos: com as poses medidas usadas diretamente como posições de precisão, o ruído
+das medições restringia muito as soluções e o erro na verificação era maior. Como a
+incerteza das medições é de alguns milímetros, o refinamento natural do projeto é repetir a
+medição com mais quadros do vídeo, o que melhora o ajuste. Para uma prótese transfemoral real, recomenda-se ainda verificar a posição
 do polo em extensão em relação à linha trocânter--joelho--tornozelo, da qual depende a
 estabilidade voluntária na fase de apoio \cite{radcliffe1994}.
 
@@ -1344,13 +1404,15 @@ corporal do enunciado.
 \begin{itemize}
   \item \textbf{Parte I}: as medições feitas com o \emph{Tracker} foram escritas na base da
   coxa, desconsiderando o movimento angular do quadril, e a perna foi tratada como corpo
-  rígido definido por dois pontos, fornecendo quatro poses entre \SI{0}{\degree} e
-  \phiD\si{\degree} de flexão. A síntese do tipo levou ao quadrilátero articulado, e a
-  síntese dimensional analítica pela equação da díade padrão, com as escolhas livres
-  determinadas por varredura, produziu um mecanismo compacto (elos de \rminelo{} a
-  \rmaxelo~mm) que passa pelas três posições de precisão e erra a posição de verificação em
-  \errcheque~mm no tornozelo. A análise de posição por Newton--Raphson mostra que o
-  mecanismo percorre toda a faixa medida sem pontos mortos, com $\mu \ge \mumin\si{\degree}$.
+  rígido definido por dois pontos, fornecendo cinco poses entre \SI{0}{\degree} e
+  \phiE\si{\degree} de flexão, suavizadas por mínimos quadrados. A síntese do tipo levou ao
+  quadrilátero articulado, e a síntese dimensional analítica pela equação da díade padrão,
+  com posições de precisão em espaçamento de Chebyshev e escolhas livres determinadas por
+  varredura, produziu um mecanismo compacto (elos de \rminelo{} a \rmaxelo~mm) que segue o
+  movimento ajustado com erro máximo de \ecurva~mm e fica a no máximo \emedmax~mm dos
+  tornozelos medidos. A análise de posição por Newton--Raphson mostra que o mecanismo
+  percorre toda a faixa medida sem pontos mortos, com ângulos de pelo menos
+  \mumindois\si{\degree} nas duas articulações móveis.
   \item \textbf{Parte II}: a interpolação polinomial de 5º grau fornece trajetórias suaves,
   com velocidade e aceleração nulas nos extremos, das quais se obtêm as orientações,
   velocidades e acelerações angulares da coxa e da perna. As equações de Newton--Euler,

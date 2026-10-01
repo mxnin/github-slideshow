@@ -25,6 +25,8 @@ def main():
     c = r1["comprimentos"]
     m("rCL", f(c["l0"])); m("rCQ", f(c["l1"])); m("rQN", f(c["l2"])); m("rLN", f(c["l3"]))
     m("mumin", f(r1["mu_min"])); m("mumax", f(r1["mu_max"]))
+    m("muQmin", f(r1["muQ_min"])); m("muQmax", f(r1["muQ_max"]))
+    m("mumindois", f(min(r1["mu_min"], r1["muQ_min"])))
     m("grashof", "satisfaz" if r1["grashof"] else "não satisfaz")
     ls = r1["grashof_ord"]
     m("grashofs", f(ls[0])); m("grashofp", f(ls[1])); m("grashofq", f(ls[2])); m("grashofl", f(ls[3]))
@@ -34,24 +36,31 @@ def main():
     m("ciFx", f(r1["polo_fim"][0])); m("ciFy", f(r1["polo_fim"][1]))
     m("phimax", f(r1["phi_max"]))
     po = r1["poses"]
-    for k, nome in zip(r1["frames"], ["A", "B", "C", "D"]):
+    for k, nome in zip(r1["frames"], ["A", "B", "C", "D", "E"]):
         m(f"fr{nome}", str(k)); m(f"phi{nome}", f(po[str(k)]["flexao"]))
-    m("precA", str(r1["precisao"][0])); m("precB", str(r1["precisao"][1])); m("precC", str(r1["precisao"][2]))
-    m("cheque", str(r1["cheque"][0]))
-    m("phicheque", f(po[str(r1["cheque"][0])]["flexao"]))
-    m("errcheque", f(r1["erros"][str(r1["cheque"][0])]))
+    m("frRef", str(r1["frame_ref"]))
+    pf = r1["precisao_phi"]
+    m("precphiA", f(pf[0])); m("precphiB", f(pf[1])); m("precphiC", f(pf[2]))
+    m("ecurva", f(r1["e_curva"])); m("emedmax", f(max(r1["erros"].values())))
+    m("emedmin", f(min(r1["erros"].values())))
+    aj = r1["ajuste"]
+    m("resmax", f(max(aj["residuos"].values())))
+    for i, nome in enumerate(("Zero", "Um", "Dois")):
+        m(f"cx{nome}", f(aj["cx"][i], [2, 4, 6][i])); m(f"cy{nome}", f(aj["cy"][i], [2, 4, 6][i]))
     JPs = [po[str(k)]["JP"] for k in r1["frames"]]
     m("JPmin", f(min(JPs), 0)); m("JPmax", f(max(JPs), 0))
     m("JPvar", f(100 * (max(JPs) - min(JPs)) / min(JPs), 0))
-    m("Jx", f(r1["J4"][0])); m("Jy", f(r1["J4"][1]))
+    m("Jx", f(r1["J0"][0])); m("Jy", f(r1["J0"][1]))
     import numpy as _np
-    desl = max(_np.hypot(po[str(k)]["x"], po[str(k)]["y"]) for k in r1["frames"])
+    J0 = _np.array(r1["J0"])
+    desl = max(_np.hypot(po[str(k)]["x"] - J0[0], po[str(k)]["y"] - J0[1]) for k in r1["frames"])
     m("deslO", f(desl, 0))
     m("rmaxelo", f(max(c.values()))); m("rminelo", f(min(c.values())))
     dd = r1["diade"]
     m("dalphaA", f(dd["alpha2"])); m("dalphaB", f(dd["alpha3"]))
     m("ddeltaAx", f(dd["delta2"][0])); m("ddeltaAy", f(dd["delta2"][1]))
     m("ddeltaBx", f(dd["delta3"][0])); m("ddeltaBy", f(dd["delta3"][1]))
+    m("dOx", f(dd["rO4_1"][0])); m("dOy", f(dd["rO4_1"][1]))
     m("dbetaA", f(dd["beta2"])); m("dbetaB", f(dd["beta3"]))
     m("dgamA", f(dd["gamma2"])); m("dgamB", f(dd["gamma3"]))
     for nm in ("W", "Z", "U", "S"):
@@ -61,19 +70,14 @@ def main():
     with open(os.path.join(D, "poses_medidas.csv")) as fh:
         for row in csv.DictReader(fh):
             fr = int(row["frame"])
-            tag = ""
-            if fr in r1["precisao"]:
-                tag = r" $\star$"
-            elif fr in r1["cheque"]:
-                tag = r" $\circ$"
-            elif fr not in r1["frames"]:
-                tag = r" $\dagger$"
+            tag = "" if fr in r1["frames"] else r" $\dagger$"
             linhas.append(f"{fr}{tag} & {f(float(row['flexao_graus']))} & {f(float(row['x_O4_mm']))} & {f(float(row['y_O4_mm']))} & "
-                          f"{f(float(row['x_P_mm']))} & {f(float(row['y_P_mm']))} & {f(float(row['JP_mm']), 0)} \\\\")
+                          f"{f(float(row['x_P_mm']))} & {f(float(row['y_P_mm']))} & {f(float(row['JP_mm']), 0)} & "
+                          + (f"{f(aj['residuos'][str(fr)])} & {f(r1['erros'][str(fr)])}" if fr in r1["frames"] else "-- & --") + r" \\")
     L.append("\\newcommand{\\tabelaposes}{" + "\n".join(linhas) + "}")
     comb = []
     for cb in r1["combinacoes"]:
-        comb.append(f"{', '.join(map(str, cb['precisao']))} & {cb['cheque'][0]} & {f(cb['erro_cheque'], 2)} & {f(cb['mu_min'])} \\\\")
+        comb.append(f"{cb['escolha']} & {'; '.join(f(g) for g in cb['phis'])} & {f(cb['e_curva'], 2)} & {f(cb['e_med_max'])} & {f(cb['mu_min'])} \\\\")
     L.append("\\newcommand{\\tabelacombos}{" + "\n".join(comb) + "}")
 
     # ---------------- Parte II ----------------
