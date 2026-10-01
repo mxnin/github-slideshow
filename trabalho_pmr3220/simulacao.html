@@ -1,0 +1,502 @@
+<title>Joelho de quatro barras</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: prancheta técnica. Joelho ampliado à esquerda com controles e camadas; à direita o membro inteiro e
+   os cartões com as contas de mudança de base (empilha no celular). Cada corpo rígido tem uma cor: peça, base e
+   pinos de um mesmo corpo compartilham a cor; vetores das díades em roxo, vetores de posição em laranja. */
+:root {
+  --bg: #f3f4f1;
+  --panel: #ffffff;
+  --ink: #1f2522;
+  --muted: #5d6762;
+  --line: #d6dbd6;
+  --grid: #e8ebe7;
+  --bone: #d5dad5;
+  --bone-edge: #8b958f;
+  --plate0: rgba(79, 90, 99, 0.22);
+  --plate4: rgba(30, 122, 70, 0.16);
+  --b0: #4f5a63;
+  --b1: #1f5fa8;
+  --b2: #1e7a46;
+  --b3: #0d7f8a;
+  --dy: #7a3fa3;
+  --vec: #c2410c;
+  --meas: #a16207;
+  --pole: #be185d;
+  --font-ui: "Barlow", "Segoe UI", system-ui, sans-serif;
+  --font-head: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
+  --font-num: "JetBrains Mono", ui-monospace, "SFMono-Regular", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141816; --panel: #1c211f; --ink: #e6ebe7; --muted: #9aa49f; --line: #303834;
+    --grid: #232a27; --bone: #343c38; --bone-edge: #7b8681;
+    --plate0: rgba(170, 180, 189, 0.20); --plate4: rgba(95, 208, 143, 0.16);
+    --b0: #aab4bd; --b1: #6aa6ec; --b2: #5fd08f; --b3: #4fd0dc; --dy: #c79bf0; --vec: #ff8a4c; --meas: #e3b04f; --pole: #ff6fae;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #141816; --panel: #1c211f; --ink: #e6ebe7; --muted: #9aa49f; --line: #303834;
+  --grid: #232a27; --bone: #343c38; --bone-edge: #7b8681;
+  --plate0: rgba(170, 180, 189, 0.20); --plate4: rgba(95, 208, 143, 0.16);
+  --b0: #aab4bd; --b1: #6aa6ec; --b2: #5fd08f; --b3: #4fd0dc; --dy: #c79bf0; --vec: #ff8a4c; --meas: #e3b04f; --pole: #ff6fae;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-ui); font-size: 15px; line-height: 1.5; margin: 0; }
+.wrap { max-width: 1240px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 40px; display: grid; gap: 16px; }
+header h1 { font-family: var(--font-head); font-weight: 600; font-size: 1.9rem; letter-spacing: 0.01em; margin: 0; text-wrap: balance; }
+header p { margin: 4px 0 0; color: var(--muted); max-width: 84ch; }
+.view { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; align-items: start; }
+@media (max-width: 900px) { .view { grid-template-columns: minmax(0, 1fr); } }
+.stage { display: grid; gap: 12px; min-width: 0; }
+figure { margin: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 8px; min-width: 0; }
+figcaption { font-family: var(--font-head); font-weight: 500; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); padding: 2px 4px 6px; }
+canvas { display: block; width: 100%; height: auto; max-width: 100%; }
+.controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 12px; }
+.controls label { font-size: 0.85rem; color: var(--muted); }
+.controls input[type="range"] { flex: 1 1 200px; accent-color: var(--b1); min-width: 0; }
+.slider-row { display: flex; align-items: center; gap: 10px; flex: 1 1 320px; min-width: 0; }
+.slider-row output { font-family: var(--font-num); font-size: 0.95rem; min-width: 6.5ch; text-align: right; font-variant-numeric: tabular-nums; }
+button.play { font: 600 0.9rem var(--font-ui); color: var(--panel); background: var(--b1); border: 0; border-radius: 4px; padding: 8px 14px; cursor: pointer; min-width: 92px; }
+button.ghost { font: 500 0.85rem var(--font-ui); color: var(--ink); background: none; border: 1px solid var(--line); border-radius: 4px; padding: 7px 10px; cursor: pointer; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--b1); outline-offset: 2px; }
+.layers { display: flex; flex-wrap: wrap; gap: 6px 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; }
+.layers label { display: inline-flex; align-items: center; gap: 7px; font-size: 0.88rem; cursor: pointer; }
+.layers input { accent-color: var(--b1); width: 16px; height: 16px; margin: 0; }
+.bodies { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 0.86rem; color: var(--muted); }
+.bodies span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 16px; height: 4px; border-radius: 2px; display: inline-block; flex: none; }
+aside { display: grid; gap: 12px; min-width: 0; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; }
+.card h2 { font-family: var(--font-head); font-weight: 600; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.06em; margin: 0 0 8px; color: var(--muted); }
+dl { display: grid; grid-template-columns: 1fr auto; gap: 3px 12px; margin: 0; }
+dt { color: var(--muted); font-size: 0.9rem; }
+dd { margin: 0; font-family: var(--font-num); font-size: 0.86rem; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.eq { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; font-family: var(--font-num); font-size: 0.8rem; font-variant-numeric: tabular-nums; margin: 6px 0 10px; }
+.eq .lab { font-family: var(--font-ui); font-size: 0.92rem; }
+.mat { display: inline-grid; gap: 0 9px; padding: 2px 6px; border-left: 1.5px solid var(--ink); border-right: 1.5px solid var(--ink); border-radius: 3px; text-align: right; }
+.mat.c2 { grid-template-columns: auto auto; }
+.mat.c1 { grid-template-columns: auto; }
+.note { font-size: 0.84rem; color: var(--muted); margin: 0; }
+.chip { display: inline-block; font: 500 0.78rem var(--font-ui); padding: 2px 8px; border-radius: 99px; border: 1px solid var(--line); }
+.chip.ok { color: var(--b2); border-color: var(--b2); }
+.chip.warn { color: var(--pole); border-color: var(--pole); }
+sup, sub { font-size: 0.72em; line-height: 0; }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Joelho de quatro barras — bases solidárias às peças</h1>
+    <p>Grupo C · PMR3220 · Parte I. Quadrilátero articulado CQNL sintetizado pela díade padrão sobre o movimento medido (suavizado por mínimos quadrados, posições de precisão em 8,8°, 66,0° e 123,1°). Cada base é presa a uma peça: base 0 na coxa (ponto médio de 3–4), bases 1 e 3 nas barras CQ e LN, base 2 no acoplador QN e base 4 na perna, com origem em J (ponto médio de 5–6). Pontos da perna passam para a coxa por <b>⁰r = [⁰R₄]·⁴r + ⁰r<sub>O4</sub></b>. Medidas em mm.</p>
+  </header>
+
+  <section class="view">
+    <div class="stage">
+      <figure><figcaption>Joelho: peças, pinos, bases e vetores</figcaption><canvas id="c-knee" width="840" height="640" aria-label="Quadrilátero articulado CQNL ampliado, com as bases presas a cada peça e os vetores das díades"></canvas></figure>
+      <div class="controls">
+        <button class="play" id="play" type="button">▶ Animar</button>
+        <div class="slider-row">
+          <label for="phi">Flexão φ</label>
+          <input type="range" id="phi" min="0" max="131.75" step="0.25" value="0">
+          <output id="phi-out" for="phi">0,0°</output>
+        </div>
+        <button class="ghost" id="snap" type="button">Próximo quadro medido</button>
+      </div>
+      <div class="layers" id="layers">
+        <label><input type="checkbox" data-k="bases" checked>Bases 0 a 4</label>
+        <label><input type="checkbox" data-k="dyad" checked><i class="sw" style="background:var(--dy)"></i>Díades W, Z · U, S</label>
+        <label><input type="checkbox" data-k="pos" checked><i class="sw" style="background:var(--vec)"></i>Vetores de posição</label>
+        <label><input type="checkbox" data-k="angs"><span>Ângulos θ₁, θ₂, θ₃</span></label>
+        <label><input type="checkbox" data-k="meas" checked><i class="sw" style="background:var(--meas)"></i>J medido e ajustado</label>
+        <label><input type="checkbox" data-k="pole"><i class="sw" style="background:var(--pole)"></i>Polo I₁₃</label>
+      </div>
+      <div class="bodies">
+        <span><i class="sw" style="background:var(--b0)"></i>coxa · base 0 · pinos C, L</span>
+        <span><i class="sw" style="background:var(--b1)"></i>barra CQ · base 1</span>
+        <span><i class="sw" style="background:var(--b2)"></i>perna = acoplador QN · bases 2 e 4 · pinos Q, N</span>
+        <span><i class="sw" style="background:var(--b3)"></i>barra LN · base 3</span>
+      </div>
+    </div>
+
+    <aside>
+      <figure><figcaption>Membro inteiro (coxa fixa)</figcaption><canvas id="c-leg" width="440" height="500" aria-label="Coxa fixa, perna e pé presos à base 4"></canvas></figure>
+
+      <div class="card">
+        <h2>Ângulos</h2>
+        <dl>
+          <dt>Flexão φ</dt><dd id="r-phi">–</dd>
+          <dt>α = −φ (giro da base 4)</dt><dd id="r-a">–</dd>
+          <dt>θ₁ (X₀ → X₁)</dt><dd id="r-t1">–</dd>
+          <dt>θ₂ (X₁ → X₂, relativo)</dt><dd id="r-t2">–</dd>
+          <dt>θ₃ (X₀ → X₃)</dt><dd id="r-t3">–</dd>
+          <dt>μ<sub>N</sub> (entre X₂ e X₃)</dt><dd id="r-muN">–</dd>
+          <dt>μ<sub>Q</sub> (entre X₁ e X₂)</dt><dd id="r-muQ">–</dd>
+        </dl>
+        <p class="note" style="margin-top:8px"><span id="r-mu-chip" class="chip ok">μ ≥ 30°</span></p>
+      </div>
+
+      <div class="card">
+        <h2>Mudança de base de ponto</h2>
+        <div class="eq"><span class="lab">[⁰R₄] =</span><span class="mat c2" id="m-R"></span></div>
+        <div class="eq"><span class="lab">⁰r<sub>O4</sub> = ⁰r<sub>J</sub> =</span><span class="mat c1" id="m-O"></span></div>
+        <div class="eq"><span class="lab">⁰r<sub>Q</sub> =</span><span class="mat c2" id="m-R2"></span><span class="mat c1" id="m-Q4"></span>+<span class="mat c1" id="m-O2"></span>=<span class="mat c1" id="m-Q"></span></div>
+        <div class="eq"><span class="lab">⁰r<sub>P</sub> = [⁰R₄]·⁴r<sub>P</sub> + ⁰r<sub>O4</sub> =</span><span class="mat c1" id="m-P"></span></div>
+        <p class="note">⁴r<sub>Q</sub> = <span id="k-Q4"></span>, ⁴r<sub>N</sub> = <span id="k-N4"></span> e ⁴r<sub>P</sub> = <span id="k-P4"></span> são constantes: estão presos à perna.</p>
+      </div>
+
+      <div class="card">
+        <h2>Fechamento da cadeia</h2>
+        <div class="eq"><span class="lab">⁰r<sub>N</sub> = ⁰r<sub>C</sub> + [⁰R₁](¹r<sub>Q</sub> + [¹R₂]²r<sub>N</sub>) =</span><span class="mat c1" id="m-N12"></span></div>
+        <div class="eq"><span class="lab">⁰r<sub>N</sub> = ⁰r<sub>L</sub> + [⁰R₃]·³r<sub>N</sub> =</span><span class="mat c1" id="m-N3"></span></div>
+        <dl>
+          <dt>W = ⁰r<sub>Q</sub> − ⁰r<sub>C</sub></dt><dd id="v-W">–</dd>
+          <dt>Z = ⁰r<sub>J</sub> − ⁰r<sub>Q</sub></dt><dd id="v-Z">–</dd>
+          <dt>U = ⁰r<sub>N</sub> − ⁰r<sub>L</sub></dt><dd id="v-U">–</dd>
+          <dt>S = ⁰r<sub>J</sub> − ⁰r<sub>N</sub></dt><dd id="v-S">–</dd>
+          <dt>|⁰r<sub>C</sub> + W + Z − ⁰r<sub>J</sub>|</dt><dd id="v-cA">–</dd>
+          <dt>|⁰r<sub>L</sub> + U + S − ⁰r<sub>J</sub>|</dt><dd id="v-cB">–</dd>
+        </dl>
+      </div>
+
+      <div class="card">
+        <h2>Comparação com o movimento</h2>
+        <dl>
+          <dt>Tornozelo: mecanismo × ajustado</dt><dd id="e-aj">–</dd>
+          <dt>Maior desvio em toda a faixa</dt><dd id="e-max">–</dd>
+          <dt>Desvio aos 5 tornozelos medidos</dt><dd id="e-med">–</dd>
+        </dl>
+      </div>
+
+      <div class="card">
+        <h2>Quadrilátero</h2>
+        <dl>
+          <dt>ℓ₀ = CL (fixo na coxa)</dt><dd id="k-l0">–</dd>
+          <dt>ℓ₁ = CQ</dt><dd id="k-l1">–</dd>
+          <dt>ℓ₂ = QN (acoplador = perna)</dt><dd id="k-l2">–</dd>
+          <dt>ℓ₃ = LN</dt><dd id="k-l3">–</dd>
+        </dl>
+      </div>
+    </aside>
+  </section>
+</div>
+
+<script>
+(() => {
+  // ------------------------------------------------------------------ dados (dados/resultado_parte1.json)
+  // C, L e coxa na base 0 (origem no ponto médio de 3-4); Q4, N4, P4 e perna4 na base 4 (origem em J).
+  const D = {"C": [-26.665367938622357, -15.963982891736148], "L": [-10.010155896979061, 9.213457522055705], "Q4": [10.8256926273511, 39.776788936588], "N4": [6.069963112443516, 19.37675711517364], "P4": [36.87049999999999, -356.7595], "J0": [2.732000000000003, -62.216499999999996], "coxa": {"1": [-159.5, 361.05], "2": [-17.72, 368.01], "3": [-37.48, -10.62], "4": [37.48, 10.62]}, "perna4": {"5": [-35.05, 1.52], "6": [35.06, -1.51], "7": [-1.18, -369.28], "9": [74.45, -350.97], "10": [10.39, -465.45], "11": [210.82, -408.6]}, "poses": {"234": {"phi": 15.366, "x": -11.732, "y": -59.365}, "307": {"phi": 0.0, "x": 2.732, "y": -62.216}, "390": {"phi": 51.721, "x": -29.89, "y": -53.597}, "423": {"phi": 97.165, "x": -45.384, "y": -32.177}, "456": {"phi": 131.911, "x": -46.16, "y": -20.337}}, "prec": [8.836, 65.955, 123.074], "aj": {"cx": [1.6958112033239074, -0.8064299727277914, 0.003358412141287402], "cy": [-62.564948102361626, 0.15460403125671043, 0.0013223812149042494]}, "phimax": 131.91068853763522};
+
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const fmt = (v, d = 1) => (Math.abs(v) < 0.5 * 10 ** -d ? 0 : v).toFixed(d).replace(".", ",").replace("-", "−");
+  const rad = d => d * Math.PI / 180, deg = r => r * 180 / Math.PI;
+  const rot = (a, v) => [Math.cos(a) * v[0] - Math.sin(a) * v[1], Math.sin(a) * v[0] + Math.cos(a) * v[1]];
+  const add = (a, b) => [a[0] + b[0], a[1] + b[1]], sub = (a, b) => [a[0] - b[0], a[1] - b[1]];
+  const mul = (k, v) => [k * v[0], k * v[1]];
+  const norm = v => Math.hypot(v[0], v[1]);
+  const ang = v => Math.atan2(v[1], v[0]);
+  const wrap = a => Math.atan2(Math.sin(a), Math.cos(a));
+  const agudo = a => { let d = deg(a) % 180; if (d < 0) d += 180; return Math.min(d, 180 - d); };
+  const mb = (a, p, r) => add(rot(a, r), p);                             // ⁰r = [⁰R₄]⁴r + ⁰r_O4
+
+  const C = D.C, L = D.L, Q4 = D.Q4, N4 = D.N4, P4 = D.P4, J0 = D.J0;
+  // posição de referência (quadro 307): [⁰R₄] = I, ⁰r_O4 = ⁰r_J(307)
+  const Q0 = add(J0, Q4), N0 = add(J0, N4);
+  const l0 = norm(sub(L, C)), l1 = norm(sub(Q0, C)), l2 = norm(sub(N4, Q4)), l3 = norm(sub(N0, L));
+  const psi0 = ang(sub(N4, Q4));
+  const fit = phi => [D.aj.cx[0] + D.aj.cx[1] * phi + D.aj.cx[2] * phi * phi, D.aj.cy[0] + D.aj.cy[1] * phi + D.aj.cy[2] * phi * phi];
+
+  // ------------------------------------------------------------------ análise de posição (Newton–Raphson em θ1, θ3; entrada ψ = θ1 + θ2)
+  const STEP = 0.25, tab = [];
+  {
+    let t1 = ang(sub(Q0, C)), t3 = ang(sub(N0, L));
+    for (let phi = 0; phi <= D.phimax + 1e-9; phi += STEP) {
+      const a = -rad(phi), psi = psi0 + a;
+      for (let k = 0; k < 50; k++) {
+        const f1 = C[0] + l1 * Math.cos(t1) + l2 * Math.cos(psi) - L[0] - l3 * Math.cos(t3);
+        const f2 = C[1] + l1 * Math.sin(t1) + l2 * Math.sin(psi) - L[1] - l3 * Math.sin(t3);
+        const j11 = -l1 * Math.sin(t1), j12 = l3 * Math.sin(t3), j21 = l1 * Math.cos(t1), j22 = -l3 * Math.cos(t3);
+        const det = j11 * j22 - j12 * j21;
+        const d1 = (-f1 * j22 + f2 * j12) / det, d3 = (-j11 * f2 + j21 * f1) / det;
+        t1 += d1; t3 += d3;
+        if (Math.abs(d1) + Math.abs(d3) < 1e-13) break;
+      }
+      const t2 = wrap(psi - t1);
+      const Q = add(C, rot(t1, [l1, 0]));                                   // ⁰r_Q = ⁰r_C + [⁰R₁]¹r_Q
+      const N = add(Q, rot(t1, rot(t2, [l2, 0])));                         // ramo 0-1-2
+      const N3 = add(L, rot(t3, [l3, 0]));                                 // ramo 0-3
+      const p = sub(Q, rot(a, Q4));                                        // ⁰r_O4 = ⁰r_Q − [⁰R₄]⁴r_Q
+      const e1 = [Math.cos(t1), Math.sin(t1)], e3 = [Math.cos(t3), Math.sin(t3)];
+      const den = -e1[0] * e3[1] + e3[0] * e1[1], rhs = sub(L, C);
+      const s = (-rhs[0] * e3[1] + e3[0] * rhs[1]) / den;
+      const ank = mb(a, p, P4), ankFit = mb(a, fit(phi), P4);
+      tab.push({ phi, a, p, t1, t2, t3, psi, Q, N, N3, muN: agudo(psi - t3), muQ: agudo(t2), pole: add(C, mul(s, e1)), ank, err: norm(sub(ank, ankFit)) });
+    }
+  }
+  const at = phi => tab[Math.max(0, Math.min(tab.length - 1, Math.round(phi / STEP)))];
+  const errMax = Math.max(...tab.map(t => t.err));
+  const measAnk = Object.entries(D.poses).map(([fr, ps]) => ({ fr: +fr, phi: ps.phi, J: [ps.x, ps.y], P: mb(-rad(ps.phi), [ps.x, ps.y], P4) }));
+  const errMed = measAnk.map(m => norm(sub(at(m.phi).ank, m.P)));
+
+  // corpos: contornos e placas que ligam os pinos às peças
+  function hull(pts) {
+    const p = pts.slice().sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+    const cr = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+    const lo = [], up = [];
+    for (const q of p) { while (lo.length >= 2 && cr(lo[lo.length - 2], lo[lo.length - 1], q) <= 0) lo.pop(); lo.push(q); }
+    for (const q of p.slice().reverse()) { while (up.length >= 2 && cr(up[up.length - 2], up[up.length - 1], q) <= 0) up.pop(); up.push(q); }
+    return lo.slice(0, -1).concat(up.slice(0, -1));
+  }
+  const thigh = [D.coxa["1"], D.coxa["2"], D.coxa["4"], D.coxa["3"]];
+  const shank4 = [D.perna4["5"], D.perna4["6"], D.perna4["9"], D.perna4["7"]];
+  const foot4 = [D.perna4["7"], D.perna4["9"], D.perna4["11"], D.perna4["10"]];
+  const plate0 = hull([C, L, D.coxa["3"], D.coxa["4"]]);
+  const plate4 = hull([Q4, N4, D.perna4["5"], D.perna4["6"]]);
+
+  // ------------------------------------------------------------------ primitivas de desenho
+  function setupCanvas(cv) {
+    const dpr = Math.max(1, window.devicePixelRatio || 1);
+    if (!cv.dataset.w) { cv.dataset.w = cv.width; cv.dataset.h = cv.height; }
+    const W = +cv.dataset.w, H = +cv.dataset.h;
+    cv.width = W * dpr; cv.height = H * dpr;
+    const ctx = cv.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return { ctx, W, H };
+  }
+  const cvLeg = document.getElementById("c-leg"), cvKnee = document.getElementById("c-knee");
+  let LC = setupCanvas(cvLeg), KC = setupCanvas(cvKnee);
+
+  function viewport(c, xmin, xmax, ymin, ymax, pad = 16) {
+    const s = Math.min((c.W - 2 * pad) / (xmax - xmin), (c.H - 2 * pad) / (ymax - ymin));
+    const ox = pad + ((c.W - 2 * pad) - s * (xmax - xmin)) / 2, oy = pad + ((c.H - 2 * pad) - s * (ymax - ymin)) / 2;
+    const X = x => ox + (x - xmin) * s, Y = y => oy + (ymax - y) * s;
+    return { s, X, Y, box: [xmin, xmax, ymin, ymax], P: r => [X(r[0]), Y(r[1])], inside: r => r[0] > xmin && r[0] < xmax && r[1] > ymin && r[1] < ymax };
+  }
+  function path(ctx, px, close) { ctx.beginPath(); px.forEach((q, i) => i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1])); if (close) ctx.closePath(); }
+  function poly(ctx, px, fill, stroke, lw = 1.2) { path(ctx, px, true); if (fill) { ctx.fillStyle = fill; ctx.fill(); } if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lw; ctx.lineJoin = "round"; ctx.stroke(); } }
+  function seg(ctx, a, b, color, lw = 2, dash) {
+    ctx.beginPath(); ctx.setLineDash(dash || []); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]);
+    ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.lineCap = "round"; ctx.stroke(); ctx.setLineDash([]);
+  }
+  function dot(ctx, q, r, fill, stroke, lw = 1.6) {
+    ctx.beginPath(); ctx.arc(q[0], q[1], r, 0, 2 * Math.PI);
+    if (fill) { ctx.fillStyle = fill; ctx.fill(); } if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lw; ctx.stroke(); }
+  }
+  function star(ctx, q, r, color) {
+    ctx.beginPath();
+    for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r * 0.45 : r;
+      const x = q[0] + rr * Math.cos(a), y = q[1] + rr * Math.sin(a); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+    ctx.closePath(); ctx.fillStyle = color; ctx.fill();
+  }
+  function bar(ctx, a, b, color, w) {                                    // barra articulada com contorno
+    seg(ctx, a, b, color, w);
+    ctx.globalAlpha = 0.35; seg(ctx, a, b, css("--panel"), w - 4); ctx.globalAlpha = 1;
+  }
+  function pin(ctx, q, color) { dot(ctx, q, 6.5, css("--panel"), color, 2.2); dot(ctx, q, 2, color); }
+  // texto com sobrescrito à esquerda e subscrito à direita (ex.: ⁴r_P), com contorno para leitura
+  function tex(ctx, x, y, sup, main, sb, color, size = 13, bold = false) {
+    const f = (sz, w) => `${w} ${sz}px ${css("--font-ui")}`;
+    ctx.save(); ctx.strokeStyle = css("--panel"); ctx.lineWidth = 3.5; ctx.lineJoin = "round"; ctx.fillStyle = color;
+    const put = (t, xx, yy) => { ctx.strokeText(t, xx, yy); ctx.fillText(t, xx, yy); };
+    let cx = x;
+    if (sup) { ctx.font = f(size * 0.7, 500); put(sup, cx, y - size * 0.45); cx += ctx.measureText(sup).width + 0.5; }
+    ctx.font = f(size, bold ? 700 : 600); put(main, cx, y); cx += ctx.measureText(main).width + 0.5;
+    if (sb) { ctx.font = f(size * 0.7, 600); put(sb, cx, y + size * 0.3); }
+    ctx.restore();
+  }
+  function head(ctx, a, b, color, h) {
+    const dx = b[0] - a[0], dy = b[1] - a[1], L_ = Math.hypot(dx, dy); if (L_ < 2) return;
+    const ux = dx / L_, uy = dy / L_; h = Math.min(h, L_ * 0.45);
+    ctx.beginPath(); ctx.moveTo(b[0], b[1]); ctx.lineTo(b[0] - ux * h - uy * h * 0.42, b[1] - uy * h + ux * h * 0.42);
+    ctx.lineTo(b[0] - ux * h + uy * h * 0.42, b[1] - uy * h - ux * h * 0.42); ctx.closePath(); ctx.fillStyle = color; ctx.fill();
+  }
+  // vetor de a até b (pixels), deslocado 'off' px na direção unitária n; rótulo do lado n
+  function vector(ctx, a, b, color, lw, lab, n = null, off = 0, along = 0.5) {
+    const d0 = sub(b, a), L0 = norm(d0); if (L0 < 3) return;
+    if (!n) n = mul(1 / L0, [d0[1], -d0[0]]);
+    const A = add(a, mul(off, n)), B = add(b, mul(off, n));
+    const u = mul(1 / L0, d0), h = Math.min(10, L0 * 0.4);
+    seg(ctx, A, sub(B, mul(h * 0.8, u)), color, lw); head(ctx, A, B, color, h);
+    if (off) { seg(ctx, a, A, color, 0.8, [2, 2]); seg(ctx, b, B, color, 0.8, [2, 2]); }
+    const m = add(add(A, mul(along, d0)), mul(13, n));
+    tex(ctx, m[0] - 7, m[1] + 5, lab[0], lab[1], lab[2], color, 14, true);
+  }
+  // eixos de uma base: origem o e ângulo t na base 0, comprimento len (mm)
+  function frame(ctx, v, o, t, len, color, name, lw = 2) {
+    const O = v.P(o), X = v.P(add(o, rot(t, [len, 0]))), Y = v.P(add(o, rot(t, [0, len])));
+    seg(ctx, O, X, color, lw); head(ctx, O, X, color, 9);
+    seg(ctx, O, Y, color, lw); head(ctx, O, Y, color, 9);
+    const ux = sub(X, O), uy = sub(Y, O), nx = norm(ux), ny = norm(uy);
+    tex(ctx, X[0] + ux[0] / nx * 10 - 4, X[1] + ux[1] / nx * 10 + 5, "", "X", name, color, 12);
+    tex(ctx, Y[0] + uy[0] / ny * 10 - 4, Y[1] + uy[1] / ny * 10 + 5, "", "Y", name, color, 12);
+    dot(ctx, O, 2.6, color);
+  }
+  function angArc(ctx, v, o, ta, tb, rpx, color, lab) {                // de ta a tb (rad, base 0), sentido do menor giro
+    const c = v.P(o), B = ta + wrap(tb - ta);
+    ctx.beginPath(); ctx.arc(c[0], c[1], rpx, -ta, -B, B > ta); ctx.strokeStyle = color; ctx.lineWidth = 1.4; ctx.stroke();
+    const e = B - Math.sign(B - ta) * 0.3;
+    head(ctx, [c[0] + rpx * Math.cos(e), c[1] - rpx * Math.sin(e)], [c[0] + rpx * Math.cos(B), c[1] - rpx * Math.sin(B)], color, 7);
+    const tm = (ta + B) / 2;
+    tex(ctx, c[0] + (rpx + 11) * Math.cos(tm) - 6, c[1] - (rpx + 11) * Math.sin(tm) + 5, "", lab[0], lab[1], color, 13, true);
+  }
+  function grid(ctx, v, step) {
+    const [x0, x1, y0, y1] = v.box, g = css("--grid");
+    for (let x = Math.ceil(x0 / step) * step; x <= x1; x += step) seg(ctx, v.P([x, y0]), v.P([x, y1]), g, 1);
+    for (let y = Math.ceil(y0 / step) * step; y <= y1; y += step) seg(ctx, v.P([x0, y]), v.P([x1, y]), g, 1);
+  }
+
+  // ------------------------------------------------------------------ camadas
+  const show = { bases: true, dyad: true, pos: true, angs: false, meas: true, pole: false };
+  try { Object.assign(show, JSON.parse(localStorage.getItem("pmr3220-camadas-v4") || "{}")); } catch (err) {}
+  document.querySelectorAll("#layers input").forEach(inp => {
+    inp.checked = !!show[inp.dataset.k];
+    inp.addEventListener("change", () => { show[inp.dataset.k] = inp.checked; try { localStorage.setItem("pmr3220-camadas-v4", JSON.stringify(show)); } catch (err) {} draw(+phiIn.value); });
+  });
+
+  // ------------------------------------------------------------------ desenho
+  function draw(phi) {
+    const s = at(phi), a = s.a, J = s.p, Q = s.Q, N = s.N;
+    const c = { b0: css("--b0"), b1: css("--b1"), b2: css("--b2"), b3: css("--b3"), dy: css("--dy"), vec: css("--vec"), meas: css("--meas"), pole: css("--pole"),
+      edge: css("--bone-edge"), bone: css("--bone"), p0: css("--plate0"), p4: css("--plate4"), ink: css("--ink"), muted: css("--muted") };
+    const sh = r => mb(a, J, r);                                           // ponto da perna (base 4) -> base 0
+    const O0 = [0, 0];
+
+    // ====== detalhe do joelho
+    let ctx = KC.ctx; ctx.clearRect(0, 0, KC.W, KC.H);
+    const k = viewport(KC, -112, 66, -96, 40);
+    grid(ctx, k, 10);
+    poly(ctx, thigh.map(k.P), c.bone, c.edge);
+    poly(ctx, shank4.map(r => k.P(sh(r))), c.bone, c.edge);
+    poly(ctx, plate0.map(k.P), c.p0, c.b0, 1.5);
+    poly(ctx, plate4.map(r => k.P(sh(r))), c.p4, c.b2, 1.5);
+
+    if (show.meas) {                                                       // trajetória de J: ajustada, medida e posições de precisão
+      path(ctx, tab.map(t => k.P(fit(t.phi)))); ctx.strokeStyle = c.meas; ctx.lineWidth = 1.2; ctx.setLineDash([4, 4]); ctx.stroke(); ctx.setLineDash([]);
+      for (const m of measAnk) { const q = k.P(m.J); dot(ctx, q, 4.5, null, c.meas, 1.6);
+        ctx.fillStyle = c.muted; ctx.font = `500 11px ${css("--font-num")}`; ctx.fillText(String(m.fr), q[0] + 8, q[1] + 4); }
+      for (const g of D.prec) star(ctx, k.P(fit(g)), 7, c.meas);
+    }
+    if (show.pole) {
+      let st = false; ctx.beginPath();
+      tab.forEach(t => { if (k.inside(t.pole)) { const q = k.P(t.pole); st ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]); st = true; } else st = false; });
+      ctx.strokeStyle = c.pole; ctx.lineWidth = 1.2; ctx.setLineDash([3, 3]); ctx.stroke(); ctx.setLineDash([]);
+      if (norm(s.pole) < 400) { seg(ctx, k.P(C), k.P(s.pole), c.pole, 1, [2, 3]); seg(ctx, k.P(L), k.P(s.pole), c.pole, 1, [2, 3]); }
+    }
+
+    const pC = k.P(C), pL = k.P(L), pQ = k.P(Q), pN = k.P(N), pJ = k.P(J);
+    bar(ctx, pQ, pN, c.b2, 9); bar(ctx, pC, pQ, c.b1, 9); bar(ctx, pL, pN, c.b3, 9);
+
+    if (show.angs) {                                                       // θ1 e θ3 a partir de X0; θ2 a partir de X1
+      seg(ctx, pC, k.P(add(C, [16, 0])), c.b0, 1, [3, 3]);
+      seg(ctx, pL, k.P(add(L, [14, 0])), c.b0, 1, [3, 3]);
+      seg(ctx, pQ, k.P(add(Q, rot(s.t1, [14, 0]))), c.b1, 1, [3, 3]);
+      angArc(ctx, k, C, 0, s.t1, 30, c.b1, ["θ", "1"]);
+      angArc(ctx, k, Q, s.t1, s.psi, 24, c.b2, ["θ", "2"]);
+      angArc(ctx, k, L, 0, s.t3, 22, c.b3, ["θ", "3"]);
+    }
+
+    if (show.pos) {                                                        // vetores de posição: ⁰r_C, ⁰r_L, ⁰r_O4 (= ⁰r_J)
+      vector(ctx, k.P(O0), pC, c.vec, 1.6, ["0", "r", "C"], null, 0, 0.5);
+      vector(ctx, k.P(O0), pL, c.vec, 1.6, ["0", "r", "L"], null, 0, 0.5);
+      vector(ctx, k.P(O0), pJ, c.vec, 2, ["0", "r", "O4"], null, 0, 0.62);
+    }
+    if (show.dyad) {                                                       // díades: W = C→Q, Z = Q→J ; U = L→N, S = N→J
+      const cen = mul(0.25, add(add(pC, pL), add(pQ, pN)));
+      const out = (p1, p2) => { const d = sub(p2, p1), n = mul(1 / norm(d), [-d[1], d[0]]), m = mul(0.5, add(p1, p2));
+        return (n[0] * (m[0] - cen[0]) + n[1] * (m[1] - cen[1])) >= 0 ? n : mul(-1, n); };
+      vector(ctx, pC, pQ, c.dy, 2.2, ["", "W", ""], out(pC, pQ), 12);
+      vector(ctx, pQ, pJ, c.dy, 2.2, ["", "Z", ""], null, 0, 0.5);
+      vector(ctx, pL, pN, c.dy, 2.2, ["", "U", ""], out(pL, pN), 12);
+      vector(ctx, pN, pJ, c.dy, 2.2, ["", "S", ""], null, 0, 0.5);
+    }
+
+    for (const [p, col] of [[pC, c.b0], [pL, c.b0], [pQ, c.b2], [pN, c.b2]]) pin(ctx, p, col);
+
+    if (show.bases) {                                                      // cada base presa à sua peça
+      frame(ctx, k, O0, 0, 18, c.b0, "0", 2.2);                            // coxa, ponto médio de 3-4
+      frame(ctx, k, C, s.t1, 11, c.b1, "1", 2);                            // barra CQ
+      frame(ctx, k, Q, s.psi, 11, c.b2, "2", 2);                           // acoplador QN
+      frame(ctx, k, L, s.t3, 11, c.b3, "3", 2);                            // barra LN
+      frame(ctx, k, J, a, 18, c.b2, "4", 2.2);                             // perna, origem em J
+    }
+    for (const [p, n, dx, dy] of [[pC, "C", -18, -9], [pL, "L", 9, -9], [pQ, "Q", 10, -8], [pN, "N", 10, 16]]) tex(ctx, p[0] + dx, p[1] + dy, "", n, "", c.ink, 15, true);
+    tex(ctx, pJ[0] - 6, pJ[1] + 20, "", "J", "", c.b2, 14, true);
+    if (show.pole && k.inside(s.pole)) { const pp = k.P(s.pole); dot(ctx, pp, 4.5, c.pole); tex(ctx, pp[0] + 7, pp[1] + 16, "", "I", "13", c.pole, 13, true); }
+    ctx.fillStyle = c.muted; ctx.font = `400 11px ${css("--font-num")}`;
+    ctx.fillText("grade 10 mm" + (show.meas ? " · ○ J medido · ★ posições de precisão · ┄ ajuste" : ""), 20, KC.H - 20);
+
+    // ====== membro inteiro
+    ctx = LC.ctx; ctx.clearRect(0, 0, LC.W, LC.H);
+    const v = viewport(LC, -560, 260, -570, 400);
+    grid(ctx, v, 100);
+    poly(ctx, thigh.map(v.P), c.bone, c.edge);
+    poly(ctx, shank4.map(r => v.P(sh(r))), c.p4, c.b2, 1.2);
+    poly(ctx, foot4.map(r => v.P(sh(r))), c.p4, c.b2, 1.2);
+    path(ctx, tab.map(t => v.P(t.ank))); ctx.strokeStyle = c.b2; ctx.lineWidth = 1.2; ctx.setLineDash([5, 4]); ctx.stroke(); ctx.setLineDash([]);
+    for (const m of measAnk) { const q = v.P(m.P); dot(ctx, q, 4, null, c.meas, 1.6);
+      ctx.fillStyle = c.muted; ctx.font = `500 11px ${css("--font-num")}`; ctx.fillText(String(m.fr), q[0] + 8, q[1] - 6); }
+    seg(ctx, v.P(C), v.P(Q), c.b1, 3); seg(ctx, v.P(Q), v.P(N), c.b2, 3); seg(ctx, v.P(L), v.P(N), c.b3, 3);
+    if (show.pos) vector(ctx, v.P(J), v.P(s.ank), c.vec, 2, ["4", "r", "P"], null, 0, 0.5);
+    if (show.bases) { frame(ctx, v, O0, 0, 90, c.b0, "0", 2); frame(ctx, v, J, a, 90, c.b2, "4", 2); }
+    const pP = v.P(s.ank); dot(ctx, pP, 4.5, c.b2);
+    tex(ctx, pP[0] + 9, pP[1] + 16, "", "P", "", c.ink, 14, true);
+    ctx.fillStyle = c.muted; ctx.font = `500 12px ${css("--font-ui")}`; ctx.fillText("coxa (fixa)", v.X(-140), v.Y(190));
+    ctx.font = `400 11px ${css("--font-num")}`; ctx.fillText("grade 100 mm · ○ tornozelo medido", 18, LC.H - 18);
+
+    // ====== leituras
+    const set = (id, t) => { document.getElementById(id).textContent = t; };
+    const vec = u => `(${fmt(u[0])}; ${fmt(u[1])})`;
+    set("phi-out", fmt(phi) + "°"); set("r-phi", fmt(phi) + "°"); set("r-a", fmt(deg(a)) + "°");
+    set("r-t1", fmt(deg(wrap(s.t1))) + "°"); set("r-t2", fmt(deg(s.t2)) + "°"); set("r-t3", fmt(deg(wrap(s.t3))) + "°");
+    set("r-muN", fmt(s.muN) + "°"); set("r-muQ", fmt(s.muQ) + "°");
+    const mu = Math.min(s.muN, s.muQ), chip = document.getElementById("r-mu-chip");
+    chip.textContent = mu >= 30 ? "μ_N, μ_Q ≥ 30° · barras longe do alinhamento" : "μ < 30°"; chip.className = "chip " + (mu >= 30 ? "ok" : "warn");
+    const mat = (id, vals, d = 3) => { document.getElementById(id).innerHTML = vals.map(x => `<span>${fmt(x, d)}</span>`).join(""); };
+    const R = [Math.cos(a), -Math.sin(a), Math.sin(a), Math.cos(a)];
+    mat("m-R", R); mat("m-R2", R);
+    mat("m-O", J, 1); mat("m-O2", J, 1); mat("m-Q4", Q4, 1); mat("m-Q", mb(a, J, Q4), 1); mat("m-P", s.ank, 1);
+    mat("m-N12", N, 1); mat("m-N3", s.N3, 1);
+    const W = sub(Q, C), Z = sub(J, Q), U = sub(N, L), S = sub(J, N);
+    set("v-W", vec(W)); set("v-Z", vec(Z)); set("v-U", vec(U)); set("v-S", vec(S));
+    set("v-cA", fmt(norm(sub(add(add(C, W), Z), J)), 4) + " mm"); set("v-cB", fmt(norm(sub(add(add(L, U), S), J)), 4) + " mm");
+    set("e-aj", fmt(s.err, 2) + " mm");
+  }
+
+  const setc = (id, u) => { document.getElementById(id).textContent = `(${fmt(u[0])}; ${fmt(u[1])})`; };
+  setc("k-Q4", Q4); setc("k-N4", N4); setc("k-P4", P4);
+  document.getElementById("k-l0").textContent = fmt(l0) + " mm"; document.getElementById("k-l1").textContent = fmt(l1) + " mm";
+  document.getElementById("k-l2").textContent = fmt(l2) + " mm"; document.getElementById("k-l3").textContent = fmt(l3) + " mm";
+  document.getElementById("e-max").textContent = fmt(errMax, 2) + " mm";
+  document.getElementById("e-med").textContent = `${fmt(Math.min(...errMed))} a ${fmt(Math.max(...errMed))} mm`;
+
+  // ------------------------------------------------------------------ controles
+  const phiIn = document.getElementById("phi");
+  phiIn.max = tab[tab.length - 1].phi;
+  phiIn.addEventListener("input", () => { stop(); draw(+phiIn.value); });
+  let anim = null, dir = 1;
+  const btn = document.getElementById("play");
+  function stop() { if (anim) cancelAnimationFrame(anim); anim = null; btn.textContent = "▶ Animar"; }
+  btn.addEventListener("click", () => {
+    if (anim) return stop();
+    btn.textContent = "❚❚ Pausar"; let last = performance.now();
+    const loop = now => { const dt = Math.min(0.05, (now - last) / 1000); last = now;
+      const top = +phiIn.max; let x = +phiIn.value + dir * 30 * dt;
+      if (x >= top) { x = top; dir = -1; } if (x <= 0) { x = 0; dir = 1; }
+      phiIn.value = x; draw(x); anim = requestAnimationFrame(loop); };
+    anim = requestAnimationFrame(loop);
+  });
+  const frames = measAnk.map(m => m.phi).sort((p, q) => p - q);
+  document.getElementById("snap").addEventListener("click", () => {
+    stop(); const cur = +phiIn.value; const nxt = frames.find(f => f > cur + 0.3); const x = nxt === undefined ? frames[0] : nxt;
+    phiIn.value = x; draw(x);
+  });
+
+  const redraw = () => { LC = setupCanvas(cvLeg); KC = setupCanvas(cvKnee); draw(+phiIn.value); };
+  matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", redraw);
+  new MutationObserver(redraw).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  document.fonts?.ready.then(redraw);
+  draw(0);
+})();
+</script>
